@@ -1,0 +1,52 @@
+{
+  "name": "dynamodb-relay-graph",
+  "version": "0.1.1",
+  "description": "A graphql/relay capable graph database using dynamodb as the store",
+  "contributors": [
+    "Thomas Mitchell <channlappio@gmail.com>"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/tmitchel2/dynamodb-relay-graph.git"
+  },
+  "main": "dist/index.js",
+  "options": {
+    "mocha": "--require resources/mocha-bootload src/**/__tests__/**/*.js"
+  },
+  "scripts": {
+    "test": "npm run lint && npm run check && npm run testonly",
+    "testonly": "mocha $npm_package_options_mocha",
+    "lint": "eslint src",
+    "check": "flow check",
+    "build": "babel src --ignore __tests__ --out-dir dist/",
+    "watch": "babel --optional runtime resources/watch.js | node",
+    "cover": "babel-node node_modules/.bin/isparta cover --root src --report html node_modules/.bin/_mocha -- $npm_package_options_mocha",
+    "cover:lcov": "babel-node node_modules/.bin/isparta cover --root src --report lcovonly node_modules/.bin/_mocha -- $npm_package_options_mocha"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+  },
+  "devDependencies": {
+    "babel": "^6.5.2",
+    "babel-cli": "^6.7.7",
+    "babel-preset-react-native": "^1.6.0",
+    "babel-eslint": "^6.0.4",
+    "eslint": "^2.9.0",
+    "eslint-plugin-babel": "^3.2.0",
+    "aws-sdk": "^2.3.3",
+    "aws-sdk-promise": "0.0.2",
+    "chai": "^3.5.0",
+    "coveralls": "^2.11.9",
+    "dataloader": "^1.0.0",
+    "graphql": "^0.5.0",
+    "graphql-relay": "^0.4.1",
+    "isparta": "^4.0.0",
+    "mocha": "^2.4.5",
+    "node-uuid": "^1.4.3",
+    "sane": "^1.3.4"
+  }
+}
