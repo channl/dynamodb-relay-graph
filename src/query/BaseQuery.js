@@ -1,8 +1,8 @@
-import Guard from '../util/Guard';
+import invariant from 'invariant';
 
 export default class BaseQuery {
   constructor(inner) {
-    Guard(inner, 'inner').isNotUndefined();
+    invariant(typeof inner !== 'undefined', 'Argument \'inner\' is undefined');
     this.inner = inner;
   }
 }

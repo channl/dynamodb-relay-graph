@@ -1,4 +1,4 @@
-import logger from '../logging/logger';
+import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import AggregateQuery from '../query/AggregateQuery';
 
@@ -19,7 +19,6 @@ export default class AggregateResolver extends BaseResolver {
     }
 
     try {
-      logger.trace('AggregateResolver.resolveAsync');
       let results = await Promise.all(
         query.items.map(innerQuery =>
           this.getQueryAsync(innerQuery, innerResult, options)));
@@ -40,16 +39,20 @@ export default class AggregateResolver extends BaseResolver {
         }
       };
 
+/*
       if (options && options.logs) {
         logger.debug(
           'AggregateResolver succeeded',
           JSON.stringify({query, innerResult, result}));
       }
+*/
       return result;
     } catch (ex) {
-      logger.warn(
-        'AggregateResolver failed',
-        JSON.stringify({query, innerResult}));
+      warning(false, JSON.stringify({
+        class: 'AggregateResolver',
+        function: 'resolveAsync',
+        query,
+        innerResult}));
       throw ex;
     } finally {
       if (sw) {

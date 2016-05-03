@@ -1,10 +1,13 @@
+import invariant from 'invariant';
 import BaseQuery from '../query/BaseQuery';
-import Guard from '../util/Guard';
 
 export default class SingleQuery extends BaseQuery {
   constructor(inner, isNullValid) {
     super(inner);
-    Guard(isNullValid, 'isNullValid').isBoolean().isNotNull();
+    invariant(
+      typeof isNullValid === 'boolean',
+      'Argument \'isNullValid\' must be a boolean');
+
     this.isNullValid = isNullValid;
   }
 }

@@ -1,4 +1,5 @@
-import logger from '../logging/logger';
+import invariant from 'invariant';
+import warning from 'warning';
 
 export default class EntityWriter {
   constructor(dynamoDB, getTableName, schema) {
@@ -30,10 +31,10 @@ export default class EntityWriter {
       let requestChunks = this.getRequestChunks(fullRequest);
 
       // Write each request chunk
-      logger.debug('Writing a full batch of ' +
+/*      logger.debug('Writing a full batch of ' +
         this.getRequestItemCount(fullRequest) + ' items in ' +
         requestChunks.length + ' chunks');
-
+*/
       // HACK MOVED THIS TO SEQUENTIAL AS IT WAS TIMINGOUT
       // await Promise.all(requestChunks.map(request =>
       // this.writeBatchAsync(request)));
@@ -44,9 +45,11 @@ export default class EntityWriter {
 
     } catch (ex) {
       // TODO Need to implement some kind of best attempt rollback
-      logger.warn(
-        'EntityWriter.writeManyAsync failed',
-        JSON.stringify({itemsToPut, itemsToDelete}));
+      warning(false, JSON.stringify({
+        class: 'EntityWriter',
+        function: 'writeManyAsync',
+        itemsToPut, itemsToDelete
+      }));
       throw ex;
     } finally {
       if (sw) {
@@ -61,15 +64,17 @@ export default class EntityWriter {
     let localRequest = request;
     while (!this.isTimeoutExceeded(startTime)) {
 
+/*
       logger.debug('Writing a batch of ' +
         this.getRequestItemCount(localRequest) + ' items');
+*/
       let response = await this.dynamoDB.batchWriteItemAsync(localRequest);
       if (Object.keys(response.data.UnprocessedItems).length === 0) {
         return;
       }
 
       // Create a new request using unprocessedItems
-      logger.warn('Some items in the batch were unprocessed, retrying in ' +
+      warning(false, 'Some items in the batch were unprocessed, retrying in ' +
         retryDelay + 'ms');
       localRequest = { RequestItems: response.data.UnprocessedItems };
 
@@ -108,9 +113,8 @@ export default class EntityWriter {
         let dupes = items
           .map(i => JSON.stringify(i))
           .filter((value, index, self) => self.indexOf(value) !== index);
-        if (dupes.length > 0) {
-          logger.crit('duplicateKeys', JSON.stringify(dupes));
-        }
+
+        invariant(dupes.length === 0, 'duplicateKeys', JSON.stringify(dupes));
       });
   }
 

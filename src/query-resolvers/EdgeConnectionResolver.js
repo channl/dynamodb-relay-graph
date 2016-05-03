@@ -1,24 +1,21 @@
-import logger from '../logging/logger';
+import warning from 'warning';
 import QueryResolver from '../query-resolvers/QueryResolver';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
 import uuid from 'node-uuid';
 
 export default class EdgeConnectionResolver extends QueryResolver {
-  constructor(
-    dynamoDB,
-    schema,
-    getTableName,
+  constructor(dynamoDB, schema, getTableName,
     getModelFromAWSItem,
     getIdFromAWSKey,
-    toAWSKey) {
+    getAWSKeyFromId,
+    getAWSKeyFromItem) {
     super(
-      dynamoDB,
-      schema,
-      getTableName,
+      dynamoDB, schema, getTableName,
       getModelFromAWSItem,
       getIdFromAWSKey,
-      toAWSKey);
+      getAWSKeyFromId,
+      getAWSKeyFromItem);
   }
 
   canResolve(query) {
@@ -32,7 +29,6 @@ export default class EdgeConnectionResolver extends QueryResolver {
     }
 
     try {
-      logger.trace('EdgeConnectionResolver.resolveAsync');
       let expression = this.getExpression(innerResult, query);
 
       if (ExpressionHelper.isEdgeExpression(query.expression)) {
@@ -54,11 +50,13 @@ export default class EdgeConnectionResolver extends QueryResolver {
           }
         };
 
+/*
         if (options && options.logs) {
           logger.debug(
             'EdgeConnectionResolver succeeded',
             JSON.stringify({query, innerResult, result}));
         }
+*/
         return result;
       }
 
@@ -69,17 +67,21 @@ export default class EdgeConnectionResolver extends QueryResolver {
 
       let response = await this.dynamoDB.queryAsync(request);
       let result = this.getResult(response, expression, query.connectionArgs);
+      /*
       if (options && options.logs) {
         logger.debug(
           'EdgeConnectionResolver succeeded',
           JSON.stringify({query, request, innerResult, result}));
       }
+      */
+
       return result;
 
     } catch (ex) {
-      logger.warn(
-        'EdgeConnectionResolver.resolveAsync failed',
-        JSON.stringify({query, innerResult}));
+      warning(false, JSON.stringify({
+        class: 'EdgeConnectionResolver',
+        function: 'resolveAsync', query, innerResult
+      }));
       throw ex;
     } finally {
       if (sw) {
@@ -100,9 +102,9 @@ export default class EdgeConnectionResolver extends QueryResolver {
         typeof query.expression.outID === 'undefined') {
       // This expression has type+inID so it already has
       // all it needs to find a particular set of edges
-      if (typeof query.expression.inID === 'string') {
-        query.expression.inID = new Buffer(uuid.parse(query.expression.inID));
-      }
+      // if (typeof query.expression.inID === 'string') {
+        //query.expression.inID = new Buffer(uuid.parse(query.expression.inID));
+      // }
       return query.expression;
     }
 
@@ -111,9 +113,9 @@ export default class EdgeConnectionResolver extends QueryResolver {
         typeof query.expression.outID !== 'undefined') {
       // This expression has type+outID so it already has
       // all it needs to find a particular set of edges
-      if (typeof query.expression.outID === 'string') {
-        query.expression.outID = new Buffer(uuid.parse(query.expression.outID));
-      }
+      // if (typeof query.expression.outID === 'string') {
+        // query.expression.outID = new Buffer(uuid.parse(query.expression.outID));
+      // }
       return query.expression;
     }
 
@@ -130,9 +132,9 @@ export default class EdgeConnectionResolver extends QueryResolver {
     };
 
     if (query.isOut) {
-      expr.outID = new Buffer(uuid.parse(innerResult.edges[0].node.id));
+      expr.outID = innerResult.edges[0].node.id;
     } else {
-      expr.inID = new Buffer(uuid.parse(innerResult.edges[0].node.id));
+      expr.inID = innerResult.edges[0].node.id;
     }
 
     return expr;
@@ -179,12 +181,14 @@ export default class EdgeConnectionResolver extends QueryResolver {
     let edges = response.data.Items.map(item => {
 
       let edge = this.getModelFromAWSItem(expression.type, item);
-      return {
+      let result = {
         type: expression.type,
         inID: edge.inID,
         outID: edge.outID,
-        cursor: edge.toCursor(connectionArgs.order)
+        cursor: this.toCursor(edge, connectionArgs.order)
       };
+
+      return result;
     });
 
     if (this.isForwardScan(connectionArgs)) {
@@ -194,7 +198,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
         edges[edges.length - 1].cursor :
         null;
 
-      return {
+      let result = {
         edges,
         pageInfo: {
           startCursor,
@@ -203,10 +207,12 @@ export default class EdgeConnectionResolver extends QueryResolver {
           hasPreviousPage: false
         }
       };
+
+      return result;
     }
 
     edges.reverse();
-    return {
+    let result = {
       edges,
       pageInfo: {
         startCursor: edges[0] ? edges[0].cursor : null,
@@ -216,6 +222,8 @@ export default class EdgeConnectionResolver extends QueryResolver {
         hasPreviousPage: typeof response.data.LastEvaluatedKey !== 'undefined'
       }
     };
+
+    return result;
   }
 
   getBeforeParam(query) {

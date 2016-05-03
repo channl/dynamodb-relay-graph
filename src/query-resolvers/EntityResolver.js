@@ -1,18 +1,16 @@
 import DataLoader from 'dataloader';
-import ExpressionHelper from '../graph/ExpressionHelper';
-import logger from '../logging/logger';
+import ExpressionHelper from '../query-resolvers/ExpressionHelper';
+import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import { fromGlobalId, toGlobalId } from 'graphql-relay';
 
 export default class EntityResolver extends BaseResolver {
 
-  constructor(
-    dynamoDB,
-    schema,
-    getTableName,
+  constructor(dynamoDB, schema, getTableName,
     getModelFromAWSItem,
     getIdFromAWSKey,
-    toAWSKey) {
+    getAWSKeyFromId,
+    getAWSKeyFromItem) {
     super();
     this.loader = new DataLoader(globalIds => this.getManyAsync(globalIds));
     this.dynamoDB = dynamoDB;
@@ -20,7 +18,8 @@ export default class EntityResolver extends BaseResolver {
     this.getTableName = getTableName;
     this.getModelFromAWSItem = getModelFromAWSItem;
     this.getIdFromAWSKey = getIdFromAWSKey;
-    this.toAWSKey = toAWSKey;
+    this.getAWSKeyFromId = getAWSKeyFromId;
+    this.getAWSKeyFromItem = getAWSKeyFromItem;
     this.batchSize = 100;
     this.timeout = 60000;
     this.initialRetryDelay = 50;
@@ -28,7 +27,6 @@ export default class EntityResolver extends BaseResolver {
   }
 
   async getAsync(key) {
-    logger.trace('EntityResolver.getAsync');
     if (ExpressionHelper.isNodeGlobalIdExpression(key)) {
       return this.loader.load(key);
     }
@@ -41,14 +39,17 @@ export default class EntityResolver extends BaseResolver {
       return this.loader.load(toGlobalId(key.type, key.outID + key.inID));
     }
 
-    logger.warn('EntityResolver.getAsync', JSON.stringify(key));
+    warning(false, 'EntityResolver.getAsync', JSON.stringify({
+      class: 'EntityResolver',
+      function: 'getAsync',
+      key
+    }));
+
     throw new Error('NotSupportedError(getAsync)');
   }
 
   async getManyAsync(globalIds) {
     try {
-      logger.trace('EntityResolver.getManyAsync');
-
       // Extract the types and ids
       let typeAndIds = globalIds.map(fromGlobalId);
 
@@ -57,10 +58,12 @@ export default class EntityResolver extends BaseResolver {
       let fullRequest = this.getFullRequestAndMetaData(typeAndIds, metaData);
       let requestChunks = this.getRequestChunks(fullRequest);
 
-      // Execute each batch query
-      logger.debug(
+/*      logger.debug(
         'Resolving a full batch of ' + this.getRequestItemCount(fullRequest) +
         ' items in ' + requestChunks.length + ' chunks');
+*/
+      // Execute each batch query
+      debugger;
       let responses = await Promise.all(
         requestChunks.map(request => this.resolveBatchAsync(request)));
       let fullResponse = this.getFullResponse(responses);
@@ -79,7 +82,11 @@ export default class EntityResolver extends BaseResolver {
 
       return results;
     } catch (ex) {
-      logger.warn('EntityResolver.getManyAsync', JSON.stringify(globalIds));
+      warning(false, JSON.stringify({
+        class: 'EntityResolver',
+        function: 'getManyAsync',
+        globalIds
+      }));
       throw ex;
     }
   }
@@ -91,9 +98,11 @@ export default class EntityResolver extends BaseResolver {
     let retryDelay = this.initialRetryDelay;
     while (!this.isTimeoutExceeded(startTime)) {
 
+/*
       logger.debug(
         'Resolving a batch of ' +
         this.getRequestItemCount(localRequest) + ' items');
+*/
 
       let response = await this.dynamoDB.batchGetItemAsync(localRequest);
 
@@ -104,7 +113,7 @@ export default class EntityResolver extends BaseResolver {
       }
 
       // Create a new localRequest using unprocessedItems
-      logger.warn(
+      warning(false,
         'Some items in the batch were unprocessed, retrying in ' +
         retryDelay + 'ms');
 
@@ -186,9 +195,12 @@ export default class EntityResolver extends BaseResolver {
       return result;
 
     } catch (ex) {
-      logger.warn(
-        'EntityResolver.toTypeIdAndAWSItem',
-        JSON.stringify({typeAndId, metaData, response, request}));
+      warning(false, JSON.stringify({
+        class: 'EntityResolver',
+        function: 'toTypeIdAndAWSItem',
+        typeAndId, metaData, response, request
+      }));
+
       throw ex;
     }
   }
@@ -198,9 +210,11 @@ export default class EntityResolver extends BaseResolver {
       return this.getIdFromAWSKey(type, requestObject) ===
         this.getIdFromAWSKey(type, responseObject);
     } catch (ex) {
-      logger.warn(
-        'EntityResolver.isMatchingResponseObject',
-        JSON.stringify({type, requestObject, responseObject}));
+      warning(false, JSON.stringify({
+        class: 'EntityResolver',
+        function: 'isMatchingResponseObject',
+        type, requestObject, responseObject
+      }));
       throw ex;
     }
   }
@@ -245,7 +259,7 @@ export default class EntityResolver extends BaseResolver {
     typeAndIds
       .forEach(typeAndId => {
         let tableName = this.getTableName(typeAndId.type);
-        let requestKey = this.toAWSKey(typeAndId.type, typeAndId.id);
+        let requestKey = this.getAWSKeyFromId(typeAndId.type, typeAndId.id);
         if (request.RequestItems[tableName]) {
           request.RequestItems[tableName].Keys.push(requestKey);
           metaData[tableName].typesAndIds.push(typeAndId);

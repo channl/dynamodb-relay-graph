@@ -1,8 +1,8 @@
-import logger from '../logging/logger';
+import warning from 'warning';
 import QueryResolver from '../query-resolvers/QueryResolver';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import { toGlobalId } from 'graphql-relay';
-import ExpressionHelper from '../graph/ExpressionHelper';
+import ExpressionHelper from '../query-resolvers/ExpressionHelper';
 import uuid from 'node-uuid';
 
 export default class NodeConnectionResolver extends QueryResolver {
@@ -12,14 +12,16 @@ export default class NodeConnectionResolver extends QueryResolver {
     getTableName,
     getModelFromAWSItem,
     getIdFromAWSKey,
-    toAWSKey) {
+    getAWSKeyFromId,
+    getAWSKeyFromItem) {
     super(
       dynamoDB,
       schema,
       getTableName,
       getModelFromAWSItem,
       getIdFromAWSKey,
-      toAWSKey);
+      getAWSKeyFromId,
+      getAWSKeyFromItem);
   }
 
   canResolve(query) {
@@ -43,7 +45,11 @@ export default class NodeConnectionResolver extends QueryResolver {
       // Have to filter out nulls due to getNodeIdConnection implementation
       nodes = nodes.filter(n => n !== null);
       let edges = nodes.map(node => {
-        return { cursor: node.toCursor(query.connectionArgs.order), node};
+        let cursor = this.toCursor(node, query.connectionArgs.order);
+        return {
+          cursor,
+          node
+        };
       });
 
       let startCursor = edges[0] ? edges[0].cursor : null;
@@ -61,16 +67,20 @@ export default class NodeConnectionResolver extends QueryResolver {
         }
       };
 
+/*
       if (options && options.logs) {
         logger.debug(
           'NodeConnectionResolver succeeded',
           JSON.stringify({query, innerResult, result}));
       }
+*/
       return result;
     } catch (ex) {
-      logger.warn(
-        'NodeConnectionResolver.resolveAsync failed',
-        JSON.stringify({query, innerResult}));
+      warning(false, JSON.stringify({
+        class: 'NodeConnectionResolver',
+        function: 'resolveAsync',
+        query, innerResult
+      }));
       throw ex;
     } finally {
       if (sw) {
@@ -81,8 +91,6 @@ export default class NodeConnectionResolver extends QueryResolver {
 
   async getNodeIdConnection(query, innerResult, options) {
     try {
-      logger.trace('Graph.getNodeGlobalIds');
-
       // Generate the full expression using the query and any previous result
       let expression = this.getExpression(query, innerResult);
       if (ExpressionHelper.isNodeGlobalIdExpression(expression)) {
@@ -126,19 +134,24 @@ export default class NodeConnectionResolver extends QueryResolver {
 
       // The query expression contains some parameters, use a dynamo query
       let request = this.getQueryRequest(expression, query.connectionArgs);
+      /*
       if (options && options.logs) {
         logger.debug(
           'NodeConnectionResolver.getNodeIdConnection request',
           JSON.stringify(request, null, 2));
       }
+      */
 
       let response = await this.dynamoDB.queryAsync(request);
       let result = this.getResult(response, expression, query.connectionArgs);
       return result;
     } catch (ex) {
-      logger.warn(
-        'NodeConnectionResolver.getNodeIdConnection failed',
-        JSON.stringify({query}));
+      warning(false,
+        JSON.stringify({
+          class: 'NodeConnectionResolver',
+          function: 'getNodeIdConnection',
+          query
+        }));
       throw ex;
     }
   }
@@ -215,9 +228,11 @@ export default class NodeConnectionResolver extends QueryResolver {
         ExpressionAttributeNames: expressionAttributeNames
       };
     } catch (ex) {
-      logger.warn(
-        'NodeConnectionResolver.getScanRequest failed',
-        JSON.stringify({expression, connectionArgs}));
+      warning(false, JSON.stringify({
+        class: 'NodeConnectionResolver',
+        function: 'getScanRequest',
+        expression, connectionArgs
+      }));
       throw ex;
     }
   }
@@ -263,9 +278,11 @@ export default class NodeConnectionResolver extends QueryResolver {
         ExpressionAttributeNames: expressionAttributeNames
       };
     } catch (ex) {
-      logger.warn(
-        'NodeConnectionResolver.getQueryRequest failed',
-        JSON.stringify({expression, connectionArgs}));
+      warning(false, JSON.stringify({
+        class: 'NodeConnectionResolver',
+        function: 'getQueryRequest',
+        expression, connectionArgs
+      }));
       throw ex;
     }
   }

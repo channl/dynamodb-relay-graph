@@ -1,4 +1,4 @@
-import logger from '../logging/logger';
+import warning from 'warning';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 
@@ -9,14 +9,16 @@ export default class ToNodesConnectionResolver extends EntityResolver {
     getTableName,
     getModelFromAWSItem,
     getIdFromAWSKey,
-    toAWSKey) {
+    getAWSKeyFromId,
+    getAWSKeyFromItem) {
     super(
       dynamoDB,
       schema,
       getTableName,
       getModelFromAWSItem,
       getIdFromAWSKey,
-      toAWSKey);
+      getAWSKeyFromId,
+      getAWSKeyFromItem);
   }
 
   canResolve(query) {
@@ -54,17 +56,22 @@ export default class ToNodesConnectionResolver extends EntityResolver {
         }
       };
 
+/*
       if (options && options.logs) {
         logger.debug(
           'ToNodesConnectionResolver succeeded',
           JSON.stringify({query, innerResult, result}));
       }
+*/
       return result;
 
     } catch (ex) {
-      logger.warn(
-        'ToNodesConnectionResolver failed',
-        JSON.stringify({query, innerResult}));
+      warning(false, JSON.stringify({
+        class: 'ToNodesConnectionResolver',
+        function: 'resolveAsync',
+        query, innerResult
+      }));
+
       throw ex;
     } finally {
       if (sw) {

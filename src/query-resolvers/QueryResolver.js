@@ -1,6 +1,6 @@
+import warning from 'warning';
 import uuid from 'node-uuid';
 import { Buffer } from 'buffer';
-import logger from '../logging/logger';
 import EntityResolver from '../query-resolvers/EntityResolver';
 
 export default class QueryResolver extends EntityResolver {
@@ -10,14 +10,16 @@ export default class QueryResolver extends EntityResolver {
     getTableName,
     getModelFromAWSItem,
     getIdFromAWSKey,
-    toAWSKey) {
+    getAWSKeyFromId,
+    getAWSKeyFromItem) {
     super(
       dynamoDB,
       schema,
       getTableName,
       getModelFromAWSItem,
       getIdFromAWSKey,
-      toAWSKey);
+      getAWSKeyFromId,
+      getAWSKeyFromItem);
   }
 
   getExclusiveStartKey(connectionArgs) {
@@ -150,13 +152,13 @@ export default class QueryResolver extends EntityResolver {
       throw new Error('IndexNotFoundError');
 
     } catch (ex) {
-      logger.warn(
-        'RequestHelper.getIndexSchema',
-        JSON.stringify({
-          expression,
-          connectionArgs,
-          requiredKeySchema,
-          tableSchema}));
+      warning(false, JSON.stringify({
+        class: 'QueryResolver',
+        function: 'getIndexSchema',
+        expression,
+        connectionArgs,
+        requiredKeySchema,
+        tableSchema}));
       throw ex;
     }
   }
@@ -208,7 +210,12 @@ export default class QueryResolver extends EntityResolver {
       return '*';
     }
 
-    logger.warn('getExpressionKeyType', JSON.stringify(expression));
+    warning(false, JSON.stringify({
+      class: 'QueryResolver',
+      function: 'getExpressionKeyType',
+      expression
+    }));
+
     throw new Error('NotSupportedError');
   }
 
@@ -390,17 +397,18 @@ export default class QueryResolver extends EntityResolver {
         ', :v_begins_with_' + name + ')';
     }
 
-    logger.warn(
-      'getKeyConditionExpressionItem',
-      JSON.stringify({name, expression}));
+    warning(false, JSON.stringify({
+      class: 'QueryResolver',
+      function: 'getKeyConditionExpressionItem',
+      name, expression
+    }));
+
     throw new Error('NotSupportedError (getKeyConditionExpressionItem)');
   }
 
   fromCursor(cursor) {
     let b = new Buffer(cursor, 'base64');
     let json = b.toString('ascii');
-
-    logger.debug('Parsing cursor', json);
     let item = JSON.parse(json);
 
     // Create real buffer objects from the JSON
@@ -416,5 +424,12 @@ export default class QueryResolver extends EntityResolver {
       });
 
     return item;
+  }
+
+  toCursor(item, order) {
+    let key = this.getAWSKeyFromItem(item, order);
+    let cursorData = JSON.stringify(key);
+    let b = new Buffer(cursorData);
+    return b.toString('base64');
   }
 }

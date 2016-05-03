@@ -1,6 +1,6 @@
 {
   "name": "dynamodb-relay-graph",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A graphql/relay capable graph database using dynamodb as the store",
   "contributors": [
     "Thomas Mitchell <channlappio@gmail.com>"
@@ -10,7 +10,7 @@
     "type": "git",
     "url": "http://github.com/tmitchel2/dynamodb-relay-graph.git"
   },
-  "main": "dist/index.js",
+  "main": "dist/Index.js",
   "options": {
     "mocha": "--require resources/mocha-bootload src/**/__tests__/**/*.js"
   },
@@ -29,6 +29,14 @@
     "README.md"
   ],
   "dependencies": {
+    "aws-sdk": "^2.3.3",
+    "aws-sdk-promise": "0.0.2",
+    "dataloader": "^1.0.0",
+    "graphql": "^0.5.0",
+    "graphql-relay": "^0.4.1",
+    "invariant": "^2.2.1",
+    "node-uuid": "^1.4.3",
+    "warning": "^2.1.0"
   },
   "devDependencies": {
     "babel": "^6.5.2",
@@ -37,16 +45,10 @@
     "babel-eslint": "^6.0.4",
     "eslint": "^2.9.0",
     "eslint-plugin-babel": "^3.2.0",
-    "aws-sdk": "^2.3.3",
-    "aws-sdk-promise": "0.0.2",
     "chai": "^3.5.0",
     "coveralls": "^2.11.9",
-    "dataloader": "^1.0.0",
-    "graphql": "^0.5.0",
-    "graphql-relay": "^0.4.1",
     "isparta": "^4.0.0",
     "mocha": "^2.4.5",
-    "node-uuid": "^1.4.3",
     "sane": "^1.3.4"
   }
 }

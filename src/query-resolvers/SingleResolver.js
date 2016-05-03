@@ -1,4 +1,4 @@
-import logger from '../logging/logger';
+import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import SingleQuery from '../query/SingleQuery';
 
@@ -16,11 +16,13 @@ export default class SingleResolver extends BaseResolver {
     try {
       if (innerResult && innerResult.edges && innerResult.edges.length === 1) {
         let result = innerResult.edges[0].node;
+        /*
         if (options && options.logs) {
           logger.debug(
             'SingleResolver succeeded',
             JSON.stringify({query, innerResult, result}));
         }
+        */
         return result;
       }
 
@@ -44,13 +46,15 @@ export default class SingleResolver extends BaseResolver {
         throw new Error('SingleItemNotFound');
       }
 
-      logger.warn('getSingleAsync', JSON.stringify({query, innerResult}));
       throw new Error('NotSupportedError (getSingleAsync)');
 
     } catch (ex) {
-      logger.warn(
-        'SingleResolver failed',
-        JSON.stringify({query, innerResult}));
+      warning(false, JSON.stringify({
+        class: 'SingleResolver',
+        function: 'resolveAsync',
+        query, innerResult
+      }));
+
       throw ex;
     } finally {
       if (sw) {
