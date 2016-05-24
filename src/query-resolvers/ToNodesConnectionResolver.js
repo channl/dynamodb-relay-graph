@@ -3,22 +3,8 @@ import EntityResolver from '../query-resolvers/EntityResolver';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 
 export default class ToNodesConnectionResolver extends EntityResolver {
-  constructor(
-    dynamoDB,
-    schema,
-    getTableName,
-    getModelFromAWSItem,
-    getIdFromAWSKey,
-    getAWSKeyFromId,
-    getAWSKeyFromItem) {
-    super(
-      dynamoDB,
-      schema,
-      getTableName,
-      getModelFromAWSItem,
-      getIdFromAWSKey,
-      getAWSKeyFromId,
-      getAWSKeyFromItem);
+  constructor(dynamoDB, schema) {
+    super(dynamoDB, schema);
   }
 
   canResolve(query) {
@@ -56,13 +42,12 @@ export default class ToNodesConnectionResolver extends EntityResolver {
         }
       };
 
-/*
       if (options && options.logs) {
-        logger.debug(
+        console.log(
           'ToNodesConnectionResolver succeeded',
           JSON.stringify({query, innerResult, result}));
       }
-*/
+
       return result;
 
     } catch (ex) {

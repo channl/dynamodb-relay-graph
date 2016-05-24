@@ -4,22 +4,8 @@ import { Buffer } from 'buffer';
 import EntityResolver from '../query-resolvers/EntityResolver';
 
 export default class QueryResolver extends EntityResolver {
-  constructor(
-    dynamoDB,
-    schema,
-    getTableName,
-    getModelFromAWSItem,
-    getIdFromAWSKey,
-    getAWSKeyFromId,
-    getAWSKeyFromItem) {
-    super(
-      dynamoDB,
-      schema,
-      getTableName,
-      getModelFromAWSItem,
-      getIdFromAWSKey,
-      getAWSKeyFromId,
-      getAWSKeyFromItem);
+  constructor(dynamoDB, schema) {
+    super(dynamoDB, schema);
   }
 
   getExclusiveStartKey(connectionArgs) {
@@ -344,17 +330,6 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('NotSupportedError (getAttributeValueAsType)');
   }
 
-  getAttributeType(tableSchema, name) {
-    let def = tableSchema
-      .AttributeDefinitions
-      .find(a => a.AttributeName === name);
-    if (def) {
-      return def.AttributeType;
-    }
-
-    throw new Error('NotSupportedError (getAttributeType)');
-  }
-
   getKeyConditionExpression(expression) {
     let names = Object
       .keys(expression)
@@ -427,7 +402,7 @@ export default class QueryResolver extends EntityResolver {
   }
 
   toCursor(item, order) {
-    let key = this.getAWSKeyFromItem(item, order);
+    let key = this.getAWSKeyFromModel(item, order);
     let cursorData = JSON.stringify(key);
     let b = new Buffer(cursorData);
     return b.toString('base64');

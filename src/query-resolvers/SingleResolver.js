@@ -16,13 +16,13 @@ export default class SingleResolver extends BaseResolver {
     try {
       if (innerResult && innerResult.edges && innerResult.edges.length === 1) {
         let result = innerResult.edges[0].node;
-        /*
+
         if (options && options.logs) {
-          logger.debug(
+          console.log(
             'SingleResolver succeeded',
             JSON.stringify({query, innerResult, result}));
         }
-        */
+
         return result;
       }
 

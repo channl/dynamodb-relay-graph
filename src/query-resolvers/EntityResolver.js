@@ -1,25 +1,17 @@
 import DataLoader from 'dataloader';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
+import invariant from 'invariant';
 import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import { fromGlobalId, toGlobalId } from 'graphql-relay';
 
 export default class EntityResolver extends BaseResolver {
 
-  constructor(dynamoDB, schema, getTableName,
-    getModelFromAWSItem,
-    getIdFromAWSKey,
-    getAWSKeyFromId,
-    getAWSKeyFromItem) {
+  constructor(dynamoDB, schema) {
     super();
     this.loader = new DataLoader(globalIds => this.getManyAsync(globalIds));
     this.dynamoDB = dynamoDB;
     this.schema = schema;
-    this.getTableName = getTableName;
-    this.getModelFromAWSItem = getModelFromAWSItem;
-    this.getIdFromAWSKey = getIdFromAWSKey;
-    this.getAWSKeyFromId = getAWSKeyFromId;
-    this.getAWSKeyFromItem = getAWSKeyFromItem;
     this.batchSize = 100;
     this.timeout = 60000;
     this.initialRetryDelay = 50;
@@ -27,16 +19,17 @@ export default class EntityResolver extends BaseResolver {
   }
 
   async getAsync(key) {
-    if (ExpressionHelper.isNodeGlobalIdExpression(key)) {
+    if (ExpressionHelper.isGlobalIdExpression(key)) {
       return this.loader.load(key);
     }
 
-    if (ExpressionHelper.isNodeTypeAndIdExpression(key)) {
-      return this.loader.load(toGlobalId(key.type, key.id));
+    if (ExpressionHelper.isModelExpression(key)) {
+      return this.loader.load(this.getGlobalIdFromModel(key));
     }
 
-    if (ExpressionHelper.isEdgeExpression(key)) {
-      return this.loader.load(toGlobalId(key.type, key.outID + key.inID));
+    debugger;
+    if (ExpressionHelper.isModelExpression(key)) {
+      return this.loader.load(this.getGlobalIdFromModel(key));
     }
 
     warning(false, 'EntityResolver.getAsync', JSON.stringify({
@@ -51,26 +44,26 @@ export default class EntityResolver extends BaseResolver {
   async getManyAsync(globalIds) {
     try {
       // Extract the types and ids
-      let typeAndIds = globalIds.map(fromGlobalId);
+      let typeAndKeys = globalIds.map(id => this.getTypeAndAWSKeyFromGlobalId(id));
 
       // Generate a full request and then split into batches
       let metaData = {};
-      let fullRequest = this.getFullRequestAndMetaData(typeAndIds, metaData);
+      let fullRequest = this.getFullRequestAndMetaData(typeAndKeys, metaData);
       let requestChunks = this.getRequestChunks(fullRequest);
 
-/*      logger.debug(
+/*      // logger.debug(
         'Resolving a full batch of ' + this.getRequestItemCount(fullRequest) +
         ' items in ' + requestChunks.length + ' chunks');
 */
       // Execute each batch query
-      debugger;
       let responses = await Promise.all(
         requestChunks.map(request => this.resolveBatchAsync(request)));
+
       let fullResponse = this.getFullResponse(responses);
 
       // Extract the results from response in the correct order
-      let typeIdAndAWSItems = typeAndIds.map(typeAndId =>
-        this.toTypeIdAndAWSItem(typeAndId, metaData, fullRequest, fullResponse)
+      let typeIdAndAWSItems = typeAndKeys.map(typeAndKey =>
+        this.toTypeIdAndAWSItem(typeAndKey, metaData, fullRequest, fullResponse)
       );
 
       // Convert the results into models
@@ -99,7 +92,7 @@ export default class EntityResolver extends BaseResolver {
     while (!this.isTimeoutExceeded(startTime)) {
 
 /*
-      logger.debug(
+      // logger.debug(
         'Resolving a batch of ' +
         this.getRequestItemCount(localRequest) + ' items');
 */
@@ -175,7 +168,7 @@ export default class EntityResolver extends BaseResolver {
 
       // Get the matching request
       let index = metaDataItem
-        .typesAndIds
+        .typeAndKeys
         .findIndex(i => i.type === typeAndId.type && i.id === typeAndId.id);
       let requestObject = requestItem[index];
       if (index === -1 || !requestObject) {
@@ -207,8 +200,18 @@ export default class EntityResolver extends BaseResolver {
 
   isMatchingResponseObject(type, requestObject, responseObject) {
     try {
-      return this.getIdFromAWSKey(type, requestObject) ===
-        this.getIdFromAWSKey(type, responseObject);
+
+      if (requestObject.id) {
+        return requestObject.id.B.equals(responseObject.id.B);
+      }
+
+      if (requestObject.outID && requestObject.inID) {
+        return
+          requestObject.outID.B.equals(responseObject.outID.B) &&
+          requestObject.inID.B.equals(responseObject.inID.B);
+      }
+
+      invariant(false, 'NotSupportedError(isMatchingResponseObject)');
     } catch (ex) {
       warning(false, JSON.stringify({
         class: 'EntityResolver',
@@ -252,23 +255,179 @@ export default class EntityResolver extends BaseResolver {
     return requests;
   }
 
-  getFullRequestAndMetaData(typeAndIds, metaData) {
+  getFullRequestAndMetaData(typeAndKeys, metaData) {
     // The metadate here stores the mapping between the
     // request item and the type and id
     let request = {RequestItems: {}};
-    typeAndIds
-      .forEach(typeAndId => {
-        let tableName = this.getTableName(typeAndId.type);
-        let requestKey = this.getAWSKeyFromId(typeAndId.type, typeAndId.id);
+    typeAndKeys
+      .forEach(typeAndKey => {
+        let tableName = this.getTableName(typeAndKey.type);
         if (request.RequestItems[tableName]) {
-          request.RequestItems[tableName].Keys.push(requestKey);
-          metaData[tableName].typesAndIds.push(typeAndId);
+          request.RequestItems[tableName].Keys.push(typeAndKey.key);
+          metaData[tableName].typeAndKeys.push(typeAndKey);
         } else {
-          request.RequestItems[tableName] = { Keys: [ requestKey ] };
-          metaData[tableName] = { typesAndIds: [ typeAndId ] };
+          request.RequestItems[tableName] = { Keys: [ typeAndKey.key ] };
+          metaData[tableName] = { typeAndKeys: [ typeAndKey ] };
         }
       });
 
     return request;
+  }
+
+  getGlobalIdFromModel(model) {
+    try {
+      invariant(model, 'Argument \'model\' is null');
+
+      if (model.type.endsWith('Edge')) {
+        return toGlobalId(model.type, model.outID.toString('base64') + model.inID.toString('base64'));
+      }
+
+      return toGlobalId(model.type, model.id.toString('base64'));
+
+    } catch (ex) {
+      warning(false, JSON.stringify({
+        class: 'Graph', function: 'getGlobalIdFromModel',
+        model}, null, 2));
+      throw ex;
+    }
+  }
+
+  getModelFromGlobalId(gid) {
+    try {
+      invariant(gid, 'Argument \'gid\' is null');
+      let {type, id} = fromGlobalId(gid);
+      if (type.endsWith('Edge')) {
+        return {
+          type,
+          outID: new Buffer(id.slice(0, 36), 'base64'),
+          inID: new Buffer(id.slice(36), 'base64')
+        };
+      }
+
+      return {
+        type,
+        id: new Buffer(id, 'base64'),
+      }
+    } catch (ex) {
+      warning(false, JSON.stringify({
+        class: 'EntityResolver', function: 'getModelFromGlobalId',
+        gid, type, id}, null, 2));
+      throw ex;
+    }
+  }
+
+  getTypeAndAWSKeyFromGlobalId(id) {
+    try {
+      invariant(id, 'Argument \'id\' is null');
+
+      let model = this.getModelFromGlobalId(id);
+      if (model.type.endsWith('Edge')) {
+        return {
+          type: model.type,
+          key: {
+            outID: { B: model.outID },
+            inID: { B: model.inID }
+          }
+        };
+      }
+
+      return {
+        type: model.type,
+        key: {
+          id: { B: model.id },
+        }
+      };
+
+    } catch (ex) {
+      warning(false, JSON.stringify({
+        class: 'EntityResolver', function: 'getTypeAndAWSKeyFromGlobalId',
+        id}, null, 2));
+      throw ex;
+    }
+  }
+
+  getModelFromAWSItem(type, item) {
+    try {
+      let model = { type };
+
+      for (let name in item) {
+        let attr = item[name];
+        if (typeof attr.S !== 'undefined') {
+          model[name] = item[name].S;
+        } else if (typeof attr.N !== 'undefined') {
+          model[name] = item[name].N;
+        } else if (typeof attr.B !== 'undefined') {
+          model[name] = item[name].B;
+        } else if (typeof attr.BOOL !== 'undefined') {
+          model[name] = item[name].BOOL;
+        }
+      }
+
+      return model;
+    } catch (ex) {
+      warning(JSON.stringify({
+        class: 'EntityResolver',
+        function: 'getModelFromAWSItem',
+        type, item
+      }));
+      throw ex;
+    }
+  }
+
+  getAWSKeyFromModel(item, indexedByAttributeName) {
+    try {
+      invariant(item, 'Argument \'item\' is null');
+
+      let key = null;
+      if (item.type.endsWith('Edge')) {
+        key = {
+          outID: { B: item.outID },
+          inID: { B: item.inID },
+        };
+      } else {
+        key = {
+          id: { B: item.id },
+        };
+      }
+
+      if (typeof indexedByAttributeName !== 'undefined') {
+        key[indexedByAttributeName] = {};
+
+        let tableName = this.getTableName(item.type);
+
+        let tableSchema = this
+          .schema
+          .tables
+          .find(ts => ts.TableName === tableName);
+
+        let attributeType = this.getAttributeType(tableSchema, indexedByAttributeName);
+
+        key[indexedByAttributeName][attributeType] =
+          item[indexedByAttributeName].toString();
+      }
+
+      return key;
+
+    } catch (ex) {
+      warning(false, JSON.stringify({
+        class: 'EntityResolver', function: 'getAWSKeyFromModel',
+        item, indexedByAttributeName}, null, 2));
+      throw ex;
+    }
+  }
+
+  getAttributeType(tableSchema, name) {
+    let def = tableSchema
+      .AttributeDefinitions
+      .find(a => a.AttributeName === name);
+    if (def) {
+      return def.AttributeType;
+    }
+
+    throw new Error('NotSupportedError (getAttributeType)');
+  }
+
+  getTableName(type) {
+    return type + 's';
   }
 }

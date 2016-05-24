@@ -2,9 +2,8 @@ import invariant from 'invariant';
 import warning from 'warning';
 
 export default class EntityWriter {
-  constructor(dynamoDB, getTableName, schema) {
+  constructor(dynamoDB, schema) {
     this.dynamoDB = dynamoDB;
-    this.getTableName = getTableName;
     this.schema = schema;
     this.batchSize = 25;
     this.timeout = 120000;
@@ -31,7 +30,7 @@ export default class EntityWriter {
       let requestChunks = this.getRequestChunks(fullRequest);
 
       // Write each request chunk
-/*      logger.debug('Writing a full batch of ' +
+/*      // logger.debug('Writing a full batch of ' +
         this.getRequestItemCount(fullRequest) + ' items in ' +
         requestChunks.length + ' chunks');
 */
@@ -65,7 +64,7 @@ export default class EntityWriter {
     while (!this.isTimeoutExceeded(startTime)) {
 
 /*
-      logger.debug('Writing a batch of ' +
+      // logger.debug('Writing a batch of ' +
         this.getRequestItemCount(localRequest) + ' items');
 */
       let response = await this.dynamoDB.batchWriteItemAsync(localRequest);

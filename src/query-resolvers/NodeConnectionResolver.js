@@ -1,27 +1,12 @@
 import warning from 'warning';
 import QueryResolver from '../query-resolvers/QueryResolver';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
-import { toGlobalId } from 'graphql-relay';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
 import uuid from 'node-uuid';
 
 export default class NodeConnectionResolver extends QueryResolver {
-  constructor(
-    dynamoDB,
-    schema,
-    getTableName,
-    getModelFromAWSItem,
-    getIdFromAWSKey,
-    getAWSKeyFromId,
-    getAWSKeyFromItem) {
-    super(
-      dynamoDB,
-      schema,
-      getTableName,
-      getModelFromAWSItem,
-      getIdFromAWSKey,
-      getAWSKeyFromId,
-      getAWSKeyFromItem);
+  constructor(dynamoDB, schema) {
+    super(dynamoDB, schema);
   }
 
   canResolve(query) {
@@ -39,6 +24,7 @@ export default class NodeConnectionResolver extends QueryResolver {
         query,
         innerResult,
         options);
+
       let nodes = await Promise
         .all(nodeIds.edges.map(e => this.getAsync(e.id)));
 
@@ -67,13 +53,12 @@ export default class NodeConnectionResolver extends QueryResolver {
         }
       };
 
-/*
+
       if (options && options.logs) {
-        logger.debug(
+        console.log(
           'NodeConnectionResolver succeeded',
           JSON.stringify({query, innerResult, result}));
       }
-*/
       return result;
     } catch (ex) {
       warning(false, JSON.stringify({
@@ -93,7 +78,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     try {
       // Generate the full expression using the query and any previous result
       let expression = this.getExpression(query, innerResult);
-      if (ExpressionHelper.isNodeGlobalIdExpression(expression)) {
+      if (ExpressionHelper.isGlobalIdExpression(expression)) {
 
         // TODO THIS MIGHT NOT EXIST!!!
         // Type and id are supplied so get the item direct
@@ -108,13 +93,13 @@ export default class NodeConnectionResolver extends QueryResolver {
         };
       }
 
-      if (ExpressionHelper.isNodeTypeAndIdExpression(expression)) {
+      if (ExpressionHelper.isModelExpression(expression)) {
 
         // TODO THIS MIGHT NOT EXIST!!!
         // Type and id are supplied so get the item direct
         return {
           edges: [ {
-            id: toGlobalId(expression.type, expression.id)
+            id: this.getGlobalIdFromModel(expression)
           } ],
           pageInfo: {
             hasPreviousPage: false,
@@ -134,13 +119,11 @@ export default class NodeConnectionResolver extends QueryResolver {
 
       // The query expression contains some parameters, use a dynamo query
       let request = this.getQueryRequest(expression, query.connectionArgs);
-      /*
       if (options && options.logs) {
-        logger.debug(
+        console.log(
           'NodeConnectionResolver.getNodeIdConnection request',
           JSON.stringify(request, null, 2));
       }
-      */
 
       let response = await this.dynamoDB.queryAsync(request);
       let result = this.getResult(response, expression, query.connectionArgs);
@@ -157,11 +140,11 @@ export default class NodeConnectionResolver extends QueryResolver {
   }
 
   getExpression(query /* , innerResult*/) {
-    if (ExpressionHelper.isNodeGlobalIdExpression(query.expression)) {
+    if (ExpressionHelper.isGlobalIdExpression(query.expression)) {
       return query.expression;
     }
 
-    if (ExpressionHelper.isNodeTypeAndIdExpression(query.expression)) {
+    if (ExpressionHelper.isModelExpression(query.expression)) {
       return query.expression;
     }
 
@@ -320,7 +303,7 @@ export default class NodeConnectionResolver extends QueryResolver {
 
   getResultEdge(expression, item) {
     return {
-      id: toGlobalId(expression.type, uuid.unparse(item.id.B))
+      id: this.getGlobalIdFromModel({type: expression.type, id: item.id.B})
     };
   }
 }

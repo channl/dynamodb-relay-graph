@@ -39,13 +39,12 @@ export default class AggregateResolver extends BaseResolver {
         }
       };
 
-/*
       if (options && options.logs) {
-        logger.debug(
+        console.log(
           'AggregateResolver succeeded',
           JSON.stringify({query, innerResult, result}));
       }
-*/
+
       return result;
     } catch (ex) {
       warning(false, JSON.stringify({

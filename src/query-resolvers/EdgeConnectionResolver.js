@@ -5,17 +5,8 @@ import ExpressionHelper from '../query-resolvers/ExpressionHelper';
 import uuid from 'node-uuid';
 
 export default class EdgeConnectionResolver extends QueryResolver {
-  constructor(dynamoDB, schema, getTableName,
-    getModelFromAWSItem,
-    getIdFromAWSKey,
-    getAWSKeyFromId,
-    getAWSKeyFromItem) {
-    super(
-      dynamoDB, schema, getTableName,
-      getModelFromAWSItem,
-      getIdFromAWSKey,
-      getAWSKeyFromId,
-      getAWSKeyFromItem);
+  constructor(dynamoDB, schema) {
+    super(dynamoDB, schema);
   }
 
   canResolve(query) {
@@ -31,7 +22,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
     try {
       let expression = this.getExpression(innerResult, query);
 
-      if (ExpressionHelper.isEdgeExpression(query.expression)) {
+      if (ExpressionHelper.isEdgeModelExpression(query.expression)) {
 
         // Type and id are supplied so get the item direct
         let item = await this.getAsync(query.expression);
@@ -50,13 +41,12 @@ export default class EdgeConnectionResolver extends QueryResolver {
           }
         };
 
-/*
         if (options && options.logs) {
-          logger.debug(
+          console.log(
             'EdgeConnectionResolver succeeded',
             JSON.stringify({query, innerResult, result}));
         }
-*/
+
         return result;
       }
 
@@ -67,13 +57,12 @@ export default class EdgeConnectionResolver extends QueryResolver {
 
       let response = await this.dynamoDB.queryAsync(request);
       let result = this.getResult(response, expression, query.connectionArgs);
-      /*
+
       if (options && options.logs) {
-        logger.debug(
+        console.log(
           'EdgeConnectionResolver succeeded',
           JSON.stringify({query, request, innerResult, result}));
       }
-      */
 
       return result;
 
@@ -91,7 +80,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
   }
 
   getExpression(innerResult, query) {
-    if (ExpressionHelper.isEdgeExpression(query.expression)) {
+    if (ExpressionHelper.isEdgeModelExpression(query.expression)) {
       // This expression has type+inID+outID so it already has
       // all it needs to find a particular edge
       return query.expression;
