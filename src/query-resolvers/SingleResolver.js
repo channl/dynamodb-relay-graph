@@ -1,13 +1,15 @@
+/* @flow */
 import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import SingleQuery from '../query/SingleQuery';
+import { log } from '../Global';
 
 export default class SingleResolver extends BaseResolver {
-  canResolve(query) {
+  canResolve(query: any): boolean {
     return (query instanceof SingleQuery);
   }
 
-  async resolveAsync(query, innerResult, options) {
+  async resolveAsync(query: any, innerResult: any, options: any) {
     let sw = null;
     if (options && options.stats) {
       sw = options.stats.timer('SingleResolver.resolveAsync').start();
@@ -18,9 +20,8 @@ export default class SingleResolver extends BaseResolver {
         let result = innerResult.edges[0].node;
 
         if (options && options.logs) {
-          console.log(
-            'SingleResolver succeeded',
-            JSON.stringify({query, innerResult, result}));
+          log(JSON.stringify({
+            class: 'SingleResolver', query, innerResult, result}));
         }
 
         return result;

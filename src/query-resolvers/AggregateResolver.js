@@ -1,18 +1,22 @@
+/* @flow */
 import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import AggregateQuery from '../query/AggregateQuery';
+import { log } from '../Global';
 
 export default class AggregateResolver extends BaseResolver {
-  constructor(getQueryAsync) {
+  getQueryAsync: any;
+
+  constructor(getQueryAsync: any) {
     super();
     this.getQueryAsync = getQueryAsync;
   }
 
-  canResolve(query) {
+  canResolve(query: any): boolean {
     return (query instanceof AggregateQuery);
   }
 
-  async resolveAsync(query, innerResult, options) {
+  async resolveAsync(query: any, innerResult: any, options: any) {
     let sw = null;
     if (options && options.stats) {
       sw = options.stats.timer('AggregateResolver.resolveAsync').start();
@@ -40,8 +44,7 @@ export default class AggregateResolver extends BaseResolver {
       };
 
       if (options && options.logs) {
-        console.log(
-          'AggregateResolver succeeded',
+        log('AggregateResolver succeeded',
           JSON.stringify({query, innerResult, result}));
       }
 

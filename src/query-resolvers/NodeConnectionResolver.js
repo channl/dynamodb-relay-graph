@@ -1,19 +1,21 @@
+/* @flow */
 import warning from 'warning';
 import QueryResolver from '../query-resolvers/QueryResolver';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
-import uuid from 'node-uuid';
+import DynamoDB from '../store/DynamoDB';
+import { log } from '../Global';
 
 export default class NodeConnectionResolver extends QueryResolver {
-  constructor(dynamoDB, schema) {
+  constructor(dynamoDB: DynamoDB, schema: any) {
     super(dynamoDB, schema);
   }
 
-  canResolve(query) {
+  canResolve(query: any): boolean {
     return (query instanceof NodeConnectionQuery);
   }
 
-  async resolveAsync(query, innerResult, options) {
+  async resolveAsync(query: any, innerResult: any, options: any) {
     let sw = null;
     if (options && options.stats) {
       sw = options.stats.timer('NodeConnectionResolver.resolveAsync').start();
@@ -55,9 +57,8 @@ export default class NodeConnectionResolver extends QueryResolver {
 
 
       if (options && options.logs) {
-        console.log(
-          'NodeConnectionResolver succeeded',
-          JSON.stringify({query, innerResult, result}));
+        log(JSON.stringify({
+          class: 'NodeConnectionResolver', query, innerResult, result}));
       }
       return result;
     } catch (ex) {
@@ -74,7 +75,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     }
   }
 
-  async getNodeIdConnection(query, innerResult, options) {
+  async getNodeIdConnection(query: any, innerResult: any, options: any) {
     try {
       // Generate the full expression using the query and any previous result
       let expression = this.getExpression(query, innerResult);
@@ -120,9 +121,10 @@ export default class NodeConnectionResolver extends QueryResolver {
       // The query expression contains some parameters, use a dynamo query
       let request = this.getQueryRequest(expression, query.connectionArgs);
       if (options && options.logs) {
-        console.log(
-          'NodeConnectionResolver.getNodeIdConnection request',
-          JSON.stringify(request, null, 2));
+        log(JSON.stringify({
+          class: 'NodeConnectionResolver',
+          function: 'getNodeIdConnection',
+          request}, null, 2));
       }
 
       let response = await this.dynamoDB.queryAsync(request);
@@ -139,7 +141,9 @@ export default class NodeConnectionResolver extends QueryResolver {
     }
   }
 
-  getExpression(query /* , innerResult*/) {
+  getExpression(
+    query: any,
+    innerResult: any) { // eslint-disable-line no-unused-vars
     if (ExpressionHelper.isGlobalIdExpression(query.expression)) {
       return query.expression;
     }
@@ -164,7 +168,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     return expr;
   }
 
-  getBeforeParam(query) {
+  getBeforeParam(query: any) {
     if (typeof query.connectionArgs.before !== 'undefined') {
       return query.connectionArgs.before;
     }
@@ -172,7 +176,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     return null;
   }
 
-  getAfterParam(query) {
+  getAfterParam(query: any) {
     if (typeof query.connectionArgs.after !== 'undefined') {
       return query.connectionArgs.after;
     }
@@ -180,7 +184,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     return null;
   }
 
-  getOrderExpression(query) {
+  getOrderExpression(query: any) {
     if (typeof query.connectionArgs.orderDesc !== 'undefined' &&
       query.connectionArgs.orderDesc) {
       return { before: this.getBeforeParam(query) };
@@ -189,7 +193,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     return { after: this.getAfterParam(query) };
   }
 
-  getScanRequest(expression, connectionArgs) {
+  getScanRequest(expression: any, connectionArgs: any) {
     try {
       let tableName = this.getTableName(expression.type);
 
@@ -220,7 +224,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     }
   }
 
-  getQueryRequest(expression, connectionArgs) {
+  getQueryRequest(expression: any, connectionArgs: any) {
     try {
       let tableName = this.getTableName(expression.type);
       let tableSchema = this
@@ -270,7 +274,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     }
   }
 
-  getResult(response, expression, connectionArgs) {
+  getResult(response: any, expression: any, connectionArgs: any) {
     let edges = response
       .data
       .Items
@@ -301,7 +305,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     };
   }
 
-  getResultEdge(expression, item) {
+  getResultEdge(expression: any, item: any) {
     return {
       id: this.getGlobalIdFromModel({type: expression.type, id: item.id.B})
     };

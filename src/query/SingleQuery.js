@@ -1,8 +1,11 @@
+/* @flow */
 import invariant from 'invariant';
 import BaseQuery from '../query/BaseQuery';
 
 export default class SingleQuery extends BaseQuery {
-  constructor(inner, isNullValid) {
+  isNullValid: boolean;
+
+  constructor(inner: ?BaseQuery, isNullValid: boolean) {
     super(inner);
     invariant(
       typeof isNullValid === 'boolean',

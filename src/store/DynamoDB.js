@@ -1,14 +1,75 @@
+/* @flow */
 import warning from 'warning';
 import stats from '../logging/stats';
 import AWS from 'aws-sdk-promise';
 
-export default class DynamoDB {
+export type DynamoDBConfig = {
+  apiVersion: string,
+  region: string,
+  dynamoDbCrc32: boolean
+};
 
-  constructor(dynamoDBConfig) {
+export type DynamoDBAttributeDefinition = {
+  AttributeName: string,
+  AttributeType: string
+};
+
+export type DynamoDBKeySchema = {
+  AttributeName: string,
+  KeyType: string
+};
+
+export type DynamoDBTable = {
+  TableName: string,
+  AttributeDefinitions: DynamoDBAttributeDefinition[],
+  KeySchema: DynamoDBKeySchema[],
+  GlobalSecondaryIndexes?: DynamoDBGlobalSecondaryIndex[],
+  LocalSecondaryIndexes?: DynamoDBLocalSecondaryIndex[],
+  ProvisionedThroughput: DynamoDBProvisionedThroughput,
+  StreamSpecification?: DynamoDBStreamSpecification
+};
+
+export type DynamoDBGlobalSecondaryIndex = {
+  IndexName: string,
+  KeySchema: DynamoDBKeySchema [],
+  Projection: DynamoDBProjection,
+  ProvisionedThroughput: DynamoDBProvisionedThroughput
+};
+
+export type DynamoDBLocalSecondaryIndex = {
+  IndexName: string,
+  KeySchema: DynamoDBKeySchema [],
+  Projection: DynamoDBProjection,
+};
+
+export type DynamoDBProjection = {
+   NonKeyAttributes?: string[],
+   ProjectionType: string
+};
+
+export type DynamoDBProvisionedThroughput = {
+  ReadCapacityUnits: number,
+  WriteCapacityUnits: number
+};
+
+export type DynamoDBStreamSpecification = {
+  StreamEnabled: boolean,
+  StreamViewType: string
+};
+
+export type DynamoDBSchema = {
+  tables: DynamoDBTable[]
+};
+
+export default class DynamoDB {
+  dyn: any;
+
+  constructor(dynamoDBConfig: DynamoDBConfig) {
     this.dyn = new AWS.DynamoDB(dynamoDBConfig);
   }
 
-  async listTablesAsync() {
+  async listTablesAsync(): Promise<string[]> {
+
     let sw = stats.timer('Dynamo.listTablesAsync').start();
     try {
       let response = await this.dyn.listTables().promise();
@@ -30,7 +91,7 @@ export default class DynamoDB {
     }
   }
 
-  async deleteTableAsync(params) {
+  async deleteTableAsync(params:any): Promise<any> {
     let sw = stats.timer('Dynamo.deleteTableAsync').start();
     try {
       let response = await this.dyn.deleteTable(params).promise();
@@ -48,7 +109,7 @@ export default class DynamoDB {
     }
   }
 
-  async createTableAsync(params) {
+  async createTableAsync(params:any): Promise<any> {
     let sw = stats.timer('Dynamo.createTableAsync').start();
     try {
       let response = await this.dyn.createTable(params).promise();
@@ -66,7 +127,7 @@ export default class DynamoDB {
     }
   }
 
-  async describeTableAsync(params) {
+  async describeTableAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.describeTableAsync').start();
     try {
       let response = await this.dyn.describeTable(params).promise();
@@ -84,7 +145,7 @@ export default class DynamoDB {
     }
   }
 
-  async updateTableAsync(params) {
+  async updateTableAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.updateTableAsync').start();
     try {
       let response = await this.dyn.updateTable(params).promise();
@@ -102,7 +163,7 @@ export default class DynamoDB {
     }
   }
 
-  async scanAsync(params) {
+  async scanAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.scanAsync').start();
     try {
       let response = await this.dyn.scan(params).promise();
@@ -120,7 +181,7 @@ export default class DynamoDB {
     }
   }
 
-  async queryAsync(params) {
+  async queryAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.queryAsync').start();
     try {
       let response = await this.dyn.query(params).promise();
@@ -138,7 +199,7 @@ export default class DynamoDB {
     }
   }
 
-  async putItemAsync(params) {
+  async putItemAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.putItemAsync').start();
     try {
       let response = await this.dyn.putItem(params).promise();
@@ -156,7 +217,7 @@ export default class DynamoDB {
     }
   }
 
-  async getItemAsync(params) {
+  async getItemAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.getItemAsync').start();
     let swTable = stats
       .timer('Dynamo.getItemAsync.' + params.TableName)
@@ -179,7 +240,7 @@ export default class DynamoDB {
     }
   }
 
-  async batchGetItemAsync(params) {
+  async batchGetItemAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.batchGetItemAsync').start();
     try {
       let response = await this.dyn.batchGetItem(params).promise();
@@ -197,7 +258,7 @@ export default class DynamoDB {
     }
   }
 
-  async batchWriteItemAsync(params) {
+  async batchWriteItemAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.batchWriteItemAsync').start();
     try {
       let response = await this.dyn.batchWriteItem(params).promise();
@@ -215,7 +276,7 @@ export default class DynamoDB {
     }
   }
 
-  async deleteItemAsync(params) {
+  async deleteItemAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.deleteItemAsync').start();
     try {
       let response = await this.dyn.deleteItem(params).promise();
@@ -233,7 +294,7 @@ export default class DynamoDB {
     }
   }
 
-  async updateItemAsync(params) {
+  async updateItemAsync(params: any): Promise<any> {
     let sw = stats.timer('Dynamo.updateItemAsync').start();
     try {
       let response = await this.dyn.updateItem(params).promise();
@@ -251,10 +312,10 @@ export default class DynamoDB {
     }
   }
 
-  ensureResponseIsValid(response) {
+  ensureResponseIsValid(response: any) {
     if (response.httpResponse.statusCode !== 200) {
       let ex = new Error('Error occurred');
-      ex.response = response;
+      // ex.response = response;
       throw ex;
     }
   }

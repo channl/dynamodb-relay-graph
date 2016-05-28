@@ -1,10 +1,14 @@
+/* @flow */
 import invariant from 'invariant';
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
 
 export default class ToNodesConnectionQuery extends BaseQuery {
-  constructor(inner, isOut, expression) {
+  isOut: boolean;
+  expression: any;
+
+  constructor(inner: ?BaseQuery, isOut: boolean, expression: any) {
     super(inner);
     invariant(typeof isOut === 'boolean', 'Argument \'isOut\' must be boolean');
     invariant(expression, 'Argument \'expression\' is null');
@@ -12,19 +16,19 @@ export default class ToNodesConnectionQuery extends BaseQuery {
     this.expression = expression;
   }
 
-  out(expression, connectionArgs) {
+  out(expression: any, connectionArgs: any): EdgeConnectionQuery {
     return new EdgeConnectionQuery(this, expression, connectionArgs, true);
   }
 
-  in(expression, connectionArgs) {
+  in(expression: any, connectionArgs: any): EdgeConnectionQuery {
     return new EdgeConnectionQuery(this, expression, connectionArgs, false);
   }
 
-  single() {
+  single(): SingleQuery {
     return new SingleQuery(this, false);
   }
 
-  singleOrNull() {
+  singleOrNull(): SingleQuery {
     return new SingleQuery(this, true);
   }
 }

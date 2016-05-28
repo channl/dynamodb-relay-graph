@@ -1,17 +1,20 @@
+/* @flow */
 import BaseQuery from '../query/BaseQuery';
 import SingleQuery from '../query/SingleQuery';
 
 export default class AggregateQuery extends BaseQuery {
-  constructor(inner, items) {
+  items: any[];
+
+  constructor(inner: ?BaseQuery, items: any[]) {
     super(inner);
     this.items = items;
   }
 
-  single() {
+  single(): SingleQuery {
     return new SingleQuery(this, false);
   }
 
-  singleOrNull() {
+  singleOrNull(): SingleQuery {
     return new SingleQuery(this, true);
   }
 }

@@ -1,17 +1,20 @@
+/* @flow */
 import warning from 'warning';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
+import DynamoDB from '../store/DynamoDB';
+import { log } from '../Global';
 
 export default class ToNodesConnectionResolver extends EntityResolver {
-  constructor(dynamoDB, schema) {
+  constructor(dynamoDB: DynamoDB, schema: any) {
     super(dynamoDB, schema);
   }
 
-  canResolve(query) {
+  canResolve(query: any): boolean {
     return (query instanceof ToNodesConnectionQuery);
   }
 
-  async resolveAsync(query, innerResult, options) {
+  async resolveAsync(query: any, innerResult: any, options: any) {
     let sw = null;
     if (options && options.stats) {
       sw = options
@@ -43,9 +46,8 @@ export default class ToNodesConnectionResolver extends EntityResolver {
       };
 
       if (options && options.logs) {
-        console.log(
-          'ToNodesConnectionResolver succeeded',
-          JSON.stringify({query, innerResult, result}));
+        log(JSON.stringify({
+          class: 'ToNodesConnectionResolver', query, innerResult, result}));
       }
 
       return result;
@@ -65,7 +67,7 @@ export default class ToNodesConnectionResolver extends EntityResolver {
     }
   }
 
-  async getNodeIds(query, innerResult) {
+  async getNodeIds(query: any, innerResult: any) {
     return innerResult
       .edges
       .map(edge => {

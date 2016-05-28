@@ -1,14 +1,15 @@
+/* @flow */
 import warning from 'warning';
 import uuid from 'node-uuid';
-import { Buffer } from 'buffer';
 import EntityResolver from '../query-resolvers/EntityResolver';
+import DynamoDB from '../store/DynamoDB';
 
 export default class QueryResolver extends EntityResolver {
-  constructor(dynamoDB, schema) {
+  constructor(dynamoDB: DynamoDB, schema: any) {
     super(dynamoDB, schema);
   }
 
-  getExclusiveStartKey(connectionArgs) {
+  getExclusiveStartKey(connectionArgs: any) {
     if (typeof connectionArgs.first !== 'undefined') {
       return typeof connectionArgs.after === 'undefined' ?
         undefined :
@@ -24,7 +25,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('First or Last must be specified');
   }
 
-  isForwardScan(connectionArgs) {
+  isForwardScan(connectionArgs: any) {
     if (typeof connectionArgs.first !== 'undefined') {
       return true;
     }
@@ -36,7 +37,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('First or Last must be specified');
   }
 
-  getScanIndexForward(connectionArgs) {
+  getScanIndexForward(connectionArgs: any) {
     if (typeof connectionArgs.first !== 'undefined' &&
         typeof connectionArgs.orderDesc !== 'undefined' &&
         connectionArgs.orderDesc) {
@@ -60,7 +61,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('First or Last must be specified');
   }
 
-  getLimit(connectionArgs) {
+  getLimit(connectionArgs: any) {
     if (typeof connectionArgs.first !== 'undefined') {
       return connectionArgs.first;
     }
@@ -72,7 +73,8 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('First or Last must be specified');
   }
 
-  getExpressionAttributeNames(expression, connectionArgs, include) {
+  getExpressionAttributeNames(expression: any,
+    connectionArgs: any, include: string[]) {
     let result = {};
 
     Object
@@ -88,7 +90,8 @@ export default class QueryResolver extends EntityResolver {
     return result;
   }
 
-  getIndexSchema(expression, connectionArgs, tableSchema) {
+  getIndexSchema(expression: any,
+    connectionArgs: any, tableSchema: any) {
     let requiredKeySchema = null;
     try {
       requiredKeySchema = Object
@@ -149,7 +152,7 @@ export default class QueryResolver extends EntityResolver {
     }
   }
 
-  isKeySchemaSatisfied(proposed, required) {
+  isKeySchemaSatisfied(proposed: any, required: any) {
     if (required.length === 0) {
       // If no requirements were specified then
       // the key schema or any index will satisfy the query
@@ -158,7 +161,7 @@ export default class QueryResolver extends EntityResolver {
 
     // Ensure all required keys are in the proposed key schema
     let hashKeySatisfied = false;
-    for(let i in required) {
+    for(let i of required) {
       if ({}.hasOwnProperty.call(required, i)) {
         let matchingKey = proposed
           .find(attr => attr.AttributeName === required[i].AttributeName);
@@ -182,7 +185,7 @@ export default class QueryResolver extends EntityResolver {
     return hashKeySatisfied;
   }
 
-  getExpressionKeyType(expression) {
+  getExpressionKeyType(expression: any) {
     if (typeof expression.after !== 'undefined' ||
       typeof expression.before !== 'undefined' ||
       typeof expression.begins_with !== 'undefined') {
@@ -205,7 +208,8 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('NotSupportedError');
   }
 
-  getProjectionExpression(expression, connectionArgs, include) {
+  getProjectionExpression(expression: any,
+    connectionArgs: any, include: any) {
     return Object
       .keys(expression)
       .concat(connectionArgs.order)
@@ -216,11 +220,11 @@ export default class QueryResolver extends EntityResolver {
       .reduce((pre, cur) => pre === '' ? cur : pre + ', ' + cur, '');
   }
 
-  getExpressionAttributeName(name) {
+  getExpressionAttributeName(name: string) {
     return '#res' + name;
   }
 
-  getExpressionAttributeValues(expression, tableSchema) {
+  getExpressionAttributeValues(expression: any, tableSchema: any) {
     let names = Object
       .keys(expression)
       .filter(name => name !== 'type');
@@ -235,7 +239,8 @@ export default class QueryResolver extends EntityResolver {
     return result;
   }
 
-  getExpressionAttributeValue(name, expression, result, tableSchema) {
+  getExpressionAttributeValue(name: string,
+    expression: any, result: any, tableSchema: any) {
     let attributeType = this.getAttributeType(tableSchema, name);
 
     if (typeof expression === 'string' ||
@@ -268,11 +273,13 @@ export default class QueryResolver extends EntityResolver {
     }
   }
 
-  getBeginsWithAttributeValueAsType(value /* , asType */ ) {
+  getBeginsWithAttributeValueAsType(
+    value: any, asType: string) { // eslint-disable-line no-unused-vars
     return value;
   }
 
-  getBeforeAttributeValueAsType(value, asType) {
+  getBeforeAttributeValueAsType(
+    value: any, asType: string) {
     // TODO this function needs rewriting
     if (typeof value !== 'undefined' && value !== null) {
       return value;
@@ -294,7 +301,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('NotSupportedError (getAttributeValueAsType)');
   }
 
-  getAfterAttributeValueAsType(value, asType) {
+  getAfterAttributeValueAsType(value: any, asType: string) {
     let localValue = value;
     if (typeof localValue === 'undefined' || localValue === null) {
       switch (asType) {
@@ -330,7 +337,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('NotSupportedError (getAttributeValueAsType)');
   }
 
-  getKeyConditionExpression(expression) {
+  getKeyConditionExpression(expression: any) {
     let names = Object
       .keys(expression)
       .filter(name => name !== 'type');
@@ -344,7 +351,7 @@ export default class QueryResolver extends EntityResolver {
       .reduce((pre, cur) => pre === '' ? cur : pre + ' AND ' + cur, '');
   }
 
-  getKeyConditionExpressionItem(name, expression) {
+  getKeyConditionExpressionItem(name: string, expression: any) {
     if (typeof expression === 'string' ||
       typeof expression === 'number' ||
       expression instanceof Buffer) {
@@ -381,7 +388,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('NotSupportedError (getKeyConditionExpressionItem)');
   }
 
-  fromCursor(cursor) {
+  fromCursor(cursor: string) {
     let b = new Buffer(cursor, 'base64');
     let json = b.toString('ascii');
     let item = JSON.parse(json);
@@ -401,7 +408,7 @@ export default class QueryResolver extends EntityResolver {
     return item;
   }
 
-  toCursor(item, order) {
+  toCursor(item: any, order: string) {
     let key = this.getAWSKeyFromModel(item, order);
     let cursorData = JSON.stringify(key);
     let b = new Buffer(cursorData);

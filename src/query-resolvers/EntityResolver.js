@@ -1,13 +1,22 @@
+/* @flow */
 import DataLoader from 'dataloader';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
 import invariant from 'invariant';
 import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import { fromGlobalId, toGlobalId } from 'graphql-relay';
+import DynamoDB from '../store/DynamoDB';
 
 export default class EntityResolver extends BaseResolver {
+  loader: any;
+  dynamoDB: DynamoDB;
+  schema: any;
+  batchSize: number;
+  timeout: number;
+  initialRetryDelay: number;
+  getNextRetryDelay: any;
 
-  constructor(dynamoDB, schema) {
+  constructor(dynamoDB: DynamoDB, schema: any) {
     super();
     this.loader = new DataLoader(globalIds => this.getManyAsync(globalIds));
     this.dynamoDB = dynamoDB;
@@ -18,7 +27,7 @@ export default class EntityResolver extends BaseResolver {
     this.getNextRetryDelay = curr => curr * 2;
   }
 
-  async getAsync(key) {
+  async getAsync(key: any) {
     if (ExpressionHelper.isGlobalIdExpression(key)) {
       return this.loader.load(key);
     }
@@ -27,7 +36,6 @@ export default class EntityResolver extends BaseResolver {
       return this.loader.load(this.getGlobalIdFromModel(key));
     }
 
-    debugger;
     if (ExpressionHelper.isModelExpression(key)) {
       return this.loader.load(this.getGlobalIdFromModel(key));
     }
@@ -41,10 +49,11 @@ export default class EntityResolver extends BaseResolver {
     throw new Error('NotSupportedError(getAsync)');
   }
 
-  async getManyAsync(globalIds) {
+  async getManyAsync(globalIds: string[]) {
     try {
       // Extract the types and ids
-      let typeAndKeys = globalIds.map(id => this.getTypeAndAWSKeyFromGlobalId(id));
+      let typeAndKeys = globalIds
+        .map(id => this.getTypeAndAWSKeyFromGlobalId(id));
 
       // Generate a full request and then split into batches
       let metaData = {};
@@ -84,7 +93,7 @@ export default class EntityResolver extends BaseResolver {
     }
   }
 
-  async resolveBatchAsync(request) {
+  async resolveBatchAsync(request: any) {
     let localRequest = request;
     let fullResponse = { Responses: {} };
     let startTime = Date.now();
@@ -122,7 +131,7 @@ export default class EntityResolver extends BaseResolver {
     throw new Error('TimeoutError (resolveBatchAsync)');
   }
 
-  getFullResponse(responses) {
+  getFullResponse(responses: any[]) {
     let fullResponse = { Responses: {} };
     for(let i = 0; i < responses.length; i++) {
       let response = responses[i];
@@ -142,24 +151,25 @@ export default class EntityResolver extends BaseResolver {
     return fullResponse;
   }
 
-  setTimeoutAsync(ms) {
+  setTimeoutAsync(ms: number) {
     return new Promise(resolve => {
       setTimeout(resolve, ms);
     });
   }
 
-  isTimeoutExceeded(startTime) {
+  isTimeoutExceeded(startTime: number) {
     return startTime + this.timeout < Date.now();
   }
 
-  getRequestItemCount(request) {
+  getRequestItemCount(request: any) {
     return Object
       .keys(request.RequestItems)
       .map(tn => request.RequestItems[tn].Keys.length)
       .reduce((pre, cur) => pre + cur);
   }
 
-  toTypeIdAndAWSItem(typeAndId, metaData, request, response) {
+  toTypeIdAndAWSItem(typeAndId: any, metaData: any,
+    request: any, response: any) {
     try {
       let tableName = this.getTableName(typeAndId.type);
       let metaDataItem = metaData[tableName];
@@ -198,7 +208,8 @@ export default class EntityResolver extends BaseResolver {
     }
   }
 
-  isMatchingResponseObject(type, requestObject, responseObject) {
+  isMatchingResponseObject(type: string,
+    requestObject: any, responseObject: any) {
     try {
 
       if (requestObject.id) {
@@ -206,8 +217,7 @@ export default class EntityResolver extends BaseResolver {
       }
 
       if (requestObject.outID && requestObject.inID) {
-        return
-          requestObject.outID.B.equals(responseObject.outID.B) &&
+        return requestObject.outID.B.equals(responseObject.outID.B) &&
           requestObject.inID.B.equals(responseObject.inID.B);
       }
 
@@ -222,40 +232,37 @@ export default class EntityResolver extends BaseResolver {
     }
   }
 
-  getRequestChunks(fullRequest) {
-    let requests = [];
+  getRequestChunks(fullRequest: any) {
+    let requests: any[] = [];
     let request = {RequestItems: {}};
     requests.push(request);
 
     let count = 0;
-    let tableNames = Object.keys(fullRequest.RequestItems);
-    for(let j in tableNames) {
-      if ({}.hasOwnProperty.call(tableNames, j)) {
-        let tableName = tableNames[j];
-        let tableReq = fullRequest.RequestItems[tableName].Keys;
-        if (!request.RequestItems[tableName]) {
+    let tableNames: string[] = Object.keys(fullRequest.RequestItems);
+    for(let tableName of tableNames) {
+      let tableReq = fullRequest.RequestItems[tableName].Keys;
+      if (!request.RequestItems[tableName]) {
+        request.RequestItems[tableName] = { Keys: []};
+      }
+      for (let i of tableReq) {
+
+        if (count >= this.batchSize) {
+          // If we have reached the chunk item limit then create a new request
+          request = {RequestItems: {}};
           request.RequestItems[tableName] = { Keys: []};
+          requests.push(request);
+          count = 0;
         }
-        for (let i in tableReq) {
 
-          if (count >= this.batchSize) {
-            // If we have reached the chunk item limit then create a new request
-            request = {RequestItems: {}};
-            request.RequestItems[tableName] = { Keys: []};
-            requests.push(request);
-            count = 0;
-          }
-
-          request.RequestItems[tableName].Keys.push(tableReq[i]);
-          count++;
-        }
+        request.RequestItems[tableName].Keys.push(tableReq[i]);
+        count++;
       }
     }
 
     return requests;
   }
 
-  getFullRequestAndMetaData(typeAndKeys, metaData) {
+  getFullRequestAndMetaData(typeAndKeys: any[], metaData: any) {
     // The metadate here stores the mapping between the
     // request item and the type and id
     let request = {RequestItems: {}};
@@ -274,12 +281,13 @@ export default class EntityResolver extends BaseResolver {
     return request;
   }
 
-  getGlobalIdFromModel(model) {
+  getGlobalIdFromModel(model: any) {
     try {
       invariant(model, 'Argument \'model\' is null');
 
       if (model.type.endsWith('Edge')) {
-        return toGlobalId(model.type, model.outID.toString('base64') + model.inID.toString('base64'));
+        return toGlobalId(model.type, model.outID.toString('base64') +
+          model.inID.toString('base64'));
       }
 
       return toGlobalId(model.type, model.id.toString('base64'));
@@ -292,7 +300,7 @@ export default class EntityResolver extends BaseResolver {
     }
   }
 
-  getModelFromGlobalId(gid) {
+  getModelFromGlobalId(gid: string): any {
     try {
       invariant(gid, 'Argument \'gid\' is null');
       let {type, id} = fromGlobalId(gid);
@@ -307,16 +315,16 @@ export default class EntityResolver extends BaseResolver {
       return {
         type,
         id: new Buffer(id, 'base64'),
-      }
+      };
     } catch (ex) {
       warning(false, JSON.stringify({
         class: 'EntityResolver', function: 'getModelFromGlobalId',
-        gid, type, id}, null, 2));
+        gid}, null, 2));
       throw ex;
     }
   }
 
-  getTypeAndAWSKeyFromGlobalId(id) {
+  getTypeAndAWSKeyFromGlobalId(id: string) {
     try {
       invariant(id, 'Argument \'id\' is null');
 
@@ -346,26 +354,28 @@ export default class EntityResolver extends BaseResolver {
     }
   }
 
-  getModelFromAWSItem(type, item) {
+  getModelFromAWSItem(type: string, item: any): any {
     try {
       let model = { type };
 
-      for (let name in item) {
-        let attr = item[name];
-        if (typeof attr.S !== 'undefined') {
-          model[name] = item[name].S;
-        } else if (typeof attr.N !== 'undefined') {
-          model[name] = item[name].N;
-        } else if (typeof attr.B !== 'undefined') {
-          model[name] = item[name].B;
-        } else if (typeof attr.BOOL !== 'undefined') {
-          model[name] = item[name].BOOL;
+      for (let name of item) {
+        if ({}.hasOwnProperty.call(item, name)) {
+          let attr = item[name];
+          if (typeof attr.S !== 'undefined') {
+            model[name] = item[name].S;
+          } else if (typeof attr.N !== 'undefined') {
+            model[name] = item[name].N;
+          } else if (typeof attr.B !== 'undefined') {
+            model[name] = item[name].B;
+          } else if (typeof attr.BOOL !== 'undefined') {
+            model[name] = item[name].BOOL;
+          }
         }
       }
 
       return model;
     } catch (ex) {
-      warning(JSON.stringify({
+      warning(false, JSON.stringify({
         class: 'EntityResolver',
         function: 'getModelFromAWSItem',
         type, item
@@ -374,7 +384,7 @@ export default class EntityResolver extends BaseResolver {
     }
   }
 
-  getAWSKeyFromModel(item, indexedByAttributeName) {
+  getAWSKeyFromModel(item: any, indexedByAttributeName: string) {
     try {
       invariant(item, 'Argument \'item\' is null');
 
@@ -400,7 +410,8 @@ export default class EntityResolver extends BaseResolver {
           .tables
           .find(ts => ts.TableName === tableName);
 
-        let attributeType = this.getAttributeType(tableSchema, indexedByAttributeName);
+        let attributeType = this.getAttributeType(
+          tableSchema, indexedByAttributeName);
 
         key[indexedByAttributeName][attributeType] =
           item[indexedByAttributeName].toString();
@@ -416,7 +427,7 @@ export default class EntityResolver extends BaseResolver {
     }
   }
 
-  getAttributeType(tableSchema, name) {
+  getAttributeType(tableSchema: any, name: string) {
     let def = tableSchema
       .AttributeDefinitions
       .find(a => a.AttributeName === name);
@@ -427,7 +438,7 @@ export default class EntityResolver extends BaseResolver {
     throw new Error('NotSupportedError (getAttributeType)');
   }
 
-  getTableName(type) {
+  getTableName(type: string) {
     return type + 's';
   }
 }

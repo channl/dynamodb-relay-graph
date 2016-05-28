@@ -1,3 +1,4 @@
+/* @flow */
 export default class ExpressionHelper {
   static isGlobalIdExpression(expression) {
     return typeof expression === 'string';

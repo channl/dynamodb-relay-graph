@@ -1,10 +1,14 @@
+/* @flow */
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
 import invariant from 'invariant';
 
 export default class NodeConnectionQuery extends BaseQuery {
-  constructor(inner, expression, connectionArgs) {
+  expression: any;
+  connectionArgs: any;
+
+  constructor(inner: ?BaseQuery, expression: any, connectionArgs: any) {
     super(inner);
     invariant(expression, 'Argument \'expression\' is null or undefined');
     invariant(
@@ -13,19 +17,19 @@ export default class NodeConnectionQuery extends BaseQuery {
     this.connectionArgs = connectionArgs;
   }
 
-  out(expression, connectionArgs) {
+  out(expression: any, connectionArgs: any): EdgeConnectionQuery {
     return new EdgeConnectionQuery(this, expression, connectionArgs, true);
   }
 
-  in(expression, connectionArgs) {
+  in(expression: any, connectionArgs: any): EdgeConnectionQuery {
     return new EdgeConnectionQuery(this, expression, connectionArgs, false);
   }
 
-  single() {
+  single(): SingleQuery {
     return new SingleQuery(this, false);
   }
 
-  singleOrNull() {
+  singleOrNull(): SingleQuery {
     return new SingleQuery(this, true);
   }
 }

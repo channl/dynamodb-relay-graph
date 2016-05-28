@@ -1,8 +1,17 @@
+/* @flow */
 import invariant from 'invariant';
 import warning from 'warning';
+import AWS from 'aws-sdk-promise';
 
 export default class EntityWriter {
-  constructor(dynamoDB, schema) {
+  dynamoDB: AWS.DynamoDB;
+  schema: any;
+  batchSize: number;
+  timeout: number;
+  initialRetryDelay: number;
+  getNextRetryDelay: (curr: number) => number;
+
+  constructor(dynamoDB: AWS.DynamoDB, schema: any) {
     this.dynamoDB = dynamoDB;
     this.schema = schema;
     this.batchSize = 25;
@@ -11,7 +20,11 @@ export default class EntityWriter {
     this.getNextRetryDelay = curr => curr * 2;
   }
 
-  async writeManyAsync(itemsToPut, itemsToDelete, stats) {
+  async writeManyAsync(
+    itemsToPut: any[],
+    itemsToDelete: any[],
+    stats: any): Promise {
+
     if (itemsToPut.length === 0 && itemsToDelete.length === 0) {
       return;
     }
@@ -57,7 +70,7 @@ export default class EntityWriter {
     }
   }
 
-  async writeBatchAsync(request) {
+  async writeBatchAsync(request: any) {
     let startTime = Date.now();
     let retryDelay = this.initialRetryDelay;
     let localRequest = request;
@@ -87,24 +100,24 @@ export default class EntityWriter {
     throw new Error('TimeoutError (writeBatchAsync)');
   }
 
-  setTimeoutAsync(ms) {
+  setTimeoutAsync(ms: number) {
     return new Promise(resolve => {
       setTimeout(resolve, ms);
     });
   }
 
-  isTimeoutExceeded(startTime) {
+  isTimeoutExceeded(startTime: number) {
     return startTime + this.timeout < Date.now();
   }
 
-  getRequestItemCount(request) {
+  getRequestItemCount(request: any) {
     return Object
       .keys(request.RequestItems)
       .map(tn => request.RequestItems[tn].length)
       .reduce((pre, cur) => pre + cur);
   }
 
-  checkForDuplicateKeys(request) {
+  checkForDuplicateKeys(request: any) {
     return Object
       .keys(request.RequestItems)
       .forEach(tn => {
@@ -117,18 +130,18 @@ export default class EntityWriter {
       });
   }
 
-  getRequestChunks(fullRequest) {
-    let requests = [];
+  getRequestChunks(fullRequest: any) {
+    let requests: any[] = [];
     let request = {RequestItems: {}};
     requests.push(request);
 
     let count = 0;
-    let tableNames = Object.keys(fullRequest.RequestItems);
-    for(let j in tableNames) {
+    let tableNames: any = Object.keys(fullRequest.RequestItems);
+    for(let j of tableNames) {
       if ({}.hasOwnProperty.call(tableNames, j)) {
         let tableName = tableNames[j];
         let tableReq = fullRequest.RequestItems[tableName];
-        for (let i in tableReq) {
+        for (let i of tableReq) {
 
           if (count >= this.batchSize) {
             // If we have reached the chunk item limit then create a new request
@@ -151,7 +164,7 @@ export default class EntityWriter {
     return requests;
   }
 
-  getRequest(itemsToPut, itemsToDelete) {
+  getRequest(itemsToPut: any[], itemsToDelete: any[]) {
     let request = {RequestItems: {}};
 
     itemsToPut.forEach(item => {
@@ -185,5 +198,9 @@ export default class EntityWriter {
     });
 
     return request;
+  }
+
+  getTableName(type: string): string {
+    return type + 's';
   }
 }
