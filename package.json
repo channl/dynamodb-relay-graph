@@ -16,13 +16,11 @@
   },
   "scripts": {
     "test": "npm run lint && npm run check && npm run testonly",
-    "testonly": "mocha $npm_package_options_mocha",
+    "testonly": "mocha ./__tests__/*.js --compilers js:babel-register --require babel-polyfill",
+    "testonlydebug": "mocha ./__tests__/*.js --compilers js:babel-register --require babel-polyfill --debug-brk",
     "lint": "eslint src",
     "check": "flow check",
-    "build": "babel src --ignore __tests__ --out-dir dist/",
-    "watch": "babel --optional runtime resources/watch.js | node",
-    "cover": "babel-node node_modules/.bin/isparta cover --root src --report html node_modules/.bin/_mocha -- $npm_package_options_mocha",
-    "cover:lcov": "babel-node node_modules/.bin/isparta cover --root src --report lcovonly node_modules/.bin/_mocha -- $npm_package_options_mocha"
+    "build": "babel src --ignore __tests__ --out-dir dist/"
   },
   "files": [
     "dist",
@@ -41,12 +39,14 @@
   "devDependencies": {
     "babel": "^6.5.2",
     "babel-cli": "^6.7.7",
-    "babel-preset-react-native": "^1.6.0",
     "babel-eslint": "^6.0.4",
-    "eslint": "^2.9.0",
-    "eslint-plugin-babel": "^3.2.0",
+    "babel-polyfill": "^6.9.0",
+    "babel-preset-react-native": "^1.6.0",
+    "babel-register": "^6.9.0",
     "chai": "^3.5.0",
     "coveralls": "^2.11.9",
+    "eslint": "^2.9.0",
+    "eslint-plugin-babel": "^3.2.0",
     "isparta": "^4.0.0",
     "mocha": "^2.4.5",
     "sane": "^1.3.4"

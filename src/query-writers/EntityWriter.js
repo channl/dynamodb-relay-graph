@@ -138,26 +138,24 @@ export default class EntityWriter {
     let count = 0;
     let tableNames: any = Object.keys(fullRequest.RequestItems);
     for(let j of tableNames) {
-      if ({}.hasOwnProperty.call(tableNames, j)) {
-        let tableName = tableNames[j];
-        let tableReq = fullRequest.RequestItems[tableName];
-        for (let i of tableReq) {
+      let tableName = tableNames[j];
+      let tableReq = fullRequest.RequestItems[tableName];
+      for (let i of tableReq) {
 
-          if (count >= this.batchSize) {
-            // If we have reached the chunk item limit then create a new request
-            request = {RequestItems: {}};
-            request.RequestItems[tableName] = [];
-            requests.push(request);
-            count = 0;
-          }
-
-          if (typeof request.RequestItems[tableName] === 'undefined') {
-            request.RequestItems[tableName] = [];
-          }
-
-          request.RequestItems[tableName].push(tableReq[i]);
-          count++;
+        if (count >= this.batchSize) {
+          // If we have reached the chunk item limit then create a new request
+          request = {RequestItems: {}};
+          request.RequestItems[tableName] = [];
+          requests.push(request);
+          count = 0;
         }
+
+        if (typeof request.RequestItems[tableName] === 'undefined') {
+          request.RequestItems[tableName] = [];
+        }
+
+        request.RequestItems[tableName].push(tableReq[i]);
+        count++;
       }
     }
 

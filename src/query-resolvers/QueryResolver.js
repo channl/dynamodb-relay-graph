@@ -161,7 +161,7 @@ export default class QueryResolver extends EntityResolver {
 
     // Ensure all required keys are in the proposed key schema
     let hashKeySatisfied = false;
-    for(let i of required) {
+    for(let i in required) {
       if ({}.hasOwnProperty.call(required, i)) {
         let matchingKey = proposed
           .find(attr => attr.AttributeName === required[i].AttributeName);

@@ -58,7 +58,7 @@ export default class Graph {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    return new NodeConnectionQuery(null, expression, connectionArgs);
+    return new NodeConnectionQuery(this, null, expression, connectionArgs);
   }
 
   vs(expression: any[], connectionArgs: ConnectionArgs): AggregateQuery {
@@ -66,6 +66,7 @@ export default class Graph {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
     return new AggregateQuery(
+      this,
       null,
       expression.map(e => this.v(e, connectionArgs)));
   }
@@ -74,7 +75,7 @@ export default class Graph {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    return new EdgeConnectionQuery(null, expression, connectionArgs, true);
+    return new EdgeConnectionQuery(this, null, expression, connectionArgs, true);
   }
 
   es(expression: any[], connectionArgs: ConnectionArgs): AggregateQuery {
@@ -82,6 +83,7 @@ export default class Graph {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
     return new AggregateQuery(
+      this,
       null,
       expression.map(exp => this.e(exp, connectionArgs)));
   }

@@ -240,11 +240,11 @@ export default class EntityResolver extends BaseResolver {
     let count = 0;
     let tableNames: string[] = Object.keys(fullRequest.RequestItems);
     for(let tableName of tableNames) {
-      let tableReq = fullRequest.RequestItems[tableName].Keys;
+      let keys = fullRequest.RequestItems[tableName].Keys;
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = { Keys: []};
       }
-      for (let i of tableReq) {
+      for (let key of keys) {
 
         if (count >= this.batchSize) {
           // If we have reached the chunk item limit then create a new request
@@ -254,7 +254,7 @@ export default class EntityResolver extends BaseResolver {
           count = 0;
         }
 
-        request.RequestItems[tableName].Keys.push(tableReq[i]);
+        request.RequestItems[tableName].Keys.push(key);
         count++;
       }
     }
@@ -303,7 +303,11 @@ export default class EntityResolver extends BaseResolver {
   getModelFromGlobalId(gid: string): any {
     try {
       invariant(gid, 'Argument \'gid\' is null');
+
       let {type, id} = fromGlobalId(gid);
+      invariant(type, 'Argument \'type\' is null');
+      invariant(id, 'Argument \'id\' is null');
+
       if (type.endsWith('Edge')) {
         return {
           type,
@@ -358,7 +362,7 @@ export default class EntityResolver extends BaseResolver {
     try {
       let model = { type };
 
-      for (let name of item) {
+      for (let name in item) {
         if ({}.hasOwnProperty.call(item, name)) {
           let attr = item[name];
           if (typeof attr.S !== 'undefined') {

@@ -3,6 +3,7 @@ import SingleQuery from '../query/SingleQuery';
 import BaseQuery from '../query/BaseQuery';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import invariant from 'invariant';
+import Graph from '../graph/Graph';
 
 export default class EdgeConnectionQuery extends BaseQuery {
   expression: any;
@@ -10,12 +11,13 @@ export default class EdgeConnectionQuery extends BaseQuery {
   isOut: boolean;
 
   constructor(
+    graph: Graph,
     inner: ?BaseQuery,
     expression: any,
     connectionArgs: any,
     isOut: boolean) {
 
-    super(inner);
+    super(graph, inner);
     invariant(expression, 'Argument \'expression\' is null or undefined');
     invariant(
       connectionArgs, 'Argument \'connectionArgs\' is null or undefined');
@@ -25,18 +27,18 @@ export default class EdgeConnectionQuery extends BaseQuery {
   }
 
   out(expression: any): ToNodesConnectionQuery {
-    return new ToNodesConnectionQuery(this, true, expression);
+    return new ToNodesConnectionQuery(this.graph, this, true, expression);
   }
 
   in(expression: any): ToNodesConnectionQuery {
-    return new ToNodesConnectionQuery(this, false, expression);
+    return new ToNodesConnectionQuery(this.graph, this, false, expression);
   }
 
   single(): SingleQuery {
-    return new SingleQuery(this, false);
+    return new SingleQuery(this.graph, this, false);
   }
 
   singleOrNull(): SingleQuery {
-    return new SingleQuery(this, true);
+    return new SingleQuery(this.graph, this, true);
   }
 }
