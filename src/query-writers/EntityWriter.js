@@ -2,10 +2,12 @@
 import invariant from 'invariant';
 import warning from 'warning';
 import AWS from 'aws-sdk-promise';
+import AWSConvertor from '../query-helpers/AWSConvertor';
 
 export default class EntityWriter {
   dynamoDB: AWS.DynamoDB;
   schema: any;
+  convertor: AWSConvertor;
   batchSize: number;
   timeout: number;
   initialRetryDelay: number;
@@ -14,6 +16,7 @@ export default class EntityWriter {
   constructor(dynamoDB: AWS.DynamoDB, schema: any) {
     this.dynamoDB = dynamoDB;
     this.schema = schema;
+    this.convertor = new AWSConvertor();
     this.batchSize = 25;
     this.timeout = 120000;
     this.initialRetryDelay = 50;
@@ -131,42 +134,50 @@ export default class EntityWriter {
   }
 
   getRequestChunks(fullRequest: any) {
-    let requests: any[] = [];
-    let request = {RequestItems: {}};
-    requests.push(request);
+    try {
+      invariant(fullRequest, 'Argument \'fullRequest\' is null');
 
-    let count = 0;
-    let tableNames: any = Object.keys(fullRequest.RequestItems);
-    for(let j of tableNames) {
-      let tableName = tableNames[j];
-      let tableReq = fullRequest.RequestItems[tableName];
-      for (let i of tableReq) {
+      let requests: any[] = [];
+      let request = {RequestItems: {}};
+      requests.push(request);
 
-        if (count >= this.batchSize) {
-          // If we have reached the chunk item limit then create a new request
-          request = {RequestItems: {}};
-          request.RequestItems[tableName] = [];
-          requests.push(request);
-          count = 0;
+      let count = 0;
+      let tableNames: any = Object.keys(fullRequest.RequestItems);
+      for(let tableName of tableNames) {
+        let tableRequestItems = fullRequest.RequestItems[tableName];
+        for (let tableRequestItem of tableRequestItems) {
+          if (count >= this.batchSize) {
+            // If we have reached the chunk item limit then create a new request
+            request = {RequestItems: {}};
+            request.RequestItems[tableName] = [];
+            requests.push(request);
+            count = 0;
+          }
+
+          if (typeof request.RequestItems[tableName] === 'undefined') {
+            request.RequestItems[tableName] = [];
+          }
+
+          request.RequestItems[tableName].push(tableRequestItem);
+          count++;
         }
-
-        if (typeof request.RequestItems[tableName] === 'undefined') {
-          request.RequestItems[tableName] = [];
-        }
-
-        request.RequestItems[tableName].push(tableReq[i]);
-        count++;
       }
-    }
 
-    return requests;
+      return requests;
+    } catch (ex) {
+      warning(false, JSON.stringify({
+        class: 'EntityWriter',
+        function: 'getRequestChunks',
+        fullRequest}, null, 2));
+      throw ex;
+    }
   }
 
   getRequest(itemsToPut: any[], itemsToDelete: any[]) {
     let request = {RequestItems: {}};
 
     itemsToPut.forEach(item => {
-      let tableName = this.getTableName(item.type);
+      let tableName = this.convertor.getTableName(item.type);
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = [];
       }
@@ -174,14 +185,14 @@ export default class EntityWriter {
       let tableReq = request.RequestItems[tableName];
       let newItem = {
         PutRequest: {
-          Item: item.toAWSItem()
+          Item: this.convertor.getAWSItemFromModel(item)
         }
       };
       tableReq.push(newItem);
     });
 
     itemsToDelete.forEach(item => {
-      let tableName = this.getTableName(item.type);
+      let tableName = this.convertor.getTableName(item.type);
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = [];
       }
@@ -189,16 +200,12 @@ export default class EntityWriter {
       let tableReq = request.RequestItems[tableName];
       let newItem = {
         DeleteRequest: {
-          Key: item.toAWSKey(null)
+          Key: this.convertor.getAWSKeyFromModel(item, null)
         }
       };
       tableReq.push(newItem);
     });
 
     return request;
-  }
-
-  getTableName(type: string): string {
-    return type + 's';
   }
 }

@@ -141,7 +141,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
   }
 
   getRequest(expression: any, connectionArgs: any) {
-    let tableName = this.getTableName(expression.type);
+    let tableName = this.convertor.getTableName(expression.type);
     let tableSchema = this.schema.tables.find(ts => ts.TableName === tableName);
     let indexSchema = this.getIndexSchema(
       expression,
@@ -180,7 +180,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
   getResult(response: any, expression: any, connectionArgs: any) {
     let edges = response.data.Items.map(item => {
 
-      let edge = this.getModelFromAWSItem(expression.type, item);
+      let edge = this.convertor.getModelFromAWSItem(expression.type, item);
       let result = {
         type: expression.type,
         inID: edge.inID,

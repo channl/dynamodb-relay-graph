@@ -100,7 +100,7 @@ export default class NodeConnectionResolver extends QueryResolver {
         // Type and id are supplied so get the item direct
         return {
           edges: [ {
-            id: this.getGlobalIdFromModel(expression)
+            id: this.convertor.getGlobalIdFromModel(expression)
           } ],
           pageInfo: {
             hasPreviousPage: false,
@@ -195,7 +195,7 @@ export default class NodeConnectionResolver extends QueryResolver {
 
   getScanRequest(expression: any, connectionArgs: any) {
     try {
-      let tableName = this.getTableName(expression.type);
+      let tableName = this.convertor.getTableName(expression.type);
 
       let projectionExpression = this.getProjectionExpression(
         expression,
@@ -226,7 +226,7 @@ export default class NodeConnectionResolver extends QueryResolver {
 
   getQueryRequest(expression: any, connectionArgs: any) {
     try {
-      let tableName = this.getTableName(expression.type);
+      let tableName = this.convertor.getTableName(expression.type);
       let tableSchema = this
         .schema
         .tables
@@ -306,8 +306,9 @@ export default class NodeConnectionResolver extends QueryResolver {
   }
 
   getResultEdge(expression: any, item: any) {
+    let model = this.convertor.getModelFromAWSItem(expression.type, item);
     return {
-      id: this.getGlobalIdFromModel({type: expression.type, id: item.id.B})
+      id: this.convertor.getGlobalIdFromModel({type: expression.type, id: model.id})
     };
   }
 }

@@ -4,6 +4,8 @@ import { log } from '../src/Global';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
+// import type { NodeQueryExpression } from '../src/flow/Types';
+
 describe('AcceptanceTests', () => {
 
   it('Can query for node', async () => {
@@ -35,6 +37,7 @@ describe('AcceptanceTests', () => {
     };
 
     let graph = new Graph(dbConfig, dbSchema);
+
     let result = await graph
       .v({type: 'User', id: new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64')}, {first: 1})
       .getAsync();

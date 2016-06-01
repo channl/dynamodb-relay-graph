@@ -1,14 +1,15 @@
 /* @flow */
 import DataLoader from 'dataloader';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
-import invariant from 'invariant';
 import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
-import { fromGlobalId, toGlobalId } from 'graphql-relay';
 import DynamoDB from '../store/DynamoDB';
+import AWSConvertor from '../query-helpers/AWSConvertor';
+// import { log } from '../Global';
 
 export default class EntityResolver extends BaseResolver {
   loader: any;
+  convertor: AWSConvertor;
   dynamoDB: DynamoDB;
   schema: any;
   batchSize: number;
@@ -19,6 +20,7 @@ export default class EntityResolver extends BaseResolver {
   constructor(dynamoDB: DynamoDB, schema: any) {
     super();
     this.loader = new DataLoader(globalIds => this.getManyAsync(globalIds));
+    this.convertor = new AWSConvertor();
     this.dynamoDB = dynamoDB;
     this.schema = schema;
     this.batchSize = 100;
@@ -33,11 +35,11 @@ export default class EntityResolver extends BaseResolver {
     }
 
     if (ExpressionHelper.isModelExpression(key)) {
-      return this.loader.load(this.getGlobalIdFromModel(key));
+      return this.loader.load(this.convertor.getGlobalIdFromModel(key));
     }
 
     if (ExpressionHelper.isModelExpression(key)) {
-      return this.loader.load(this.getGlobalIdFromModel(key));
+      return this.loader.load(this.convertor.getGlobalIdFromModel(key));
     }
 
     warning(false, 'EntityResolver.getAsync', JSON.stringify({
@@ -53,17 +55,13 @@ export default class EntityResolver extends BaseResolver {
     try {
       // Extract the types and ids
       let typeAndKeys = globalIds
-        .map(id => this.getTypeAndAWSKeyFromGlobalId(id));
+        .map(id => this.convertor.getTypeAndAWSKeyFromGlobalId(id));
 
       // Generate a full request and then split into batches
       let metaData = {};
       let fullRequest = this.getFullRequestAndMetaData(typeAndKeys, metaData);
       let requestChunks = this.getRequestChunks(fullRequest);
 
-/*      // logger.debug(
-        'Resolving a full batch of ' + this.getRequestItemCount(fullRequest) +
-        ' items in ' + requestChunks.length + ' chunks');
-*/
       // Execute each batch query
       let responses = await Promise.all(
         requestChunks.map(request => this.resolveBatchAsync(request)));
@@ -78,7 +76,7 @@ export default class EntityResolver extends BaseResolver {
       // Convert the results into models
       let results = typeIdAndAWSItems.map(data => {
         return data.item ?
-          this.getModelFromAWSItem(data.type, data.item) :
+          this.convertor.getModelFromAWSItem(data.type, data.item) :
           null;
       });
 
@@ -94,41 +92,44 @@ export default class EntityResolver extends BaseResolver {
   }
 
   async resolveBatchAsync(request: any) {
-    let localRequest = request;
-    let fullResponse = { Responses: {} };
-    let startTime = Date.now();
-    let retryDelay = this.initialRetryDelay;
-    while (!this.isTimeoutExceeded(startTime)) {
+    try {
+      let localRequest = request;
+      let fullResponse = { Responses: {} };
+      let startTime = Date.now();
+      let retryDelay = this.initialRetryDelay;
+      while (!this.isTimeoutExceeded(startTime)) {
 
-/*
-      // logger.debug(
-        'Resolving a batch of ' +
-        this.getRequestItemCount(localRequest) + ' items');
-*/
+        let response = await this.dynamoDB.batchGetItemAsync(localRequest);
 
-      let response = await this.dynamoDB.batchGetItemAsync(localRequest);
+        // Append any completed responses into our full response
+        fullResponse = this.getFullResponse([ fullResponse, response.data ]);
+        if (Object.keys(response.data.UnprocessedKeys).length === 0) {
+          return fullResponse;
+        }
 
-      // Append any completed responses into our full response
-      fullResponse = this.getFullResponse([ fullResponse, response.data ]);
-      if (Object.keys(response.data.UnprocessedKeys).length === 0) {
-        return fullResponse;
+        // Create a new localRequest using unprocessedItems
+        warning(false,
+          'Some items in the batch were unprocessed, retrying in ' +
+          retryDelay + 'ms');
+
+        localRequest = { RequestItems: response.data.UnprocessedKeys };
+
+        // Pause before retrying
+        await this.setTimeoutAsync(retryDelay);
+
+        // Increase the next retry delay using the exponential algorithm
+        retryDelay = this.getNextRetryDelay(retryDelay);
       }
 
-      // Create a new localRequest using unprocessedItems
-      warning(false,
-        'Some items in the batch were unprocessed, retrying in ' +
-        retryDelay + 'ms');
-
-      localRequest = { RequestItems: response.data.UnprocessedKeys };
-
-      // Pause before retrying
-      await this.setTimeoutAsync(retryDelay);
-
-      // Increase the next retry delay using the exponential algorithm
-      retryDelay = this.getNextRetryDelay(retryDelay);
+      throw new Error('TimeoutError (resolveBatchAsync)');
+    } catch (ex) {
+      warning(false, JSON.stringify({
+        class: 'EntityResolver',
+        function: 'resolveBatchAsync',
+        request
+      }));
+      throw ex;
     }
-
-    throw new Error('TimeoutError (resolveBatchAsync)');
   }
 
   getFullResponse(responses: any[]) {
@@ -168,10 +169,10 @@ export default class EntityResolver extends BaseResolver {
       .reduce((pre, cur) => pre + cur);
   }
 
-  toTypeIdAndAWSItem(typeAndId: any, metaData: any,
+  toTypeIdAndAWSItem(typeAndKey: any, metaData: any,
     request: any, response: any) {
     try {
-      let tableName = this.getTableName(typeAndId.type);
+      let tableName = this.convertor.getTableName(typeAndKey.type);
       let metaDataItem = metaData[tableName];
       let requestItem = request.RequestItems[tableName].Keys;
       let responseItem = response.Responses[tableName];
@@ -179,7 +180,7 @@ export default class EntityResolver extends BaseResolver {
       // Get the matching request
       let index = metaDataItem
         .typeAndKeys
-        .findIndex(i => i.type === typeAndId.type && i.id === typeAndId.id);
+        .findIndex(i => i.type === typeAndKey.type && i.key.id === typeAndKey.key.id);
       let requestObject = requestItem[index];
       if (index === -1 || !requestObject) {
         throw new Error('UnexpectedMissingItemError');
@@ -187,11 +188,11 @@ export default class EntityResolver extends BaseResolver {
 
       // Get the matching response
       let responseObject = responseItem.find(i =>
-        this.isMatchingResponseObject(typeAndId.type, requestObject, i));
+        this.isMatchingResponseObject(typeAndKey.type, requestObject, i));
 
       let result = {
-        type: typeAndId.type,
-        id: typeAndId.id,
+        type: typeAndKey.type,
+        id: typeAndKey.key.id,
         item: responseObject
       };
 
@@ -201,7 +202,7 @@ export default class EntityResolver extends BaseResolver {
       warning(false, JSON.stringify({
         class: 'EntityResolver',
         function: 'toTypeIdAndAWSItem',
-        typeAndId, metaData, response, request
+        typeAndKey, metaData, response, request
       }));
 
       throw ex;
@@ -212,16 +213,16 @@ export default class EntityResolver extends BaseResolver {
     requestObject: any, responseObject: any) {
     try {
 
-      if (requestObject.id) {
-        return requestObject.id.B.equals(responseObject.id.B);
+      let requestModel = this.convertor.getModelFromAWSItem(type, requestObject);
+      let responseModel = this.convertor.getModelFromAWSItem(type, responseObject);
+
+      if (type.endsWith('Edge')) {
+        return this.areEqual(requestModel.outID, responseModel.outID) &&
+          this.areEqual(requestModel.inID, responseModel.inID);
       }
 
-      if (requestObject.outID && requestObject.inID) {
-        return requestObject.outID.B.equals(responseObject.outID.B) &&
-          requestObject.inID.B.equals(responseObject.inID.B);
-      }
-
-      invariant(false, 'NotSupportedError(isMatchingResponseObject)');
+      debugger;
+      return this.areEqual(requestModel.id, responseModel.id);
     } catch (ex) {
       warning(false, JSON.stringify({
         class: 'EntityResolver',
@@ -230,6 +231,14 @@ export default class EntityResolver extends BaseResolver {
       }));
       throw ex;
     }
+  }
+
+  areEqual(a: any, b: any) {
+    if (a instanceof Buffer && b instanceof Buffer) {
+      return a.equals(b);
+    }
+
+    return a === b;
   }
 
   getRequestChunks(fullRequest: any) {
@@ -268,7 +277,7 @@ export default class EntityResolver extends BaseResolver {
     let request = {RequestItems: {}};
     typeAndKeys
       .forEach(typeAndKey => {
-        let tableName = this.getTableName(typeAndKey.type);
+        let tableName = this.convertor.getTableName(typeAndKey.type);
         if (request.RequestItems[tableName]) {
           request.RequestItems[tableName].Keys.push(typeAndKey.key);
           metaData[tableName].typeAndKeys.push(typeAndKey);
@@ -281,156 +290,6 @@ export default class EntityResolver extends BaseResolver {
     return request;
   }
 
-  getGlobalIdFromModel(model: any) {
-    try {
-      invariant(model, 'Argument \'model\' is null');
-
-      if (model.type.endsWith('Edge')) {
-        return toGlobalId(model.type, model.outID.toString('base64') +
-          model.inID.toString('base64'));
-      }
-
-      return toGlobalId(model.type, model.id.toString('base64'));
-
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'Graph', function: 'getGlobalIdFromModel',
-        model}, null, 2));
-      throw ex;
-    }
-  }
-
-  getModelFromGlobalId(gid: string): any {
-    try {
-      invariant(gid, 'Argument \'gid\' is null');
-
-      let {type, id} = fromGlobalId(gid);
-      invariant(type, 'Argument \'type\' is null');
-      invariant(id, 'Argument \'id\' is null');
-
-      if (type.endsWith('Edge')) {
-        return {
-          type,
-          outID: new Buffer(id.slice(0, 36), 'base64'),
-          inID: new Buffer(id.slice(36), 'base64')
-        };
-      }
-
-      return {
-        type,
-        id: new Buffer(id, 'base64'),
-      };
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'EntityResolver', function: 'getModelFromGlobalId',
-        gid}, null, 2));
-      throw ex;
-    }
-  }
-
-  getTypeAndAWSKeyFromGlobalId(id: string) {
-    try {
-      invariant(id, 'Argument \'id\' is null');
-
-      let model = this.getModelFromGlobalId(id);
-      if (model.type.endsWith('Edge')) {
-        return {
-          type: model.type,
-          key: {
-            outID: { B: model.outID },
-            inID: { B: model.inID }
-          }
-        };
-      }
-
-      return {
-        type: model.type,
-        key: {
-          id: { B: model.id },
-        }
-      };
-
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'EntityResolver', function: 'getTypeAndAWSKeyFromGlobalId',
-        id}, null, 2));
-      throw ex;
-    }
-  }
-
-  getModelFromAWSItem(type: string, item: any): any {
-    try {
-      let model = { type };
-
-      for (let name in item) {
-        if ({}.hasOwnProperty.call(item, name)) {
-          let attr = item[name];
-          if (typeof attr.S !== 'undefined') {
-            model[name] = item[name].S;
-          } else if (typeof attr.N !== 'undefined') {
-            model[name] = item[name].N;
-          } else if (typeof attr.B !== 'undefined') {
-            model[name] = item[name].B;
-          } else if (typeof attr.BOOL !== 'undefined') {
-            model[name] = item[name].BOOL;
-          }
-        }
-      }
-
-      return model;
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'EntityResolver',
-        function: 'getModelFromAWSItem',
-        type, item
-      }));
-      throw ex;
-    }
-  }
-
-  getAWSKeyFromModel(item: any, indexedByAttributeName: string) {
-    try {
-      invariant(item, 'Argument \'item\' is null');
-
-      let key = null;
-      if (item.type.endsWith('Edge')) {
-        key = {
-          outID: { B: item.outID },
-          inID: { B: item.inID },
-        };
-      } else {
-        key = {
-          id: { B: item.id },
-        };
-      }
-
-      if (typeof indexedByAttributeName !== 'undefined') {
-        key[indexedByAttributeName] = {};
-
-        let tableName = this.getTableName(item.type);
-
-        let tableSchema = this
-          .schema
-          .tables
-          .find(ts => ts.TableName === tableName);
-
-        let attributeType = this.getAttributeType(
-          tableSchema, indexedByAttributeName);
-
-        key[indexedByAttributeName][attributeType] =
-          item[indexedByAttributeName].toString();
-      }
-
-      return key;
-
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'EntityResolver', function: 'getAWSKeyFromModel',
-        item, indexedByAttributeName}, null, 2));
-      throw ex;
-    }
-  }
-
   getAttributeType(tableSchema: any, name: string) {
     let def = tableSchema
       .AttributeDefinitions
@@ -440,9 +299,5 @@ export default class EntityResolver extends BaseResolver {
     }
 
     throw new Error('NotSupportedError (getAttributeType)');
-  }
-
-  getTableName(type: string) {
-    return type + 's';
   }
 }

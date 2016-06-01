@@ -5,11 +5,19 @@ import SingleQuery from '../query/SingleQuery';
 import invariant from 'invariant';
 import Graph from '../graph/Graph';
 
-export default class NodeConnectionQuery extends BaseQuery {
-  expression: any;
-  connectionArgs: any;
+import type {
+  NodeQueryExpression,
+  EdgeQueryExpression,
+  ConnectionArgs
+} from '../flow/Types';
 
-  constructor(graph: Graph, inner: ?BaseQuery, expression: any, connectionArgs: any) {
+export default class NodeConnectionQuery extends BaseQuery {
+  expression: NodeQueryExpression;
+  connectionArgs: ConnectionArgs;
+
+  constructor(graph: Graph, inner: ?BaseQuery,
+    expression: NodeQueryExpression,
+    connectionArgs: ConnectionArgs) {
     super(graph, inner);
     invariant(expression, 'Argument \'expression\' is null or undefined');
     invariant(
@@ -18,11 +26,11 @@ export default class NodeConnectionQuery extends BaseQuery {
     this.connectionArgs = connectionArgs;
   }
 
-  out(expression: any, connectionArgs: any): EdgeConnectionQuery {
+  out(expression: EdgeQueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
     return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, true);
   }
 
-  in(expression: any, connectionArgs: any): EdgeConnectionQuery {
+  in(expression: EdgeQueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
     return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, false);
   }
 

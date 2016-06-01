@@ -1,5 +1,6 @@
 /* @flow */
 import { invariant } from '../Global';
+import type { Options } from '../flow/Types';
 
 export default class BaseResolver {
 
@@ -11,7 +12,7 @@ export default class BaseResolver {
   async resolveAsync(
     query: any,
     innerResult: any,
-    options: any): Promise<any> { // eslint-disable-line no-unused-vars
+    options: Options): Promise<any> { // eslint-disable-line no-unused-vars
     invariant('NotImplemented');
   }
 }

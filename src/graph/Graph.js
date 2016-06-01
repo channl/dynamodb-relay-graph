@@ -1,7 +1,6 @@
 /* @flow */
 import invariant from 'invariant';
 import DynamoDB from '../store/DynamoDB';
-import AggregateQuery from '../query/AggregateQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import AggregateResolver from '../query-resolvers/AggregateResolver';
@@ -14,14 +13,7 @@ import ToNodesConnectionResolver
   from '../query-resolvers/ToNodesConnectionResolver';
 
 import type { DynamoDBConfig, DynamoDBSchema } from '../store/DynamoDB';
-
-type ConnectionArgs = {
-  first?: number,
-  last?: number,
-  before?: string,
-  after?: string,
-  order?: string,
-};
+import type { NodeQueryExpression, ConnectionArgs } from '../flow/Types';
 
 export default class Graph {
   _writer: EntityWriter;
@@ -45,6 +37,10 @@ export default class Graph {
     let res4 = new SingleResolver();
     let res5 = new ToNodesConnectionResolver(dynamoDB, schema);
 
+
+    let expr2: ConnectionArgs = {};
+    expr2 = expr2;
+
     this._resolvers = [
       res1,
       res2,
@@ -54,21 +50,11 @@ export default class Graph {
     ];
   }
 
-  v(expression: any, connectionArgs: ConnectionArgs): NodeConnectionQuery {
+  v(expression: NodeQueryExpression, connectionArgs: ConnectionArgs): NodeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
     return new NodeConnectionQuery(this, null, expression, connectionArgs);
-  }
-
-  vs(expression: any[], connectionArgs: ConnectionArgs): AggregateQuery {
-    invariant(expression, 'Argument \'expression\' is null');
-    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-
-    return new AggregateQuery(
-      this,
-      null,
-      expression.map(e => this.v(e, connectionArgs)));
   }
 
   e(expression: any, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
@@ -76,16 +62,6 @@ export default class Graph {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
     return new EdgeConnectionQuery(this, null, expression, connectionArgs, true);
-  }
-
-  es(expression: any[], connectionArgs: ConnectionArgs): AggregateQuery {
-    invariant(expression, 'Argument \'expression\' is null');
-    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-
-    return new AggregateQuery(
-      this,
-      null,
-      expression.map(exp => this.e(exp, connectionArgs)));
   }
 
   async addAsync(item: any): Promise {

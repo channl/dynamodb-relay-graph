@@ -409,7 +409,7 @@ export default class QueryResolver extends EntityResolver {
   }
 
   toCursor(item: any, order: string) {
-    let key = this.getAWSKeyFromModel(item, order);
+    let key = this.convertor.getAWSKeyFromModel(item, order);
     let cursorData = JSON.stringify(key);
     let b = new Buffer(cursorData);
     return b.toString('base64');
