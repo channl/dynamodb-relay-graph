@@ -221,7 +221,6 @@ export default class EntityResolver extends BaseResolver {
           this.areEqual(requestModel.inID, responseModel.inID);
       }
 
-      debugger;
       return this.areEqual(requestModel.id, responseModel.id);
     } catch (ex) {
       warning(false, JSON.stringify({

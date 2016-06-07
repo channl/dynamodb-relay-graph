@@ -13,13 +13,13 @@ export default class QueryResolver extends EntityResolver {
     if (typeof connectionArgs.first !== 'undefined') {
       return typeof connectionArgs.after === 'undefined' ?
         undefined :
-        this.fromCursor(connectionArgs.after);
+        this.convertor.fromCursor(connectionArgs.after);
     }
 
     if (typeof connectionArgs.last !== 'undefined') {
       return typeof connectionArgs.before === 'undefined' ?
         undefined :
-        this.fromCursor(connectionArgs.before);
+        this.convertor.fromCursor(connectionArgs.before);
     }
 
     throw new Error('First or Last must be specified');
@@ -81,7 +81,7 @@ export default class QueryResolver extends EntityResolver {
       .keys(expression)
       .concat(connectionArgs.order)
       .concat(include)
-      .filter(value => value !== 'type')
+      .filter(value => value !== 'type' && typeof value !== 'undefined')
       .filter((value, index, self) => self.indexOf(value) === index)
       .forEach(name => {
         result[this.getExpressionAttributeName(name)] = name;
@@ -386,32 +386,5 @@ export default class QueryResolver extends EntityResolver {
     }));
 
     throw new Error('NotSupportedError (getKeyConditionExpressionItem)');
-  }
-
-  fromCursor(cursor: string) {
-    let b = new Buffer(cursor, 'base64');
-    let json = b.toString('ascii');
-    let item = JSON.parse(json);
-
-    // Create real buffer objects from the JSON
-    // B.data versus B seems to be due to differences in Buffer implementation
-    Object
-      .keys(item)
-      .map(name => item[name])
-      .filter(a => typeof a.B !== 'undefined')
-      .forEach(a => {
-        a.B = typeof a.B.data !== 'undefined' ?
-          new Buffer(a.B.data) :
-          new Buffer(a.B);
-      });
-
-    return item;
-  }
-
-  toCursor(item: any, order: string) {
-    let key = this.convertor.getAWSKeyFromModel(item, order);
-    let cursorData = JSON.stringify(key);
-    let b = new Buffer(cursorData);
-    return b.toString('base64');
   }
 }

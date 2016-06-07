@@ -4,7 +4,7 @@ import QueryResolver from '../query-resolvers/QueryResolver';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
 import DynamoDB from '../store/DynamoDB';
-import { log } from '../Global';
+import { log, invariant } from '../Global';
 
 export default class NodeConnectionResolver extends QueryResolver {
   constructor(dynamoDB: DynamoDB, schema: any) {
@@ -33,7 +33,7 @@ export default class NodeConnectionResolver extends QueryResolver {
       // Have to filter out nulls due to getNodeIdConnection implementation
       nodes = nodes.filter(n => n !== null);
       let edges = nodes.map(node => {
-        let cursor = this.toCursor(node, query.connectionArgs.order);
+        let cursor = this.convertor.toCursor(node, query.connectionArgs.order);
         return {
           cursor,
           node
@@ -231,6 +231,8 @@ export default class NodeConnectionResolver extends QueryResolver {
         .schema
         .tables
         .find(ts => ts.TableName === tableName);
+
+      invariant(tableSchema, 'TableSchema ' + tableName + ' not found');
 
       let indexSchema = this.getIndexSchema(
         expression,

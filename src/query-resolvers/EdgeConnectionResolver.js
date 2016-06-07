@@ -185,7 +185,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
         type: expression.type,
         inID: edge.inID,
         outID: edge.outID,
-        cursor: this.toCursor(edge, connectionArgs.order)
+        cursor: this.convertor.toCursor(edge, connectionArgs.order)
       };
 
       return result;
@@ -228,7 +228,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
 
   getBeforeParam(query: any) {
     if (typeof query.connectionArgs.before !== 'undefined') {
-      let cursor = this.fromCursor(query.connectionArgs.before);
+      let cursor = this.convertor.fromCursor(query.connectionArgs.before);
       let value = cursor[query.connectionArgs.order].S;
       return value;
     }
@@ -238,7 +238,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
 
   getAfterParam(query: any) {
     if (typeof query.connectionArgs.after !== 'undefined') {
-      let cursor = this.fromCursor(query.connectionArgs.after);
+      let cursor = this.convertor.fromCursor(query.connectionArgs.after);
       let value = cursor[query.connectionArgs.order].S;
       return value;
     }

@@ -5,6 +5,33 @@ import { fromGlobalId, toGlobalId } from 'graphql-relay';
 
 export default class AWSConvertor {
 
+  fromCursor(cursor: string) {
+    let b = new Buffer(cursor, 'base64');
+    let json = b.toString('ascii');
+    let item = JSON.parse(json);
+
+    // Create real buffer objects from the JSON
+    // B.data versus B seems to be due to differences in Buffer implementation
+    Object
+      .keys(item)
+      .map(name => item[name])
+      .filter(a => typeof a.B !== 'undefined')
+      .forEach(a => {
+        a.B = typeof a.B.data !== 'undefined' ?
+          new Buffer(a.B.data) :
+          new Buffer(a.B);
+      });
+
+    return item;
+  }
+
+  toCursor(item: any, order: ?string) {
+    let key = this.getAWSKeyFromModel(item, order);
+    let cursorData = JSON.stringify(key);
+    let b = new Buffer(cursorData);
+    return b.toString('base64');
+  }
+
   getTableName(type: string) {
     return type + 's';
   }

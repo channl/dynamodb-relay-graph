@@ -9,6 +9,7 @@ import NodeConnectionResolver from '../query-resolvers/NodeConnectionResolver';
 import SingleResolver from '../query-resolvers/SingleResolver';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityWriter from '../query-writers/EntityWriter';
+import AWSConvertor from '../query-helpers/AWSConvertor';
 import ToNodesConnectionResolver
   from '../query-resolvers/ToNodesConnectionResolver';
 
@@ -18,6 +19,7 @@ import type { NodeQueryExpression, ConnectionArgs } from '../flow/Types';
 export default class Graph {
   _writer: EntityWriter;
   _resolvers: BaseResolver[];
+  _convertor: AWSConvertor;
 
   constructor(
     dynamoDBConfig: DynamoDBConfig,
@@ -31,15 +33,10 @@ export default class Graph {
 
     let res1 = new AggregateResolver((query, innerResult, stats) =>
       this.getQueryAsync(query, innerResult, stats));
-
     let res2 = new EdgeConnectionResolver(dynamoDB, schema);
     let res3 = new NodeConnectionResolver(dynamoDB, schema);
     let res4 = new SingleResolver();
     let res5 = new ToNodesConnectionResolver(dynamoDB, schema);
-
-
-    let expr2: ConnectionArgs = {};
-    expr2 = expr2;
 
     this._resolvers = [
       res1,
@@ -48,6 +45,8 @@ export default class Graph {
       res4,
       res5
     ];
+
+    this._convertor = new AWSConvertor();
   }
 
   v(expression: NodeQueryExpression, connectionArgs: ConnectionArgs): NodeConnectionQuery {
@@ -117,5 +116,9 @@ export default class Graph {
     }
 
     return await resolver.resolveAsync(query, innerResult, options);
+  }
+
+  getCursor(model: any, order: ?string) {
+    return this._convertor.toCursor(model, order);
   }
 }
