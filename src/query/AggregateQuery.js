@@ -1,4 +1,5 @@
 /* @flow */
+import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import SingleQuery from '../query/SingleQuery';
 import Graph from '../graph/Graph';
@@ -8,6 +9,8 @@ export default class AggregateQuery extends BaseQuery {
 
   constructor(graph: Graph, inner: ?BaseQuery, items: any[]) {
     super(graph, inner);
+
+    invariant(items, 'Argument \'items\' is null');
     this.items = items;
   }
 

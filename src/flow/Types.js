@@ -1,23 +1,39 @@
 /* @flow */
+import { MeasuredCollection } from 'measured';
+
 export type ConnectionArgs = {
   first?: number,
   last?: number,
   before?: string,
   after?: string,
   order?: string,
+  orderDesc?: boolean,
 };
 
 export type Options = {
-  log: boolean
+  log?: boolean,
+  stats?: MeasuredCollection
 };
 
-export type NodeQueryExpression = {
-  type: string,
-  id: Buffer
-} | string;
+export type QueryExpression = NodeQueryExpression | EdgeQueryExpression;
+
+export type NodeQueryExpression = any
+| TypeOnlyNodeQueryExpression
+| TypeAndIdNodeQueryExpression;
+
+export type TypeOnlyNodeQueryExpression = {
+  type: string
+};
+
+export type TypeAndIdNodeQueryExpression = {
+ type: string,
+ id: Buffer
+};
 
 export type EdgeQueryExpression = {
-  type: string
+  type: string,
+  inID?: Object,
+  outID?: Object,
 };
 
 export type Node = {
@@ -25,19 +41,20 @@ export type Node = {
   id: Buffer
 };
 
-export type Edge = {
-  cursor: string,
-  node: Node
+export type TypeAndKey = {
+  type: string,
+  key: Object,
 };
 
-export type PageInfo = {
-  startCursor: string,
-  endCursor: string,
-  hasPreviousPage: boolean,
-  hasNextPage: boolean
+export type RequestMetadata = {
+  [tableName: string]: TableMetadata,
 };
 
-export type Connection = {
-  edges: Edge[],
-  pageInfo: PageInfo
+export type TableMetadata = {
+  typeAndKeys: TypeAndKey[],
+};
+
+export type Model = {
+  type: string,
+  [propertyName: string]: string | Buffer | number | boolean,
 };

@@ -1,14 +1,13 @@
 /* @flow */
-import invariant from 'invariant';
+import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
 import Graph from '../graph/Graph';
-
+import type { Connection } from 'graphql-relay';
 import type {
   EdgeQueryExpression,
   ConnectionArgs,
-  Connection,
 } from '../flow/Types';
 
 export default class ToNodesConnectionQuery extends BaseQuery {
@@ -24,10 +23,14 @@ export default class ToNodesConnectionQuery extends BaseQuery {
   }
 
   out(expression: EdgeQueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
+    invariant(expression, 'Argument \'expression\' is null');
+    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, true);
   }
 
   in(expression: EdgeQueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
+    invariant(expression, 'Argument \'expression\' is null');
+    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, false);
   }
 

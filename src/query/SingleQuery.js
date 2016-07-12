@@ -1,5 +1,5 @@
 /* @flow */
-import invariant from 'invariant';
+import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import Graph from '../graph/Graph';
 
@@ -8,10 +8,8 @@ export default class SingleQuery extends BaseQuery {
 
   constructor(graph: Graph, inner: ?BaseQuery, isNullValid: boolean) {
     super(graph, inner);
-    invariant(
-      typeof isNullValid === 'boolean',
-      'Argument \'isNullValid\' must be a boolean');
 
+    invariant(typeof isNullValid === 'boolean', 'Argument \'isNullValid\' must be a boolean');
     this.isNullValid = isNullValid;
   }
 }

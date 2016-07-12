@@ -1,21 +1,28 @@
 /* @flow */
-import warning from 'warning';
+import BaseQuery from '../query/BaseQuery';
 import QueryResolver from '../query-resolvers/QueryResolver';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
 import DynamoDB from '../store/DynamoDB';
-import { log, invariant } from '../Global';
+import { log, invariant, warning } from '../Global';
+import type { Options, ConnectionArgs } from '../flow/Types';
+import type { DynamoDBSchema } from 'aws-sdk-promise';
 
 export default class NodeConnectionResolver extends QueryResolver {
-  constructor(dynamoDB: DynamoDB, schema: any) {
+  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema) {
     super(dynamoDB, schema);
   }
 
-  canResolve(query: any): boolean {
+  canResolve(query: BaseQuery): boolean {
+    invariant(query, 'Argument \'query\' is null');
     return (query instanceof NodeConnectionQuery);
   }
 
-  async resolveAsync(query: any, innerResult: any, options: any) {
+  async resolveAsync(query: NodeConnectionQuery,
+    innerResult: Object, options: ?Options): Promise<?Object> {
+    invariant(query, 'Argument \'query\' is null');
+    invariant(innerResult, 'Argument \'innerResult\' is null');
+
     let sw = null;
     if (options && options.stats) {
       sw = options.stats.timer('NodeConnectionResolver.resolveAsync').start();
@@ -58,14 +65,18 @@ export default class NodeConnectionResolver extends QueryResolver {
 
       if (options && options.logs) {
         log(JSON.stringify({
-          class: 'NodeConnectionResolver', query, innerResult, result}));
+          class: 'NodeConnectionResolver',
+          query: query.clone(),
+          innerResult,
+          result}));
       }
       return result;
     } catch (ex) {
       warning(false, JSON.stringify({
         class: 'NodeConnectionResolver',
         function: 'resolveAsync',
-        query, innerResult
+        query: query.clone(),
+        innerResult
       }));
       throw ex;
     } finally {
@@ -75,8 +86,11 @@ export default class NodeConnectionResolver extends QueryResolver {
     }
   }
 
-  async getNodeIdConnection(query: any, innerResult: any, options: any) {
+  async getNodeIdConnection(query: NodeConnectionQuery, innerResult: any, options: ?Options) {
     try {
+      invariant(query, 'Argument \'query\' is null');
+      invariant(innerResult, 'Argument \'innerResult\' is null');
+
       // Generate the full expression using the query and any previous result
       let expression = this.getExpression(query, innerResult);
       if (ExpressionHelper.isGlobalIdExpression(expression)) {
@@ -135,15 +149,18 @@ export default class NodeConnectionResolver extends QueryResolver {
         JSON.stringify({
           class: 'NodeConnectionResolver',
           function: 'getNodeIdConnection',
-          query
+          query: query.clone(),
         }));
       throw ex;
     }
   }
 
   getExpression(
-    query: any,
+    query: NodeConnectionQuery,
     innerResult: any) { // eslint-disable-line no-unused-vars
+    invariant(query, 'Argument \'query\' is null');
+    invariant(innerResult, 'Argument \'innerResult\' is null');
+
     if (ExpressionHelper.isGlobalIdExpression(query.expression)) {
       return query.expression;
     }
@@ -168,7 +185,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     return expr;
   }
 
-  getBeforeParam(query: any) {
+  getBeforeParam(query: NodeConnectionQuery) {
     if (typeof query.connectionArgs.before !== 'undefined') {
       return query.connectionArgs.before;
     }
@@ -176,7 +193,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     return null;
   }
 
-  getAfterParam(query: any) {
+  getAfterParam(query: NodeConnectionQuery) {
     if (typeof query.connectionArgs.after !== 'undefined') {
       return query.connectionArgs.after;
     }
@@ -184,7 +201,7 @@ export default class NodeConnectionResolver extends QueryResolver {
     return null;
   }
 
-  getOrderExpression(query: any) {
+  getOrderExpression(query: NodeConnectionQuery) {
     if (typeof query.connectionArgs.orderDesc !== 'undefined' &&
       query.connectionArgs.orderDesc) {
       return { before: this.getBeforeParam(query) };
@@ -193,8 +210,11 @@ export default class NodeConnectionResolver extends QueryResolver {
     return { after: this.getAfterParam(query) };
   }
 
-  getScanRequest(expression: any, connectionArgs: any) {
+  getScanRequest(expression: any, connectionArgs: ConnectionArgs) {
     try {
+      invariant(expression, 'Argument \'expression\' is null');
+      invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
+
       let tableName = this.convertor.getTableName(expression.type);
 
       let projectionExpression = this.getProjectionExpression(
@@ -224,8 +244,11 @@ export default class NodeConnectionResolver extends QueryResolver {
     }
   }
 
-  getQueryRequest(expression: any, connectionArgs: any) {
+  getQueryRequest(expression: any, connectionArgs: ConnectionArgs) {
     try {
+      invariant(expression, 'Argument \'expression\' is null');
+      invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
+
       let tableName = this.convertor.getTableName(expression.type);
       let tableSchema = this
         .schema
@@ -276,7 +299,11 @@ export default class NodeConnectionResolver extends QueryResolver {
     }
   }
 
-  getResult(response: any, expression: any, connectionArgs: any) {
+  getResult(response: any, expression: any, connectionArgs: ConnectionArgs) {
+    invariant(response, 'Argument \'response\' is null');
+    invariant(expression, 'Argument \'expression\' is null');
+    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
+
     let edges = response
       .data
       .Items
@@ -308,6 +335,9 @@ export default class NodeConnectionResolver extends QueryResolver {
   }
 
   getResultEdge(expression: any, item: any) {
+    invariant(expression, 'Argument \'expression\' is null');
+    invariant(item, 'Argument \'item\' is null');
+
     let model = this.convertor.getModelFromAWSItem(expression.type, item);
     return {
       id: this.convertor.getGlobalIdFromModel({type: expression.type, id: model.id})

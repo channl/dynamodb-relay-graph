@@ -11,16 +11,16 @@ export const log = (...params) => {
   console.log(...params);
 };
 
-export const warning = (predicateOrValue: any, value: string) => {
-  if (typeof value === 'undefined') {
+export const warning = (predicateOrValue: any, value: ?any) => {
+  if (value == null) {
     _warning(false, predicateOrValue);
   } else {
     _warning(predicateOrValue, value);
   }
 };
 
-export const invariant = (predicateOrValue: any, value: string) => {
-  if (typeof value === 'undefined') {
+export const invariant = (predicateOrValue: any, value: ?any) => {
+  if (value == null) {
     _invariant(false, predicateOrValue);
   } else {
     _invariant(predicateOrValue, value);

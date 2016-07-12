@@ -1,71 +1,14 @@
 /* @flow */
 import warning from 'warning';
 import stats from '../logging/stats';
-import AWS from 'aws-sdk-promise';
-
-export type DynamoDBConfig = {
-  apiVersion: string,
-  region: string,
-  dynamoDbCrc32: boolean
-};
-
-export type DynamoDBAttributeDefinition = {
-  AttributeName: string,
-  AttributeType: string
-};
-
-export type DynamoDBKeySchema = {
-  AttributeName: string,
-  KeyType: string
-};
-
-export type DynamoDBTable = {
-  TableName: string,
-  AttributeDefinitions: DynamoDBAttributeDefinition[],
-  KeySchema: DynamoDBKeySchema[],
-  GlobalSecondaryIndexes?: DynamoDBGlobalSecondaryIndex[],
-  LocalSecondaryIndexes?: DynamoDBLocalSecondaryIndex[],
-  ProvisionedThroughput: DynamoDBProvisionedThroughput,
-  StreamSpecification?: DynamoDBStreamSpecification
-};
-
-export type DynamoDBGlobalSecondaryIndex = {
-  IndexName: string,
-  KeySchema: DynamoDBKeySchema [],
-  Projection: DynamoDBProjection,
-  ProvisionedThroughput: DynamoDBProvisionedThroughput
-};
-
-export type DynamoDBLocalSecondaryIndex = {
-  IndexName: string,
-  KeySchema: DynamoDBKeySchema [],
-  Projection: DynamoDBProjection,
-};
-
-export type DynamoDBProjection = {
-   NonKeyAttributes?: string[],
-   ProjectionType: string
-};
-
-export type DynamoDBProvisionedThroughput = {
-  ReadCapacityUnits: number,
-  WriteCapacityUnits: number
-};
-
-export type DynamoDBStreamSpecification = {
-  StreamEnabled: boolean,
-  StreamViewType: string
-};
-
-export type DynamoDBSchema = {
-  tables: DynamoDBTable[]
-};
+import awssdkpromise from 'aws-sdk-promise';
+import type { DynamoDBConfig } from 'aws-sdk-promise';
 
 export default class DynamoDB {
-  dyn: any;
+  dyn: awssdkpromise.DynamoDB;
 
   constructor(dynamoDBConfig: DynamoDBConfig) {
-    this.dyn = new AWS.DynamoDB(dynamoDBConfig);
+    this.dyn = new awssdkpromise.DynamoDB(dynamoDBConfig);
   }
 
   async listTablesAsync(): Promise<string[]> {

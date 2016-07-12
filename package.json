@@ -10,17 +10,20 @@
     "type": "git",
     "url": "http://github.com/tmitchel2/dynamodb-relay-graph.git"
   },
-  "main": "dist/Index.js",
+  "main": "dist/index.js",
   "options": {
-    "mocha": "--require resources/mocha-bootload src/**/__tests__/**/*.js"
+    "mocha": "--check-leaks --full-trace ./__tests__/**/*.js"
   },
   "scripts": {
     "test": "npm run lint && npm run check && npm run testonly",
-    "testonly": "mocha ./__tests__/*.js --compilers js:babel-register --require babel-polyfill",
-    "testonlydebug": "mocha ./__tests__/*.js --compilers js:babel-register --require babel-polyfill --debug-brk",
+    "testonly": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mocha",
+    "testonlydebug": "mocha ./__tests__/**/*.js --compilers js:babel-register --require babel-polyfill --debug-brk",
     "lint": "eslint src",
     "check": "flow check",
-    "build": "babel src --ignore __tests__ --out-dir dist/"
+    "check-cover": "for file in {src/*.js,src/**/*.js}; do echo $file; flow coverage $file; done",
+    "build": "babel src --ignore __tests__ --out-dir dist/",
+    "cover": "babel-node ./node_modules/.bin/isparta cover --root src --report html _mocha -- $npm_package_options_mocha",
+    "cover:lcov": "babel-node ./node_modules/.bin/isparta cover --root src --report lcovonly _mocha -- $npm_package_options_mocha"
   },
   "files": [
     "dist",

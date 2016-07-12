@@ -2,14 +2,19 @@
 import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import SingleQuery from '../query/SingleQuery';
-import { log } from '../Global';
+import { log, invariant } from '../Global';
+import type { Options } from '../flow/Types';
 
 export default class SingleResolver extends BaseResolver {
   canResolve(query: any): boolean {
     return (query instanceof SingleQuery);
   }
 
-  async resolveAsync(query: any, innerResult: any, options: any) {
+  async resolveAsync(query: SingleQuery,
+    innerResult: Object, options: ?Options): Promise<?Object> {
+    invariant(query, 'Argument \'query\' is null');
+    invariant(innerResult, 'Argument \'innerResult\' is null');
+
     let sw = null;
     if (options && options.stats) {
       sw = options.stats.timer('SingleResolver.resolveAsync').start();
@@ -21,7 +26,10 @@ export default class SingleResolver extends BaseResolver {
 
         if (options && options.logs) {
           log(JSON.stringify({
-            class: 'SingleResolver', query, innerResult, result}));
+            class: 'SingleResolver',
+            query: query.clone(),
+            innerResult,
+            result}));
         }
 
         return result;
@@ -53,7 +61,8 @@ export default class SingleResolver extends BaseResolver {
       warning(false, JSON.stringify({
         class: 'SingleResolver',
         function: 'resolveAsync',
-        query, innerResult
+        query: query.clone(),
+        innerResult
       }));
 
       throw ex;

@@ -1,6 +1,7 @@
 /* @flow */
-import invariant from 'invariant';
+import { invariant } from '../Global';
 import DynamoDB from '../store/DynamoDB';
+import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import AggregateResolver from '../query-resolvers/AggregateResolver';
@@ -10,11 +11,9 @@ import SingleResolver from '../query-resolvers/SingleResolver';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityWriter from '../query-writers/EntityWriter';
 import AWSConvertor from '../query-helpers/AWSConvertor';
-import ToNodesConnectionResolver
-  from '../query-resolvers/ToNodesConnectionResolver';
-
-import type { DynamoDBConfig, DynamoDBSchema } from '../store/DynamoDB';
-import type { NodeQueryExpression, ConnectionArgs } from '../flow/Types';
+import ToNodesConnectionResolver from '../query-resolvers/ToNodesConnectionResolver';
+import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
+import type { NodeQueryExpression, ConnectionArgs, Options } from '../flow/Types';
 
 export default class Graph {
   _writer: EntityWriter;
@@ -93,10 +92,10 @@ export default class Graph {
     return this._writer.writeManyAsync(items, [ ]);
   }
 
-  async getAsync(query: any, options: any): Promise<any> {
+  async getAsync(query: BaseQuery, options: ?Options): Promise<Object> {
     invariant(query, 'Argument \'query\' is null');
 
-    let innerResult = null;
+    let innerResult = {};
     if (query.inner) {
       innerResult = await this.getAsync(query.inner, options);
     }
@@ -106,9 +105,11 @@ export default class Graph {
   }
 
   async getQueryAsync(
-    query: any,
-    innerResult: any,
-    options: any): Promise<any> {
+    query: BaseQuery,
+    innerResult: Object,
+    options: ?Options): Promise<Object> {
+    invariant(query, 'Argument \'query\' is null');
+    invariant(innerResult, 'Argument \'innerResult\' is null');
 
     let resolver = this._resolvers.find(r => r.canResolve(query));
     if (!resolver) {
@@ -118,7 +119,15 @@ export default class Graph {
     return await resolver.resolveAsync(query, innerResult, options);
   }
 
-  getCursor(model: any, order: ?string) {
+  getCursor(model: Object, order: ?string) {
+    invariant(model, 'Argument \'model\' is null');
+
     return this._convertor.toCursor(model, order);
+  }
+
+  getGlobalId(model: Object): string {
+    invariant(model, 'Argument \'model\' is null');
+
+    return this._convertor.getGlobalIdFromModel(model);
   }
 }

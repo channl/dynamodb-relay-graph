@@ -3,7 +3,8 @@ import warning from 'warning';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import DynamoDB from '../store/DynamoDB';
-import { log } from '../Global';
+import { log, invariant } from '../Global';
+import type { Options } from '../flow/Types';
 
 export default class ToNodesConnectionResolver extends EntityResolver {
   constructor(dynamoDB: DynamoDB, schema: any) {
@@ -11,10 +12,15 @@ export default class ToNodesConnectionResolver extends EntityResolver {
   }
 
   canResolve(query: any): boolean {
+    invariant(query, 'Argument \'query\' is null');
     return (query instanceof ToNodesConnectionQuery);
   }
 
-  async resolveAsync(query: any, innerResult: any, options: any) {
+  async resolveAsync(query: ToNodesConnectionQuery,
+    innerResult: Object, options: ?Options): Promise<Object> {
+    invariant(query, 'Argument \'query\' is null');
+    invariant(innerResult, 'Argument \'innerResult\' is null');
+
     let sw = null;
     if (options && options.stats) {
       sw = options
@@ -47,7 +53,10 @@ export default class ToNodesConnectionResolver extends EntityResolver {
 
       if (options && options.logs) {
         log(JSON.stringify({
-          class: 'ToNodesConnectionResolver', query, innerResult, result}));
+          class: 'ToNodesConnectionResolver',
+          query: query.clone(),
+          innerResult,
+          result}));
       }
 
       return result;
@@ -56,7 +65,8 @@ export default class ToNodesConnectionResolver extends EntityResolver {
       warning(false, JSON.stringify({
         class: 'ToNodesConnectionResolver',
         function: 'resolveAsync',
-        query, innerResult
+        query: query.clone(),
+        innerResult
       }));
 
       throw ex;
@@ -67,7 +77,7 @@ export default class ToNodesConnectionResolver extends EntityResolver {
     }
   }
 
-  async getNodeIds(query: any, innerResult: any) {
+  async getNodeIds(query: ToNodesConnectionQuery, innerResult: any) {
     return innerResult
       .edges
       .map(edge => {

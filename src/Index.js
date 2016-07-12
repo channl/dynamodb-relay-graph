@@ -1,4 +1,4 @@
 /* @flow */
 import Graph from './graph/Graph';
 
-export default Graph;
+export default { Graph };

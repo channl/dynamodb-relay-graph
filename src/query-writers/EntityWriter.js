@@ -1,11 +1,11 @@
 /* @flow */
-import invariant from 'invariant';
-import warning from 'warning';
-import AWS from 'aws-sdk-promise';
+import { warning, invariant } from '../Global';
+import DynamoDB from '../store/DynamoDB';
 import AWSConvertor from '../query-helpers/AWSConvertor';
+import type { DynamoDBSchema } from 'aws-sdk-promise';
 
 export default class EntityWriter {
-  dynamoDB: AWS.DynamoDB;
+  dynamoDB: DynamoDB;
   schema: any;
   convertor: AWSConvertor;
   batchSize: number;
@@ -13,7 +13,10 @@ export default class EntityWriter {
   initialRetryDelay: number;
   getNextRetryDelay: (curr: number) => number;
 
-  constructor(dynamoDB: AWS.DynamoDB, schema: any) {
+  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema) {
+    invariant(dynamoDB, 'Argument \'dynamoDB\' is null');
+    invariant(schema, 'Argument \'schema\' is null');
+
     this.dynamoDB = dynamoDB;
     this.schema = schema;
     this.convertor = new AWSConvertor();
@@ -26,7 +29,9 @@ export default class EntityWriter {
   async writeManyAsync(
     itemsToPut: any[],
     itemsToDelete: any[],
-    stats: any): Promise {
+    stats: ?any): Promise {
+    invariant(itemsToPut, 'Argument \'itemsToPut\' is null');
+    invariant(itemsToDelete, 'Argument \'itemsToDelete\' is null');
 
     if (itemsToPut.length === 0 && itemsToDelete.length === 0) {
       return;
@@ -74,6 +79,8 @@ export default class EntityWriter {
   }
 
   async writeBatchAsync(request: any) {
+    invariant(request, 'Argument \'request\' is null');
+
     let startTime = Date.now();
     let retryDelay = this.initialRetryDelay;
     let localRequest = request;
@@ -104,16 +111,19 @@ export default class EntityWriter {
   }
 
   setTimeoutAsync(ms: number) {
+    invariant(typeof ms === 'number', 'Argument \'ms\' is not a number');
     return new Promise(resolve => {
       setTimeout(resolve, ms);
     });
   }
 
   isTimeoutExceeded(startTime: number) {
+    invariant(typeof startTime === 'number', 'Argument \'startTime\' is not a number');
     return startTime + this.timeout < Date.now();
   }
 
   getRequestItemCount(request: any) {
+    invariant(request, 'Argument \'request\' is null');
     return Object
       .keys(request.RequestItems)
       .map(tn => request.RequestItems[tn].length)
@@ -121,6 +131,7 @@ export default class EntityWriter {
   }
 
   checkForDuplicateKeys(request: any) {
+    invariant(request, 'Argument \'request\' is null');
     return Object
       .keys(request.RequestItems)
       .forEach(tn => {
