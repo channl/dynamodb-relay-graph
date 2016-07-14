@@ -1,8 +1,8 @@
 /* @flow */
 import { warning, invariant } from '../Global';
-import DynamoDB from '../store/DynamoDB';
+import DynamoDB from '../aws/DynamoDB';
 import AWSConvertor from '../query-helpers/AWSConvertor';
-import type { DynamoDBSchema } from 'aws-sdk-promise';
+import type { DynamoDBSchema, BatchWriteItemRequest } from 'aws-sdk-promise';
 
 export default class EntityWriter {
   dynamoDB: DynamoDB;
@@ -50,11 +50,6 @@ export default class EntityWriter {
       // this.checkForDuplicateKeys(fullRequest);
       let requestChunks = this.getRequestChunks(fullRequest);
 
-      // Write each request chunk
-/*      // logger.debug('Writing a full batch of ' +
-        this.getRequestItemCount(fullRequest) + ' items in ' +
-        requestChunks.length + ' chunks');
-*/
       // HACK MOVED THIS TO SEQUENTIAL AS IT WAS TIMINGOUT
       // await Promise.all(requestChunks.map(request =>
       // this.writeBatchAsync(request)));
@@ -78,7 +73,7 @@ export default class EntityWriter {
     }
   }
 
-  async writeBatchAsync(request: any) {
+  async writeBatchAsync(request: BatchWriteItemRequest) {
     invariant(request, 'Argument \'request\' is null');
 
     let startTime = Date.now();
@@ -86,19 +81,15 @@ export default class EntityWriter {
     let localRequest = request;
     while (!this.isTimeoutExceeded(startTime)) {
 
-/*
-      // logger.debug('Writing a batch of ' +
-        this.getRequestItemCount(localRequest) + ' items');
-*/
       let response = await this.dynamoDB.batchWriteItemAsync(localRequest);
-      if (Object.keys(response.data.UnprocessedItems).length === 0) {
+      if (Object.keys(response.UnprocessedItems).length === 0) {
         return;
       }
 
       // Create a new request using unprocessedItems
       warning(false, 'Some items in the batch were unprocessed, retrying in ' +
         retryDelay + 'ms');
-      localRequest = { RequestItems: response.data.UnprocessedItems };
+      localRequest = { RequestItems: response.UnprocessedItems };
 
       // Pause before retrying
       await this.setTimeoutAsync(retryDelay);
@@ -120,14 +111,6 @@ export default class EntityWriter {
   isTimeoutExceeded(startTime: number) {
     invariant(typeof startTime === 'number', 'Argument \'startTime\' is not a number');
     return startTime + this.timeout < Date.now();
-  }
-
-  getRequestItemCount(request: any) {
-    invariant(request, 'Argument \'request\' is null');
-    return Object
-      .keys(request.RequestItems)
-      .map(tn => request.RequestItems[tn].length)
-      .reduce((pre, cur) => pre + cur);
   }
 
   checkForDuplicateKeys(request: any) {
@@ -188,7 +171,7 @@ export default class EntityWriter {
     let request = {RequestItems: {}};
 
     itemsToPut.forEach(item => {
-      let tableName = this.convertor.getTableName(item.type);
+      let tableName = AWSConvertor.getTableName(item.type);
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = [];
       }
@@ -196,14 +179,14 @@ export default class EntityWriter {
       let tableReq = request.RequestItems[tableName];
       let newItem = {
         PutRequest: {
-          Item: this.convertor.getAWSItemFromModel(item)
+          Item: AWSConvertor.getAWSItemFromModel(item)
         }
       };
       tableReq.push(newItem);
     });
 
     itemsToDelete.forEach(item => {
-      let tableName = this.convertor.getTableName(item.type);
+      let tableName = AWSConvertor.getTableName(item.type);
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = [];
       }
@@ -211,7 +194,7 @@ export default class EntityWriter {
       let tableReq = request.RequestItems[tableName];
       let newItem = {
         DeleteRequest: {
-          Key: this.convertor.getAWSKeyFromModel(item, null)
+          Key: AWSConvertor.getAWSKeyFromModel(item, null)
         }
       };
       tableReq.push(newItem);

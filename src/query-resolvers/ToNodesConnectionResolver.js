@@ -1,14 +1,18 @@
 /* @flow */
 import warning from 'warning';
+import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
-import DynamoDB from '../store/DynamoDB';
+import DynamoDB from '../aws/DynamoDB';
 import { log, invariant } from '../Global';
 import type { Options } from '../flow/Types';
 
-export default class ToNodesConnectionResolver extends EntityResolver {
+export default class ToNodesConnectionResolver extends BaseResolver {
+  _entityResolver: EntityResolver;
+
   constructor(dynamoDB: DynamoDB, schema: any) {
     super(dynamoDB, schema);
+    this._entityResolver = new EntityResolver(dynamoDB, schema);
   }
 
   canResolve(query: any): boolean {
@@ -31,7 +35,7 @@ export default class ToNodesConnectionResolver extends EntityResolver {
 
     try {
       let nodeIds = await this.getNodeIds(query, innerResult);
-      let nodes = await Promise.all(nodeIds.map(id => this.getAsync(id)));
+      let nodes = await Promise.all(nodeIds.map(id => this._entityResolver.getAsync(id)));
       let edges = nodes.map((node, i) => {
         return { cursor: innerResult.edges[i].cursor, node};
       });

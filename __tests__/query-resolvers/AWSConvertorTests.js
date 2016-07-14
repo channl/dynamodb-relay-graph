@@ -6,7 +6,6 @@ import { describe, it } from 'mocha';
 describe('AWSConvertorTests', () => {
 
   it('getAWSItemFromModel', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'User',
       id: new Buffer('ABC', 'base64'),
@@ -14,7 +13,7 @@ describe('AWSConvertorTests', () => {
       lastname: 'LastName',
       age: 37
     };
-    let result = convertor.getAWSItemFromModel(item);
+    let result = AWSConvertor.getAWSItemFromModel(item);
     let expected = {
       id: {
         B: new Buffer('ABC', 'base64'),
@@ -33,7 +32,6 @@ describe('AWSConvertorTests', () => {
   });
 
   it('ToCursor', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'User',
       id: new Buffer('ABC', 'base64'),
@@ -41,15 +39,14 @@ describe('AWSConvertorTests', () => {
       lastname: 'LastName',
       age: 37
     };
-    let result = convertor.toCursor(item);
+    let result = AWSConvertor.toCursor(item);
     let expected = 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbMCwxNl19fX0=';
     expect(result).to.deep.equal(expected);
   });
 
   it('FromCursor', () => {
-    let convertor = new AWSConvertor();
     let cursor = 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbMCwxNl19fX0=';
-    let result = convertor.fromCursor(cursor);
+    let result = AWSConvertor.fromCursor(cursor);
     let expected = {
       id: { B:
         new Buffer('ABC', 'base64'),
@@ -59,14 +56,12 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetTableName', () => {
-    let convertor = new AWSConvertor();
-    let result = convertor.getTableName('User');
+    let result = AWSConvertor.getTableName('User');
     let expected = 'Users';
     expect(result).to.deep.equal(expected);
   });
 
   it('GetGlobalIdFromModel', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'User',
       id: new Buffer('ABC', 'base64'),
@@ -74,13 +69,12 @@ describe('AWSConvertorTests', () => {
       lastname: 'LastName',
       age: 37
     };
-    let result = convertor.getGlobalIdFromModel(item);
+    let result = AWSConvertor.getGlobalIdFromModel(item);
     let expected = 'VXNlcjpCQUJBPQ==';
     expect(result).to.deep.equal(expected);
   });
 
   it('GetGlobalIdFromModelWithStringId', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'User',
       id: 'ID',
@@ -88,13 +82,12 @@ describe('AWSConvertorTests', () => {
       lastname: 'LastName',
       age: 37
     };
-    let result = convertor.getGlobalIdFromModel(item);
+    let result = AWSConvertor.getGlobalIdFromModel(item);
     let expected = 'VXNlcjpTSUQ=';
     expect(result).to.deep.equal(expected);
   });
 
   it('GetGlobalIdFromModelWithNumberId', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'User',
       id: 123,
@@ -102,27 +95,25 @@ describe('AWSConvertorTests', () => {
       lastname: 'LastName',
       age: 37
     };
-    let result = convertor.getGlobalIdFromModel(item);
+    let result = AWSConvertor.getGlobalIdFromModel(item);
     let expected = 'VXNlcjpOMTIz';
     expect(result).to.deep.equal(expected);
   });
 
   it('GetGlobalIdFromModelEdge', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'MyEdge',
       outID: new Buffer('ABC', 'base64'),
       inID: new Buffer('DEF', 'base64'),
     };
-    let result = convertor.getGlobalIdFromModel(item);
+    let result = AWSConvertor.getGlobalIdFromModel(item);
     let expected = 'TXlFZGdlOkJBQkE9X19fQkRFRT0=';
     expect(result).to.deep.equal(expected);
   });
 
   it('GetModelFromGlobalId', () => {
-    let convertor = new AWSConvertor();
     let globalId = 'VXNlcjpCQUJBPQ==';
-    let result = convertor.getModelFromGlobalId(globalId);
+    let result = AWSConvertor.getModelFromGlobalId(globalId);
     let expected = {
       id: new Buffer('ABC', 'base64'),
       type: 'User',
@@ -131,9 +122,8 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetModelWithStringIdFromGlobalId', () => {
-    let convertor = new AWSConvertor();
     let globalId = 'VXNlcjpTSUQ=';
-    let result = convertor.getModelFromGlobalId(globalId);
+    let result = AWSConvertor.getModelFromGlobalId(globalId);
     let expected = {
       id: 'ID',
       type: 'User',
@@ -142,9 +132,8 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetModelWithNumberIdFromGlobalId', () => {
-    let convertor = new AWSConvertor();
     let globalId = 'VXNlcjpOMTIz';
-    let result = convertor.getModelFromGlobalId(globalId);
+    let result = AWSConvertor.getModelFromGlobalId(globalId);
     let expected = {
       id: 123,
       type: 'User',
@@ -153,9 +142,8 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetModelFromGlobalIdEdge', () => {
-    let convertor = new AWSConvertor();
     let globalId = 'TXlFZGdlOkJBQkE9X19fQkRFRT0=';
-    let result = convertor.getModelFromGlobalId(globalId);
+    let result = AWSConvertor.getModelFromGlobalId(globalId);
     let expected = {
       type: 'MyEdge',
       outID: new Buffer('ABC', 'base64'),
@@ -165,9 +153,8 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetTypeAndAWSKeyFromGlobalId', () => {
-    let convertor = new AWSConvertor();
     let globalId = 'TXlFZGdlOkJBQkE9X19fQkRFRT0=';
-    let result = convertor.getTypeAndAWSKeyFromGlobalId(globalId);
+    let result = AWSConvertor.getTypeAndAWSKeyFromGlobalId(globalId);
     let expected = {
       key: {
         outID: { B: new Buffer('ABC', 'base64') },
@@ -179,7 +166,6 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetModelFromAWSItem', () => {
-    let convertor = new AWSConvertor();
     let item = {
       outID: { B: new Buffer('ABC', 'base64') },
       inID: { B: new Buffer('DEF', 'base64') },
@@ -188,7 +174,7 @@ describe('AWSConvertorTests', () => {
       bool: { BOOL: true },
     };
     // TODO user type+key type
-    let result = convertor.getModelFromAWSItem('MyEdge', item);
+    let result = AWSConvertor.getModelFromAWSItem('MyEdge', item);
     let expected = {
       type: 'MyEdge',
       outID: new Buffer('ABC', 'base64'),
@@ -201,7 +187,6 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetAWSKeyFromModel', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'MyEdge',
       outID: new Buffer('ABC', 'base64'),
@@ -210,7 +195,7 @@ describe('AWSConvertorTests', () => {
       number: 99,
       bool: true,
     };
-    let result = convertor.getAWSKeyFromModel(item);
+    let result = AWSConvertor.getAWSKeyFromModel(item);
     let expected = {
       outID: { B: new Buffer('ABC', 'base64') },
       inID: { B: new Buffer('DEF', 'base64') },
@@ -219,7 +204,6 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetAWSKeyFromModelWithStringIndex', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'MyEdge',
       outID: new Buffer('ABC', 'base64'),
@@ -228,7 +212,7 @@ describe('AWSConvertorTests', () => {
       number: 99,
       bool: true,
     };
-    let result = convertor.getAWSKeyFromModel(item, 'name');
+    let result = AWSConvertor.getAWSKeyFromModel(item, 'name');
     let expected = {
       outID: { B: new Buffer('ABC', 'base64') },
       inID: { B: new Buffer('DEF', 'base64') },
@@ -238,7 +222,6 @@ describe('AWSConvertorTests', () => {
   });
 
   it('GetAWSKeyFromModelWithNumberIndex', () => {
-    let convertor = new AWSConvertor();
     let item = {
       type: 'MyEdge',
       outID: new Buffer('ABC', 'base64'),
@@ -247,7 +230,7 @@ describe('AWSConvertorTests', () => {
       number: 99,
       bool: true,
     };
-    let result = convertor.getAWSKeyFromModel(item, 'number');
+    let result = AWSConvertor.getAWSKeyFromModel(item, 'number');
     let expected = {
       outID: { B: new Buffer('ABC', 'base64') },
       inID: { B: new Buffer('DEF', 'base64') },
@@ -255,6 +238,4 @@ describe('AWSConvertorTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-
-
 });

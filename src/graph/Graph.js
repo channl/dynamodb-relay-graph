@@ -1,6 +1,6 @@
 /* @flow */
 import { invariant } from '../Global';
-import DynamoDB from '../store/DynamoDB';
+import DynamoDB from '../aws/DynamoDB';
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
@@ -18,7 +18,6 @@ import type { NodeQueryExpression, ConnectionArgs, Options } from '../flow/Types
 export default class Graph {
   _writer: EntityWriter;
   _resolvers: BaseResolver[];
-  _convertor: AWSConvertor;
 
   constructor(
     dynamoDBConfig: DynamoDBConfig,
@@ -44,8 +43,6 @@ export default class Graph {
       res4,
       res5
     ];
-
-    this._convertor = new AWSConvertor();
   }
 
   v(expression: NodeQueryExpression, connectionArgs: ConnectionArgs): NodeConnectionQuery {
@@ -122,12 +119,12 @@ export default class Graph {
   getCursor(model: Object, order: ?string) {
     invariant(model, 'Argument \'model\' is null');
 
-    return this._convertor.toCursor(model, order);
+    return AWSConvertor.toCursor(model, order);
   }
 
   getGlobalId(model: Object): string {
     invariant(model, 'Argument \'model\' is null');
 
-    return this._convertor.getGlobalIdFromModel(model);
+    return AWSConvertor.getGlobalIdFromModel(model);
   }
 }

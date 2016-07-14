@@ -3,7 +3,7 @@ import BaseQuery from '../query/BaseQuery';
 import QueryResolver from '../query-resolvers/QueryResolver';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
-import DynamoDB from '../store/DynamoDB';
+import DynamoDB from '../aws/DynamoDB';
 import { log, invariant, warning } from '../Global';
 import type { Options, ConnectionArgs } from '../flow/Types';
 import type { DynamoDBSchema } from 'aws-sdk-promise';

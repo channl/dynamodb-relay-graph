@@ -2,200 +2,168 @@
 import DataLoader from 'dataloader';
 import ExpressionHelper from '../query-resolvers/ExpressionHelper';
 import warning from 'warning';
-import BaseResolver from '../query-resolvers/BaseResolver';
 import RequestHelper from '../query-resolvers/RequestHelper';
-import DynamoDB from '../store/DynamoDB';
+import DynamoDB from '../aws/DynamoDB';
 import AWSConvertor from '../query-helpers/AWSConvertor';
 import { invariant } from '../Global';
-import type { DynamoDBSchema, BatchGetItemResponse } from 'aws-sdk-promise';
+import BatchingDynamoDB from '../utils/BatchingDynamoDB';
+import type { DynamoDBSchema, BatchGetItemRequest,
+  BatchGetItemResponse, AttributeMap } from 'aws-sdk-promise';
+import type { QueryExpression, TypeAndKey, RequestMetadata } from '../flow/Types';
 
-export default class EntityResolver extends BaseResolver {
-  loader: any;
-  convertor: AWSConvertor;
-  dynamoDB: DynamoDB;
-  schema: DynamoDBSchema;
-  batchSize: number;
-  timeout: number;
-  initialRetryDelay: number;
-  getNextRetryDelay: any;
-  requestHelper: RequestHelper;
+export default class EntityResolver {
+  _loader: any;
+  _convertor: AWSConvertor;
+  _dynamoDB: DynamoDB;
+  _schema: DynamoDBSchema;
+  _batchSize: number;
+  _batchingDynamoDB: BatchingDynamoDB;
 
   constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema) {
-    super();
     invariant(dynamoDB, 'Argument \'dynamoDB\' is null');
     invariant(schema, 'Argument \'schema\' is null');
 
-    this.loader = new DataLoader(globalIds => this.getManyAsync(globalIds));
-    this.convertor = new AWSConvertor();
-    this.dynamoDB = dynamoDB;
-    this.schema = schema;
-    this.batchSize = 100;
-    this.timeout = 60000;
-    this.initialRetryDelay = 50;
-    this.getNextRetryDelay = curr => curr * 2;
-    this.requestHelper = new RequestHelper(this.convertor);
+    this._loader = new DataLoader(globalIds => this._loadAsync(globalIds));
+    this._dynamoDB = dynamoDB;
+    this._schema = schema;
+    this._batchSize = 100;
+    this._batchingDynamoDB = new BatchingDynamoDB(dynamoDB);
   }
 
-  async getAsync(key: any) {
-    invariant(key, 'Argument \'key\' is null');
+  async getAsync(expression: QueryExpression) {
+    invariant(expression != null, 'Argument \'expression\' is null');
 
-    if (ExpressionHelper.isGlobalIdExpression(key)) {
-      return this.loader.load(key);
-    }
-
-    if (ExpressionHelper.isModelExpression(key)) {
-      return this.loader.load(this.convertor.getGlobalIdFromModel(key));
-    }
-
-    if (ExpressionHelper.isModelExpression(key)) {
-      return this.loader.load(this.convertor.getGlobalIdFromModel(key));
-    }
-
-    warning(false, 'EntityResolver.getAsync', JSON.stringify({
-      class: 'EntityResolver',
-      function: 'getAsync',
-      key
-    }));
-
-    throw new Error('NotSupportedError(getAsync)');
+    // Convert expression to globalId and fetch it
+    let globalId = ExpressionHelper.getGlobalIdFromExpression(expression);
+    return this._loader.load(globalId);
   }
 
-  async getManyAsync(globalIds: string[]) {
+  async _loadAsync(globalIds: string[]) {
     try {
       invariant(globalIds, 'Argument \'globalIds\' is null');
 
-      // Extract the types and ids
-      let typeAndKeys = globalIds
-        .map(id => this.convertor.getTypeAndAWSKeyFromGlobalId(id));
-
-      // Generate a full request and then split into batches
+      // Convert globalIds to types and keys
+      let typeAndKeys = globalIds.map(AWSConvertor.getTypeAndAWSKeyFromGlobalId);
       let metaData = {};
-      let fullRequest = this.requestHelper.getFullRequestAndMetaData(typeAndKeys, metaData);
-      let requestChunks = this.requestHelper.getRequestChunks(fullRequest, this.batchSize);
-
-      // Execute each batch query
-      let responses = await Promise.all(
-        requestChunks.map(request => this.resolveBatchAsync(request)));
-
-      let fullResponse = this.getFullResponse(responses);
+      let request = RequestHelper.getFullRequestAndMetaData(typeAndKeys, metaData);
+      let response = await this._batchingDynamoDB.batchGetItemAsync(request);
 
       // Extract the results from response in the correct order
-      let typeIdAndAWSItems = typeAndKeys.map(typeAndKey =>
-        this.requestHelper.toTypeIdAndAWSItem(typeAndKey, metaData, fullRequest, fullResponse)
-      );
-
-      // Convert the results into models
-      let results = typeIdAndAWSItems.map(data => {
-        return data.item ?
-          this.convertor.getModelFromAWSItem(data.type, data.item) :
-          null;
-      });
+      let results = typeAndKeys
+        .map(typeAndKey => {
+          let data = this.constructor._toTypeIdAndAWSItem(typeAndKey, metaData, request, response);
+          return data.item ? AWSConvertor.getModelFromAWSItem(data.type, data.item) : null;
+        });
 
       return results;
     } catch (ex) {
       warning(false, JSON.stringify({
         class: 'EntityResolver',
-        function: 'getManyAsync',
+        function: '_loadAsync',
         globalIds
       }));
       throw ex;
     }
   }
 
-  async resolveBatchAsync(request: any): Promise<BatchGetItemResponse> {
+  static _toTypeIdAndAWSItem(typeAndKey: TypeAndKey, metaData: RequestMetadata,
+    request: BatchGetItemRequest, response: BatchGetItemResponse) {
     try {
-      invariant(request, 'Argument \'request\' is null');
+      invariant(typeAndKey != null, 'Argument \'typeAndKey\' is null');
+      invariant(metaData != null, 'Argument \'metaData\' is null');
+      invariant(request != null, 'Argument \'request\' is null');
+      invariant(response != null, 'Argument \'response\' is null');
 
-      let localRequest = request;
-      let fullResponse: BatchGetItemResponse = {
-        ConsumedCapacity: [],
-        Responses: {},
-        UnprocessedKeys: {},
+      let tableName = AWSConvertor.getTableName(typeAndKey.type);
+      let metaDataItem = metaData[tableName];
+      invariant(metaDataItem != null, '\'metaDataItem\' is null');
+
+      let requestItem = request.RequestItems[tableName].Keys;
+      let responseItem = response.Responses[tableName];
+
+      // Get the matching request
+      let index = metaDataItem
+        .typeAndKeys
+        .findIndex(i => i.type === typeAndKey.type && this._areKeysEqual(i.key, typeAndKey.key));
+      invariant(index >= 0, 'Metadata typeAndKey not found');
+
+      let requestObject = requestItem[index];
+      invariant(requestObject != null, 'Request item not found');
+
+      // Get the matching response
+      let responseObject = responseItem
+        .find(i => this._isMatchingResponseObject(typeAndKey.type, requestObject, i));
+      invariant(responseObject != null, 'Response item not found');
+
+      let result = {
+        type: typeAndKey.type,
+        id: typeAndKey.key.id,
+        item: responseObject
       };
 
-      let startTime = Date.now();
-      let retryDelay = this.initialRetryDelay;
-      while (!this.isTimeoutExceeded(startTime)) {
+      return result;
 
-        let response = await this.dynamoDB.batchGetItemAsync(localRequest);
-
-        // Append any completed responses into our full response
-        fullResponse = this.getFullResponse([ fullResponse, response.data ]);
-        if (Object.keys(response.data.UnprocessedKeys).length === 0) {
-          return fullResponse;
-        }
-
-        // Create a new localRequest using unprocessedItems
-        warning(false,
-          'Some items in the batch were unprocessed, retrying in ' +
-          retryDelay + 'ms');
-
-        localRequest = { RequestItems: response.data.UnprocessedKeys };
-
-        // Pause before retrying
-        await this.setTimeoutAsync(retryDelay);
-
-        // Increase the next retry delay using the exponential algorithm
-        retryDelay = this.getNextRetryDelay(retryDelay);
-      }
-
-      throw new Error('TimeoutError (resolveBatchAsync)');
     } catch (ex) {
       warning(false, JSON.stringify({
         class: 'EntityResolver',
-        function: 'resolveBatchAsync',
-        request
+        function: 'toTypeIdAndAWSItem',
+        typeAndKey, metaData, response, request
+      }));
+
+      throw ex;
+    }
+  }
+
+  static _isMatchingResponseObject(type: string,
+    requestObject: AttributeMap, responseObject: AttributeMap): boolean {
+    try {
+      invariant(type, 'Argument \'type\' is null');
+      invariant(requestObject, 'Argument \'requestObject\' is null');
+      invariant(responseObject, 'Argument \'responseObject\' is null');
+
+      let requestModel = AWSConvertor.getModelFromAWSItem(type, requestObject);
+      let responseModel = AWSConvertor.getModelFromAWSItem(type, responseObject);
+
+      if (type.endsWith('Edge')) {
+        return this._areEqual(requestModel.outID, responseModel.outID) &&
+          this._areEqual(requestModel.inID, responseModel.inID);
+      }
+
+      return this._areEqual(requestModel.id, responseModel.id);
+    } catch (ex) {
+      warning(false, JSON.stringify({
+        class: 'EntityResolver',
+        function: 'isMatchingResponseObject',
+        type, requestObject, responseObject
       }));
       throw ex;
     }
   }
 
-  getFullResponse(responses: BatchGetItemResponse[]): BatchGetItemResponse {
-    invariant(responses, 'Argument \'responses\' is null');
-
-    let fullResponse = {
-      ConsumedCapacity: [],
-      Responses: {},
-      UnprocessedKeys: {},
-    };
-
-    for(let i = 0; i < responses.length; i++) {
-      let response = responses[i];
-      Object.keys(response.Responses).forEach(tableName => {
-        let responseTable = response.Responses[tableName];
-        let fullResponseTable = fullResponse.Responses[tableName];
-        if (!fullResponseTable) {
-          fullResponseTable = [];
-          fullResponse.Responses[tableName] = fullResponseTable;
-        }
-
-        // Copy the items over
-        responseTable.forEach(item => fullResponseTable.push(item));
-      });
+  static _areEqual(a: any, b: any) {
+    if (a instanceof Buffer && b instanceof Buffer) {
+      return a.equals(b);
     }
 
-    return fullResponse;
+    return a === b;
   }
 
-  setTimeoutAsync(ms: number) {
-    invariant(typeof ms === 'number', 'Argument \'ms\' is not a number');
+  static _areKeysEqual(a: AttributeMap, b: AttributeMap) {
+    // TODO deep equals?
+    if (Object.keys(a).length !== Object.keys(a).length) {
+      return false;
+    }
 
-    return new Promise(resolve => {
-      setTimeout(resolve, ms);
-    });
-  }
+    for (let key of Object.keys(a)) {
+      for (let keyValue of Object.keys(a[key])) {
+        let valA = a[key][keyValue];
+        let valB = b[key][keyValue];
+        if (!this._areEqual(valA, valB)) {
+          return false;
+        }
+      }
+    }
 
-  isTimeoutExceeded(startTime: number) {
-    invariant(typeof startTime === 'number', 'Argument \'startTime\' is not a number');
-
-    return startTime + this.timeout < Date.now();
-  }
-
-  getRequestItemCount(request: any) {
-    invariant(request, 'Argument \'request\' is null');
-    return Object
-      .keys(request.RequestItems)
-      .map(tn => request.RequestItems[tn].Keys.length)
-      .reduce((pre, cur) => pre + cur);
+    return true;
   }
 }

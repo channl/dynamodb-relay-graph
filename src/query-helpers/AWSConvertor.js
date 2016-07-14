@@ -2,11 +2,11 @@
 import { warning, invariant } from '../Global';
 import { fromGlobalId, toGlobalId } from 'graphql-relay';
 import type { TypeAndKey, Model } from '../flow/Types';
-import type { ItemKey } from 'aws-sdk-promise';
+import type { AttributeMap } from 'aws-sdk-promise';
 
 export default class AWSConvertor {
 
-  fromCursor(cursor: string) {
+  static fromCursor(cursor: string) {
     invariant(typeof cursor === 'string', 'Argument \'cursor\' is not a string');
 
     let b = new Buffer(cursor, 'base64');
@@ -28,7 +28,7 @@ export default class AWSConvertor {
     return item;
   }
 
-  toCursor(item: Model, order: ?string) {
+  static toCursor(item: Model, order: ?string) {
     invariant(item, 'Argument \'item\' is null');
 
     let key = this.getAWSKeyFromModel(item, order);
@@ -37,12 +37,12 @@ export default class AWSConvertor {
     return b.toString('base64');
   }
 
-  getTableName(type: string) {
+  static getTableName(type: string) {
     invariant(typeof type === 'string', 'Argument \'type\' is not a string');
     return type + 's';
   }
 
-  getAWSItemFromModel(item: Model) {
+  static getAWSItemFromModel(item: Model) {
     try {
       invariant(item, 'Argument \'item\' is null');
 
@@ -77,7 +77,7 @@ export default class AWSConvertor {
     }
   }
 
-  getGlobalIdFromModel(model: Model): string {
+  static getGlobalIdFromModel(model: Model): string {
     try {
       invariant(model, 'Argument \'model\' is null');
 
@@ -98,7 +98,7 @@ export default class AWSConvertor {
     }
   }
 
-  getModelFromGlobalId(gid: string): Model {
+  static getModelFromGlobalId(gid: string): Model {
     try {
       invariant(typeof gid === 'string', 'Argument \'gid\' is not a string');
 
@@ -129,7 +129,7 @@ export default class AWSConvertor {
     }
   }
 
-  getTypeAndAWSKeyFromGlobalId(id: string): TypeAndKey {
+  static getTypeAndAWSKeyFromGlobalId(id: string): TypeAndKey {
     try {
       invariant(typeof id === 'string', 'Argument \'id\' is not a string');
 
@@ -149,7 +149,7 @@ export default class AWSConvertor {
     }
   }
 
-  getModelFromAWSItem(type: string, item: ItemKey): Model {
+  static getModelFromAWSItem(type: string, item: AttributeMap): Model {
     try {
       invariant(typeof type === 'string', 'Argument \'type\' is not a string');
       invariant(item, 'Argument \'item\' is null');
@@ -183,7 +183,7 @@ export default class AWSConvertor {
     }
   }
 
-  getAWSKeyFromModel(item: Model, indexedByAttributeName: ?string) {
+  static getAWSKeyFromModel(item: Model, indexedByAttributeName: ?string) {
     try {
       invariant(item, 'Argument \'item\' is null');
 
@@ -210,7 +210,8 @@ export default class AWSConvertor {
     }
   }
 
-  setAWSAttribute(name: string, value: Buffer | number | string | boolean, awsItem: ItemKey) {
+  static setAWSAttribute(name: string,
+    value: Buffer | number | string | boolean, awsItem: AttributeMap) {
     invariant(typeof name === 'string', 'Argument \'name\' is not a string');
     invariant(value, 'Argument \'value\' is null');
     invariant(awsItem, 'Argument \'awsItem\' is null');
@@ -233,7 +234,7 @@ export default class AWSConvertor {
     invariant(false, 'Attribute type not supported');
   }
 
-  _getGlobalIdParam(value: Buffer | string | number | boolean) {
+  static _getGlobalIdParam(value: Buffer | string | number | boolean) {
     invariant(value, 'Argument \'value\' is null');
 
     if (value instanceof Buffer) {
@@ -251,7 +252,7 @@ export default class AWSConvertor {
     invariant(false, 'Attribute type not supported');
   }
 
-  _getValueFromGlobalIdParam(param: string) {
+  static _getValueFromGlobalIdParam(param: string) {
     try {
       invariant(typeof param === 'string', 'Argument \'param\' is not a string');
 

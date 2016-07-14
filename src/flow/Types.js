@@ -1,5 +1,6 @@
 /* @flow */
 import { MeasuredCollection } from 'measured';
+import type { AttributeMap } from 'aws-sdk-promise';
 
 export type ConnectionArgs = {
   first?: number,
@@ -27,23 +28,24 @@ export type TypeOnlyNodeQueryExpression = {
 
 export type TypeAndIdNodeQueryExpression = {
  type: string,
- id: Buffer
+ id: Value,
 };
 
-export type EdgeQueryExpression = {
+export type EdgeQueryExpression = InEdgeQueryExpression | OutEdgeQueryExpression;
+
+export type InEdgeQueryExpression = {
   type: string,
-  inID?: Object,
-  outID?: Object,
+  inID: Value,
 };
 
-export type Node = {
+export type OutEdgeQueryExpression = {
   type: string,
-  id: Buffer
+  outID: Value,
 };
 
 export type TypeAndKey = {
   type: string,
-  key: Object,
+  key: AttributeMap,
 };
 
 export type RequestMetadata = {
@@ -54,7 +56,9 @@ export type TableMetadata = {
   typeAndKeys: TypeAndKey[],
 };
 
+export type Value = string | Buffer | number | boolean;
+
 export type Model = {
   type: string,
-  [propertyName: string]: string | Buffer | number | boolean,
+  [propertyName: string]: Value,
 };
