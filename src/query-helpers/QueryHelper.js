@@ -1,89 +1,84 @@
+/* @flow */
 import { warning, invariant } from '../Global';
 import uuid from 'node-uuid';
-import EntityResolver from '../query-resolvers/EntityResolver';
-import DynamoDB from '../store/DynamoDB';
 import ResolverHelper from '../query-helpers/ResolverHelper';
+import AWSConvertor from '../query-helpers/AWSConvertor';
 import type { ConnectionArgs } from '../flow/Types';
-import type { DynamoDBSchema, DynamoDBTable, KeyDefinition } from 'aws-sdk-promise';
+import type { DynamoDBTable, KeyDefinition, DynamoDBKeySchema } from 'aws-sdk-promise';
 
-export default class QueryResolver extends EntityResolver {
-  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema) {
-    super(dynamoDB, schema);
-  }
+export default class QueryHelper {
 
-  getExclusiveStartKey(connectionArgs: ConnectionArgs) {
+  static getExclusiveStartKey(connectionArgs: ConnectionArgs) {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    if (typeof connectionArgs.first !== 'undefined') {
-      return typeof connectionArgs.after === 'undefined' ?
+    if (connectionArgs.first != null) {
+      return connectionArgs.after == null ?
         undefined :
-        this.convertor.fromCursor(connectionArgs.after);
+        AWSConvertor.fromCursor(connectionArgs.after);
     }
 
-    if (typeof connectionArgs.last !== 'undefined') {
-      return typeof connectionArgs.before === 'undefined' ?
+    if (connectionArgs.last != null) {
+      return connectionArgs.before == null ?
         undefined :
-        this.convertor.fromCursor(connectionArgs.before);
+        AWSConvertor.fromCursor(connectionArgs.before);
     }
 
-    throw new Error('First or Last must be specified');
+    invariant(false, 'First or Last must be specified');
   }
 
-  isForwardScan(connectionArgs: ConnectionArgs) {
+  static isForwardScan(connectionArgs: ConnectionArgs) {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    if (typeof connectionArgs.first !== 'undefined') {
+    if (connectionArgs.first != null) {
       return true;
     }
 
-    if (typeof connectionArgs.last !== 'undefined') {
+    if (connectionArgs.last != null) {
       return false;
     }
 
-    throw new Error('First or Last must be specified');
+    invariant(false, 'First or Last must be specified');
   }
 
-  getScanIndexForward(connectionArgs: ConnectionArgs) {
+  static getScanIndexForward(connectionArgs: ConnectionArgs) {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    if (typeof connectionArgs.first !== 'undefined' &&
-        typeof connectionArgs.orderDesc !== 'undefined' &&
-        connectionArgs.orderDesc) {
+    if (connectionArgs.first != null && connectionArgs.orderDesc != null &&
+      connectionArgs.orderDesc) {
       return false;
     }
 
-    if (typeof connectionArgs.first !== 'undefined') {
+    if (connectionArgs.first != null) {
       return true;
     }
 
-    if (typeof connectionArgs.last !== 'undefined' &&
-        typeof connectionArgs.orderDesc !== 'undefined' &&
+    if (connectionArgs.last != null && connectionArgs.orderDesc != null &&
         connectionArgs.orderDesc) {
       return true;
     }
 
-    if (typeof connectionArgs.last !== 'undefined') {
+    if (connectionArgs.last != null) {
       return false;
     }
 
-    throw new Error('First or Last must be specified');
+    invariant(false, 'First or Last must be specified');
   }
 
-  getLimit(connectionArgs: ConnectionArgs) {
+  static getLimit(connectionArgs: ConnectionArgs) {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    if (typeof connectionArgs.first !== 'undefined') {
+    if (connectionArgs.first != null) {
       return connectionArgs.first;
     }
 
-    if (typeof connectionArgs.last !== 'undefined') {
+    if (connectionArgs.last != null) {
       return connectionArgs.last;
     }
 
-    throw new Error('First or Last must be specified');
+    invariant(false, 'First or Last must be specified');
   }
 
-  getExpressionAttributeNames(expression: Object,
+  static getExpressionAttributeNames(expression: Object,
     connectionArgs: ConnectionArgs, include: string[]) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
@@ -103,7 +98,7 @@ export default class QueryResolver extends EntityResolver {
     return result;
   }
 
-  getIndexSchema(expression: Object,
+  static getIndexSchema(expression: Object,
     connectionArgs: ConnectionArgs, tableSchema: DynamoDBTable) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
@@ -169,7 +164,7 @@ export default class QueryResolver extends EntityResolver {
     }
   }
 
-  isKeySchemaSatisfied(proposed: KeyDefinition, required: KeyDefinition) {
+  static isKeySchemaSatisfied(proposed: DynamoDBKeySchema, required: ?DynamoDBKeySchema) {
     invariant(proposed, 'Argument \'proposed\' is null');
     invariant(required, 'Argument \'required\' is null');
 
@@ -181,23 +176,21 @@ export default class QueryResolver extends EntityResolver {
 
     // Ensure all required keys are in the proposed key schema
     let hashKeySatisfied = false;
-    for(let i in required) {
-      if ({}.hasOwnProperty.call(required, i)) {
-        let matchingKey: ?KeyDefinition = proposed
-          .find(attr => attr.AttributeName === required[i].AttributeName);
-        if (!matchingKey) {
-          return false;
-        }
+    for(let requiredItem of required) {
+      let matchingKey: ?KeyDefinition = proposed
+        .find(attr => attr.AttributeName === requiredItem.AttributeName);
+      if (!matchingKey) {
+        return false;
+      }
 
-        // '*' KeyType means HASH or RANGE should match
-        if (required[i].KeyType !== '*' &&
-          required[i].KeyType !== matchingKey.KeyType) {
-          return false;
-        }
+      // '*' KeyType means HASH or RANGE should match
+      if (requiredItem.KeyType !== '*' &&
+        requiredItem.KeyType !== matchingKey.KeyType) {
+        return false;
+      }
 
-        if (matchingKey.KeyType === 'HASH') {
-          hashKeySatisfied = true;
-        }
+      if (matchingKey.KeyType === 'HASH') {
+        hashKeySatisfied = true;
       }
     }
 
@@ -205,7 +198,7 @@ export default class QueryResolver extends EntityResolver {
     return hashKeySatisfied;
   }
 
-  getExpressionKeyType(expression: Object) {
+  static getExpressionKeyType(expression: Object) {
     invariant(expression, 'Argument \'expression\' is null');
 
     if (typeof expression.after !== 'undefined' ||
@@ -230,7 +223,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('NotSupportedError');
   }
 
-  getProjectionExpression(expression: any,
+  static getProjectionExpression(expression: any,
     connectionArgs: ConnectionArgs, include: string[]) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
@@ -247,12 +240,12 @@ export default class QueryResolver extends EntityResolver {
       .reduce((pre, cur) => pre === '' ? cur : pre + ', ' + cur, '');
   }
 
-  getExpressionAttributeName(name: string) {
+  static getExpressionAttributeName(name: string) {
     invariant(name, 'Argument \'name\' is null');
     return '#res' + name;
   }
 
-  getExpressionAttributeValues(expression: any, tableSchema: any) {
+  static getExpressionAttributeValues(expression: any, tableSchema: any) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(tableSchema, 'Argument \'tableSchema\' is null');
 
@@ -270,7 +263,7 @@ export default class QueryResolver extends EntityResolver {
     return result;
   }
 
-  getExpressionAttributeValue(name: string,
+  static getExpressionAttributeValue(name: string,
     expression: any, result: any, tableSchema: DynamoDBTable) {
     invariant(name, 'Argument \'name\' is null');
     invariant(expression, 'Argument \'expression\' is null');
@@ -308,14 +301,14 @@ export default class QueryResolver extends EntityResolver {
     }
   }
 
-  getBeginsWithAttributeValueAsType(
+  static getBeginsWithAttributeValueAsType(
     value: any, asType: string) { // eslint-disable-line no-unused-vars
     invariant(value, 'Argument \'value\' is null');
     invariant(asType, 'Argument \'asType\' is null');
     return value;
   }
 
-  getBeforeAttributeValueAsType(
+  static getBeforeAttributeValueAsType(
     value: any, asType: string) {
     invariant(value, 'Argument \'value\' is null');
     invariant(asType, 'Argument \'asType\' is null');
@@ -341,7 +334,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('NotSupportedError (getAttributeValueAsType)');
   }
 
-  getAfterAttributeValueAsType(value: any, asType: string) {
+  static getAfterAttributeValueAsType(value: any, asType: string) {
     invariant(value, 'Argument \'value\' is null');
     invariant(asType, 'Argument \'asType\' is null');
     let localValue = value;
@@ -380,7 +373,7 @@ export default class QueryResolver extends EntityResolver {
     throw new Error('NotSupportedError (getAttributeValueAsType)');
   }
 
-  getKeyConditionExpression(expression: any) {
+  static getKeyConditionExpression(expression: any) {
     invariant(expression, 'Argument \'expression\' is null');
     let names = Object
       .keys(expression)
@@ -395,7 +388,7 @@ export default class QueryResolver extends EntityResolver {
       .reduce((pre, cur) => pre === '' ? cur : pre + ' AND ' + cur, '');
   }
 
-  getKeyConditionExpressionItem(name: string, expression: any) {
+  static getKeyConditionExpressionItem(name: string, expression: any) {
     invariant(name, 'Argument \'name\' is null');
 
     if (typeof expression === 'string' ||

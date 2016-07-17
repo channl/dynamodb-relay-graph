@@ -4,6 +4,7 @@ import DynamoDB from '../aws/DynamoDB';
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
+import EntityResolver from '../query-resolvers/EntityResolver';
 import AggregateResolver from '../query-resolvers/AggregateResolver';
 import EdgeConnectionResolver from '../query-resolvers/EdgeConnectionResolver';
 import NodeConnectionResolver from '../query-resolvers/NodeConnectionResolver';
@@ -19,22 +20,21 @@ export default class Graph {
   _writer: EntityWriter;
   _resolvers: BaseResolver[];
 
-  constructor(
-    dynamoDBConfig: DynamoDBConfig,
-    schema: DynamoDBSchema) {
+  constructor(dynamoDBConfig: DynamoDBConfig, schema: DynamoDBSchema) {
 
     invariant(dynamoDBConfig, 'Argument \'dynamoDBConfig\' is null');
-    invariant(schema, 'Argument \'schema\' is null');
 
     let dynamoDB = new DynamoDB(dynamoDBConfig);
-    this._writer = new EntityWriter(dynamoDB, schema);
+    let entityResolver = new EntityResolver(dynamoDB);
+
+    this._writer = new EntityWriter(dynamoDB);
 
     let res1 = new AggregateResolver((query, innerResult, stats) =>
       this.getQueryAsync(query, innerResult, stats));
-    let res2 = new EdgeConnectionResolver(dynamoDB, schema);
-    let res3 = new NodeConnectionResolver(dynamoDB, schema);
+    let res2 = new EdgeConnectionResolver(dynamoDB, schema, entityResolver);
+    let res3 = new NodeConnectionResolver(dynamoDB, schema, entityResolver);
     let res4 = new SingleResolver();
-    let res5 = new ToNodesConnectionResolver(dynamoDB, schema);
+    let res5 = new ToNodesConnectionResolver(entityResolver);
 
     this._resolvers = [
       res1,

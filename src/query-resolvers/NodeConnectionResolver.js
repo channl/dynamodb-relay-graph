@@ -1,16 +1,27 @@
 /* @flow */
 import BaseQuery from '../query/BaseQuery';
-import QueryResolver from '../query-resolvers/QueryResolver';
+import BaseResolver from '../query-resolvers/BaseResolver';
+import EntityResolver from '../query-resolvers/EntityResolver';
+import QueryHelper from '../query-helpers/QueryHelper';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
-import ExpressionHelper from '../query-resolvers/ExpressionHelper';
+import ExpressionHelper from '../query-helpers/ExpressionHelper';
+import AWSConvertor from '../query-helpers/AWSConvertor';
 import DynamoDB from '../aws/DynamoDB';
 import { log, invariant, warning } from '../Global';
 import type { Options, ConnectionArgs } from '../flow/Types';
 import type { DynamoDBSchema } from 'aws-sdk-promise';
 
-export default class NodeConnectionResolver extends QueryResolver {
-  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema) {
-    super(dynamoDB, schema);
+export default class NodeConnectionResolver extends BaseResolver {
+  _dynamoDB: DynamoDB;
+  _schema: DynamoDBSchema;
+  _entityResolver: EntityResolver;
+
+  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema, entityResolver: EntityResolver) {
+    super();
+
+    this._dynamoDB = dynamoDB;
+    this._schema = schema;
+    this._entityResolver = entityResolver;
   }
 
   canResolve(query: BaseQuery): boolean {
@@ -35,12 +46,12 @@ export default class NodeConnectionResolver extends QueryResolver {
         options);
 
       let nodes = await Promise
-        .all(nodeIds.edges.map(e => this.getAsync(e.id)));
+        .all(nodeIds.edges.map(e => this._entityResolver.getAsync(e.id)));
 
       // Have to filter out nulls due to getNodeIdConnection implementation
       nodes = nodes.filter(n => n !== null);
       let edges = nodes.map(node => {
-        let cursor = this.convertor.toCursor(node, query.connectionArgs.order);
+        let cursor = AWSConvertor.toCursor(node, query.connectionArgs.order);
         return {
           cursor,
           node
@@ -114,7 +125,7 @@ export default class NodeConnectionResolver extends QueryResolver {
         // Type and id are supplied so get the item direct
         return {
           edges: [ {
-            id: this.convertor.getGlobalIdFromModel(expression)
+            id: AWSConvertor.getGlobalIdFromModel(expression)
           } ],
           pageInfo: {
             hasPreviousPage: false,
@@ -127,7 +138,7 @@ export default class NodeConnectionResolver extends QueryResolver {
         // This query expression only contains a type
         // so we should do a dynamo scan
         let request = this.getScanRequest(expression, query.connectionArgs);
-        let response = await this.dynamoDB.scanAsync(request);
+        let response = await this._dynamoDB.scanAsync(request);
         let result = this.getResult(response, expression, query.connectionArgs);
         return result;
       }
@@ -141,7 +152,7 @@ export default class NodeConnectionResolver extends QueryResolver {
           request}, null, 2));
       }
 
-      let response = await this.dynamoDB.queryAsync(request);
+      let response = await this._dynamoDB.queryAsync(request);
       let result = this.getResult(response, expression, query.connectionArgs);
       return result;
     } catch (ex) {
@@ -215,22 +226,22 @@ export default class NodeConnectionResolver extends QueryResolver {
       invariant(expression, 'Argument \'expression\' is null');
       invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-      let tableName = this.convertor.getTableName(expression.type);
+      let tableName = AWSConvertor.getTableName(expression.type);
 
-      let projectionExpression = this.getProjectionExpression(
+      let projectionExpression = QueryHelper.getProjectionExpression(
         expression,
         connectionArgs,
         [ 'id' ]);
 
-      let expressionAttributeNames = this.getExpressionAttributeNames(
+      let expressionAttributeNames = QueryHelper.getExpressionAttributeNames(
         expression,
         connectionArgs,
         [ 'id' ]);
 
       return {
         TableName: tableName,
-        ExclusiveStartKey: this.getExclusiveStartKey(connectionArgs),
-        Limit: this.getLimit(connectionArgs),
+        ExclusiveStartKey: QueryHelper.getExclusiveStartKey(connectionArgs),
+        Limit: QueryHelper.getLimit(connectionArgs),
         ProjectionExpression: projectionExpression,
         ExpressionAttributeNames: expressionAttributeNames
       };
@@ -249,31 +260,31 @@ export default class NodeConnectionResolver extends QueryResolver {
       invariant(expression, 'Argument \'expression\' is null');
       invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-      let tableName = this.convertor.getTableName(expression.type);
+      let tableName = AWSConvertor.getTableName(expression.type);
       let tableSchema = this
-        .schema
+        ._schema
         .tables
         .find(ts => ts.TableName === tableName);
 
       invariant(tableSchema, 'TableSchema ' + tableName + ' not found');
 
-      let indexSchema = this.getIndexSchema(
+      let indexSchema = QueryHelper.getIndexSchema(
         expression,
         connectionArgs,
         tableSchema);
 
       let indexName = indexSchema ? indexSchema.IndexName : undefined;
 
-      let projectionExpression = this.getProjectionExpression(
+      let projectionExpression = QueryHelper.getProjectionExpression(
         expression,
         connectionArgs,
         [ 'id' ]);
 
-      let expressionAttributeValues = this.getExpressionAttributeValues(
+      let expressionAttributeValues = QueryHelper.getExpressionAttributeValues(
         expression,
         tableSchema);
 
-      let expressionAttributeNames = this.getExpressionAttributeNames(
+      let expressionAttributeNames = QueryHelper.getExpressionAttributeNames(
         expression,
         connectionArgs,
         [ 'id' ]);
@@ -281,11 +292,11 @@ export default class NodeConnectionResolver extends QueryResolver {
       return {
         TableName: tableName,
         IndexName: indexName,
-        ExclusiveStartKey: this.getExclusiveStartKey(connectionArgs),
-        Limit: this.getLimit(connectionArgs),
-        ScanIndexForward: this.getScanIndexForward(connectionArgs),
+        ExclusiveStartKey: QueryHelper.getExclusiveStartKey(connectionArgs),
+        Limit: QueryHelper.getLimit(connectionArgs),
+        ScanIndexForward: QueryHelper.getScanIndexForward(connectionArgs),
         ProjectionExpression: projectionExpression,
-        KeyConditionExpression: this.getKeyConditionExpression(expression),
+        KeyConditionExpression: QueryHelper.getKeyConditionExpression(expression),
         ExpressionAttributeValues: expressionAttributeValues,
         ExpressionAttributeNames: expressionAttributeNames
       };
@@ -309,11 +320,11 @@ export default class NodeConnectionResolver extends QueryResolver {
       .Items
       .map(item => this.getResultEdge(expression, item));
 
-    let hasNextPage = this.isForwardScan(connectionArgs) ?
+    let hasNextPage = QueryHelper.isForwardScan(connectionArgs) ?
       typeof response.data.LastEvaluatedKey !== 'undefined' :
       false;
 
-    let hasPreviousPage = this.isForwardScan(connectionArgs) ?
+    let hasPreviousPage = QueryHelper.isForwardScan(connectionArgs) ?
       false :
       typeof response.data.LastEvaluatedKey !== 'undefined';
 
@@ -338,9 +349,9 @@ export default class NodeConnectionResolver extends QueryResolver {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(item, 'Argument \'item\' is null');
 
-    let model = this.convertor.getModelFromAWSItem(expression.type, item);
+    let model = AWSConvertor.getModelFromAWSItem(expression.type, item);
     return {
-      id: this.convertor.getGlobalIdFromModel({type: expression.type, id: model.id})
+      id: AWSConvertor.getGlobalIdFromModel({type: expression.type, id: model.id})
     };
   }
 }

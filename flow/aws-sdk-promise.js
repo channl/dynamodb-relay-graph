@@ -315,7 +315,9 @@ declare module 'aws-sdk-promise' {
     AttributeType: string,
   };
 
-  declare type DynamoDBKeySchema = {
+  declare type DynamoDBKeySchema = DynamoDBKeySchemaItem[];
+
+  declare type DynamoDBKeySchemaItem = {
     AttributeName: string,
     KeyType: string,
   };
@@ -323,7 +325,7 @@ declare module 'aws-sdk-promise' {
   declare type DynamoDBTable = {
     TableName: string,
     AttributeDefinitions: DynamoDBAttributeDefinition[],
-    KeySchema: DynamoDBKeySchema[],
+    KeySchema: DynamoDBKeySchema,
     GlobalSecondaryIndexes?: DynamoDBGlobalSecondaryIndex[],
     LocalSecondaryIndexes?: DynamoDBLocalSecondaryIndex[],
     ProvisionedThroughput: DynamoDBProvisionedThroughput,
@@ -332,14 +334,14 @@ declare module 'aws-sdk-promise' {
 
   declare type DynamoDBGlobalSecondaryIndex = {
     IndexName: string,
-    KeySchema: DynamoDBKeySchema [],
+    KeySchema: DynamoDBKeySchema,
     Projection: DynamoDBProjection,
     ProvisionedThroughput: DynamoDBProvisionedThroughput
   };
 
   declare type DynamoDBLocalSecondaryIndex = {
     IndexName: string,
-    KeySchema: DynamoDBKeySchema [],
+    KeySchema: DynamoDBKeySchema,
     Projection: DynamoDBProjection,
   };
 

@@ -1,33 +1,23 @@
 /* @flow */
 import DataLoader from 'dataloader';
-import ExpressionHelper from '../query-resolvers/ExpressionHelper';
+import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import warning from 'warning';
-import RequestHelper from '../query-resolvers/RequestHelper';
 import DynamoDB from '../aws/DynamoDB';
 import AWSConvertor from '../query-helpers/AWSConvertor';
 import { invariant } from '../Global';
 import BatchingDynamoDB from '../utils/BatchingDynamoDB';
-import type { DynamoDBSchema, BatchGetItemRequest,
-  BatchGetItemResponse, AttributeMap } from 'aws-sdk-promise';
-import type { QueryExpression, TypeAndKey, RequestMetadata } from '../flow/Types';
+import type { BatchGetItemRequest, AttributeMap } from 'aws-sdk-promise';
+import type { QueryExpression, TypeAndKey } from '../flow/Types';
 
 export default class EntityResolver {
   _loader: any;
-  _convertor: AWSConvertor;
-  _dynamoDB: DynamoDB;
-  _schema: DynamoDBSchema;
-  _batchSize: number;
-  _batchingDynamoDB: BatchingDynamoDB;
+  _dynamoDB: BatchingDynamoDB;
 
-  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema) {
+  constructor(dynamoDB: DynamoDB) {
     invariant(dynamoDB, 'Argument \'dynamoDB\' is null');
-    invariant(schema, 'Argument \'schema\' is null');
 
     this._loader = new DataLoader(globalIds => this._loadAsync(globalIds));
-    this._dynamoDB = dynamoDB;
-    this._schema = schema;
-    this._batchSize = 100;
-    this._batchingDynamoDB = new BatchingDynamoDB(dynamoDB);
+    this._dynamoDB = new BatchingDynamoDB(dynamoDB);
   }
 
   async getAsync(expression: QueryExpression) {
@@ -44,18 +34,11 @@ export default class EntityResolver {
 
       // Convert globalIds to types and keys
       let typeAndKeys = globalIds.map(AWSConvertor.getTypeAndAWSKeyFromGlobalId);
-      let metaData = {};
-      let request = RequestHelper.getFullRequestAndMetaData(typeAndKeys, metaData);
-      let response = await this._batchingDynamoDB.batchGetItemAsync(request);
-
-      // Extract the results from response in the correct order
-      let results = typeAndKeys
-        .map(typeAndKey => {
-          let data = this.constructor._toTypeIdAndAWSItem(typeAndKey, metaData, request, response);
-          return data.item ? AWSConvertor.getModelFromAWSItem(data.type, data.item) : null;
-        });
-
-      return results;
+      let request = this.constructor._getRequest(typeAndKeys);
+      let response = await this._dynamoDB.batchGetItemAsync(request);
+      let result = this.constructor._toResult(response, typeAndKeys);
+      // Request and Response are sorted by table so order by original request
+      return result;
     } catch (ex) {
       warning(false, JSON.stringify({
         class: 'EntityResolver',
@@ -66,52 +49,50 @@ export default class EntityResolver {
     }
   }
 
-  static _toTypeIdAndAWSItem(typeAndKey: TypeAndKey, metaData: RequestMetadata,
-    request: BatchGetItemRequest, response: BatchGetItemResponse) {
-    try {
-      invariant(typeAndKey != null, 'Argument \'typeAndKey\' is null');
-      invariant(metaData != null, 'Argument \'metaData\' is null');
-      invariant(request != null, 'Argument \'request\' is null');
-      invariant(response != null, 'Argument \'response\' is null');
+  static _toResult(response, typeAndKeys) {
+    let items = Object
+      .keys(response.Responses)
+      .map(tableName => {
+        let responseItems = response.Responses[tableName];
+        responseItems.map(item => {
+          return {
+            item,
+            model: AWSConvertor.getModelFromAWSItem(AWSConvertor.getTypeName(tableName), item)
+          };
+        });
+      }
+    );
 
-      let tableName = AWSConvertor.getTableName(typeAndKey.type);
-      let metaDataItem = metaData[tableName];
-      invariant(metaDataItem != null, '\'metaDataItem\' is null');
+    // TODO
+    let result = typeAndKeys.map(i => items.find(item => item === i));
+    return result;
+  }
 
-      let requestItem = request.RequestItems[tableName].Keys;
-      let responseItem = response.Responses[tableName];
+  static _getRequest(typeAndKeys: TypeAndKey[]): BatchGetItemRequest {
+    invariant(typeAndKeys, 'Argument \'typeAndKeys\' is null');
 
-      // Get the matching request
-      let index = metaDataItem
-        .typeAndKeys
-        .findIndex(i => i.type === typeAndKey.type && this._areKeysEqual(i.key, typeAndKey.key));
-      invariant(index >= 0, 'Metadata typeAndKey not found');
+    // The metadate here stores the mapping between the
+    // request item and the type and id
+    let request: BatchGetItemRequest = { RequestItems: {} };
+    typeAndKeys
+      .forEach(typeAndKey => {
+        let tableName = AWSConvertor.getTableName(typeAndKey.type);
+        if (!request.RequestItems[tableName]) {
+          request.RequestItems[tableName] = { Keys: [] };
+        }
 
-      let requestObject = requestItem[index];
-      invariant(requestObject != null, 'Request item not found');
+        request.RequestItems[tableName].Keys.push(typeAndKey.key);
+      });
 
-      // Get the matching response
-      let responseObject = responseItem
-        .find(i => this._isMatchingResponseObject(typeAndKey.type, requestObject, i));
-      invariant(responseObject != null, 'Response item not found');
+    return request;
+  }
 
-      let result = {
-        type: typeAndKey.type,
-        id: typeAndKey.key.id,
-        item: responseObject
-      };
-
-      return result;
-
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'EntityResolver',
-        function: 'toTypeIdAndAWSItem',
-        typeAndKey, metaData, response, request
-      }));
-
-      throw ex;
+  static _areEqual(a: any, b: any) {
+    if (a instanceof Buffer && b instanceof Buffer) {
+      return a.equals(b);
     }
+
+    return a === b;
   }
 
   static _isMatchingResponseObject(type: string,

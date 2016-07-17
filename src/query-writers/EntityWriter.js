@@ -2,23 +2,20 @@
 import { warning, invariant } from '../Global';
 import DynamoDB from '../aws/DynamoDB';
 import AWSConvertor from '../query-helpers/AWSConvertor';
-import type { DynamoDBSchema, BatchWriteItemRequest } from 'aws-sdk-promise';
+import type { BatchWriteItemRequest } from 'aws-sdk-promise';
 
 export default class EntityWriter {
   dynamoDB: DynamoDB;
-  schema: any;
   convertor: AWSConvertor;
   batchSize: number;
   timeout: number;
   initialRetryDelay: number;
   getNextRetryDelay: (curr: number) => number;
 
-  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema) {
+  constructor(dynamoDB: DynamoDB) {
     invariant(dynamoDB, 'Argument \'dynamoDB\' is null');
-    invariant(schema, 'Argument \'schema\' is null');
 
     this.dynamoDB = dynamoDB;
-    this.schema = schema;
     this.convertor = new AWSConvertor();
     this.batchSize = 25;
     this.timeout = 120000;

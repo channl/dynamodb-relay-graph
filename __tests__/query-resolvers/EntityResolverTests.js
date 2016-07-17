@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
 describe('EntityResolverTests', () => {
-
+/*
   it('ToTypeIdAndAWSItem', () => {
     let request = {
       RequestItems: {
@@ -54,7 +54,7 @@ describe('EntityResolverTests', () => {
     let result = EntityResolver._toTypeIdAndAWSItem(typeAndKey, metadata, request, response);
     expect(result).to.deep.equal(expected);
   });
-
+*/
   it('IsMatchingResponseObjectTrue', () => {
     let requestObject = {
       id: { B: new Buffer('ABCsHX4SP2y3tJBdcZMOw==', 'base64') },

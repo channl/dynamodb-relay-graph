@@ -37,6 +37,11 @@ export default class AWSConvertor {
     return b.toString('base64');
   }
 
+  static getTypeName(tableName: string) {
+    invariant(typeof tableName === 'string', 'Argument \'tableName\' is not a string');
+    return tableName.substr(0, tableName.length - 1);
+  }
+
   static getTableName(type: string) {
     invariant(typeof type === 'string', 'Argument \'type\' is not a string');
     return type + 's';
@@ -123,7 +128,7 @@ export default class AWSConvertor {
       };
     } catch (ex) {
       warning(false, JSON.stringify({
-        class: 'EntityResolver', function: 'getModelFromGlobalId',
+        class: 'AWSConvertor', function: 'getModelFromGlobalId',
         gid}, null, 2));
       throw ex;
     }

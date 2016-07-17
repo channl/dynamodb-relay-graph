@@ -1,16 +1,27 @@
 /* @flow */
 import BaseQuery from '../query/BaseQuery';
-import QueryResolver from '../query-resolvers/QueryResolver';
+import BaseResolver from '../query-resolvers/BaseResolver';
+import EntityResolver from '../query-resolvers/EntityResolver';
+import QueryHelper from '../query-helpers/QueryHelper';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
-import ExpressionHelper from '../query-resolvers/ExpressionHelper';
+import ExpressionHelper from '../query-helpers/ExpressionHelper';
+import AWSConvertor from '../query-helpers/AWSConvertor';
 import DynamoDB from '../aws/DynamoDB';
 import { log, invariant, warning } from '../Global';
 import type { Options, ConnectionArgs } from '../flow/Types';
 import type { DynamoDBSchema } from 'aws-sdk-promise';
 
-export default class EdgeConnectionResolver extends QueryResolver {
-  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema) {
-    super(dynamoDB, schema);
+export default class EdgeConnectionResolver extends BaseResolver {
+  _dynamoDB: DynamoDB;
+  _schema: DynamoDBSchema;
+  _entityResolver: EntityResolver;
+
+  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema, entityResolver: EntityResolver) {
+    super();
+
+    this._dynamoDB = dynamoDB;
+    this._schema = schema;
+    this._entityResolver = entityResolver;
   }
 
   canResolve(query: BaseQuery): boolean {
@@ -34,7 +45,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
       if (ExpressionHelper.isEdgeModelExpression(query.expression)) {
 
         // Type and id are supplied so get the item direct
-        let item = await this.getAsync(query.expression);
+        let item = await this._entityResolver.getAsync(query.expression);
         let edges = item ? [ {cursor: 'xxx', node: item} ] : [];
         let startCursor = edges[0] ? edges[0].cursor : null;
         let endCursor = edges[edges.length - 1] ?
@@ -67,7 +78,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
         query.connectionArgs,
         query.isOut);
 
-      let response = await this.dynamoDB.queryAsync(request);
+      let response = await this._dynamoDB.queryAsync(request);
       let result = this.getResult(response, expression, query.connectionArgs);
 
       if (options && options.logs) {
@@ -169,25 +180,25 @@ export default class EdgeConnectionResolver extends QueryResolver {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    let tableName = this.convertor.getTableName(expression.type);
-    let tableSchema = this.schema.tables.find(ts => ts.TableName === tableName);
-    let indexSchema = this.getIndexSchema(
+    let tableName = AWSConvertor.getTableName(expression.type);
+    let tableSchema = this._schema.tables.find(ts => ts.TableName === tableName);
+    let indexSchema = QueryHelper.getIndexSchema(
       expression,
       connectionArgs,
       tableSchema);
 
     let indexName = indexSchema ? indexSchema.IndexName : undefined;
-    let projectionExpression = this.getProjectionExpression(
+    let projectionExpression = QueryHelper.getProjectionExpression(
       expression,
       connectionArgs,
       [ 'inID', 'outID', 'createDate' ]);
 
-    let keyConditionExpression = this.getKeyConditionExpression(expression);
-    let expressionAttributeValues = this.getExpressionAttributeValues(
+    let keyConditionExpression = QueryHelper.getKeyConditionExpression(expression);
+    let expressionAttributeValues = QueryHelper.getExpressionAttributeValues(
       expression,
       tableSchema);
 
-    let expressionAttributeNames = this.getExpressionAttributeNames(
+    let expressionAttributeNames = QueryHelper.getExpressionAttributeNames(
       expression,
       connectionArgs,
       [ 'inID', 'outID', 'createDate' ]);
@@ -195,9 +206,9 @@ export default class EdgeConnectionResolver extends QueryResolver {
     return {
       TableName: tableName,
       IndexName: indexName,
-      ExclusiveStartKey: this.getExclusiveStartKey(connectionArgs),
-      Limit: this.getLimit(connectionArgs),
-      ScanIndexForward: this.getScanIndexForward(connectionArgs),
+      ExclusiveStartKey: QueryHelper.getExclusiveStartKey(connectionArgs),
+      Limit: QueryHelper.getLimit(connectionArgs),
+      ScanIndexForward: QueryHelper.getScanIndexForward(connectionArgs),
       ProjectionExpression: projectionExpression,
       KeyConditionExpression: keyConditionExpression,
       ExpressionAttributeValues: expressionAttributeValues,
@@ -212,18 +223,18 @@ export default class EdgeConnectionResolver extends QueryResolver {
 
     let edges = response.data.Items.map(item => {
 
-      let edge = this.convertor.getModelFromAWSItem(expression.type, item);
+      let edge = AWSConvertor.getModelFromAWSItem(expression.type, item);
       let result = {
         type: expression.type,
         inID: edge.inID,
         outID: edge.outID,
-        cursor: this.convertor.toCursor(edge, connectionArgs.order)
+        cursor: AWSConvertor.toCursor(edge, connectionArgs.order)
       };
 
       return result;
     });
 
-    if (this.isForwardScan(connectionArgs)) {
+    if (QueryHelper.isForwardScan(connectionArgs)) {
 
       let startCursor = edges[0] ? edges[0].cursor : null;
       let endCursor = edges[edges.length - 1] ?
@@ -262,7 +273,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
     invariant(query, 'Argument \'query\' is null');
 
     if (typeof query.connectionArgs.before !== 'undefined') {
-      let cursor = this.convertor.fromCursor(query.connectionArgs.before);
+      let cursor = AWSConvertor.fromCursor(query.connectionArgs.before);
       let value = cursor[query.connectionArgs.order].S;
       return value;
     }
@@ -274,7 +285,7 @@ export default class EdgeConnectionResolver extends QueryResolver {
     invariant(query, 'Argument \'query\' is null');
 
     if (typeof query.connectionArgs.after !== 'undefined') {
-      let cursor = this.convertor.fromCursor(query.connectionArgs.after);
+      let cursor = AWSConvertor.fromCursor(query.connectionArgs.after);
       let value = cursor[query.connectionArgs.order].S;
       return value;
     }

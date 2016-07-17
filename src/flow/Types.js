@@ -2,11 +2,18 @@
 import { MeasuredCollection } from 'measured';
 import type { AttributeMap } from 'aws-sdk-promise';
 
-export type ConnectionArgs = {
-  first?: number,
-  last?: number,
-  before?: string,
+export type ConnectionArgs = FirstConnectionArgs | LastConnectionArgs;
+
+export type FirstConnectionArgs = {
+  first: number,
   after?: string,
+  order?: string,
+  orderDesc?: boolean,
+};
+
+export type LastConnectionArgs = {
+  last: number,
+  before?: string,
   order?: string,
   orderDesc?: boolean,
 };

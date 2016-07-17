@@ -1,5 +1,5 @@
 /* @flow */
-import ExpressionHelper from '../../src/query-resolvers/ExpressionHelper';
+import ExpressionHelper from '../../src/query-helpers/ExpressionHelper';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 

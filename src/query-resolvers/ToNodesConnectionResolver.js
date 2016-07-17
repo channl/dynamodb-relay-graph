@@ -3,16 +3,15 @@ import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
-import DynamoDB from '../aws/DynamoDB';
 import { log, invariant } from '../Global';
 import type { Options } from '../flow/Types';
 
 export default class ToNodesConnectionResolver extends BaseResolver {
   _entityResolver: EntityResolver;
 
-  constructor(dynamoDB: DynamoDB, schema: any) {
-    super(dynamoDB, schema);
-    this._entityResolver = new EntityResolver(dynamoDB, schema);
+  constructor(entityResolver: EntityResolver) {
+    super();
+    this._entityResolver = entityResolver;
   }
 
   canResolve(query: any): boolean {

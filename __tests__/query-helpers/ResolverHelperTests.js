@@ -1,5 +1,5 @@
 /* @flow */
-import ResolverHelper from '../../src/query-resolvers/ResolverHelper';
+import ResolverHelper from '../../src/query-helpers/ResolverHelper';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
