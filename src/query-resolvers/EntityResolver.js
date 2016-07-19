@@ -1,13 +1,12 @@
 /* @flow */
 import DataLoader from 'dataloader';
-import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import warning from 'warning';
 import DynamoDB from '../aws/DynamoDB';
 import AWSConvertor from '../query-helpers/AWSConvertor';
 import { invariant } from '../Global';
 import BatchingDynamoDB from '../utils/BatchingDynamoDB';
 import type { BatchGetItemRequest, AttributeMap } from 'aws-sdk-promise';
-import type { QueryExpression, TypeAndKey } from '../flow/Types';
+import type { TypeAndKey } from '../flow/Types';
 
 export default class EntityResolver {
   _loader: any;
@@ -20,11 +19,10 @@ export default class EntityResolver {
     this._dynamoDB = new BatchingDynamoDB(dynamoDB);
   }
 
-  async getAsync(expression: QueryExpression) {
-    invariant(expression != null, 'Argument \'expression\' is null');
+  async getAsync(globalId: string) {
+    invariant(globalId != null, 'Argument \'globalId\' is null');
 
     // Convert expression to globalId and fetch it
-    let globalId = ExpressionHelper.getGlobalIdFromExpression(expression);
     return this._loader.load(globalId);
   }
 

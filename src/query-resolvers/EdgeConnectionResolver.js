@@ -42,10 +42,11 @@ export default class EdgeConnectionResolver extends BaseResolver {
     try {
       let expression = this.getExpression(innerResult, query);
 
-      if (ExpressionHelper.isEdgeModelExpression(query.expression)) {
+      if (ExpressionHelper.isEdgeModelExpression(expression)) {
 
         // Type and id are supplied so get the item direct
-        let item = await this._entityResolver.getAsync(query.expression);
+        let globalId = ExpressionHelper.getGlobalIdFromExpression(expression);
+        let item = await this._entityResolver.getAsync(globalId);
         let edges = item ? [ {cursor: 'xxx', node: item} ] : [];
         let startCursor = edges[0] ? edges[0].cursor : null;
         let endCursor = edges[edges.length - 1] ?

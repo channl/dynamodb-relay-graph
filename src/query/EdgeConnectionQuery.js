@@ -5,17 +5,17 @@ import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import { invariant } from '../Global';
 import Graph from '../graph/Graph';
 
-import type { EdgeQueryExpression, ConnectionArgs } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs } from '../flow/Types';
 
 export default class EdgeConnectionQuery extends BaseQuery {
-  expression: EdgeQueryExpression;
+  expression: QueryExpression;
   connectionArgs: ConnectionArgs;
   isOut: boolean;
 
   constructor(
     graph: Graph,
     inner: ?BaseQuery,
-    expression: EdgeQueryExpression,
+    expression: QueryExpression,
     connectionArgs: ConnectionArgs,
     isOut: boolean) {
 
@@ -28,12 +28,12 @@ export default class EdgeConnectionQuery extends BaseQuery {
     this.isOut = isOut;
   }
 
-  out(expression: EdgeQueryExpression): ToNodesConnectionQuery {
+  out(expression: QueryExpression): ToNodesConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null or undefined');
     return new ToNodesConnectionQuery(this.graph, this, true, expression);
   }
 
-  in(expression: EdgeQueryExpression): ToNodesConnectionQuery {
+  in(expression: QueryExpression): ToNodesConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null or undefined');
     return new ToNodesConnectionQuery(this.graph, this, false, expression);
   }

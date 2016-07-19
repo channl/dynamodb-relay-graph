@@ -26,12 +26,10 @@ export default class ExpressionHelper {
   }
 
   static isNodeModelExpression(expression: QueryExpression): boolean {
-    // $FlowIgnore
     return expression.type != null && expression.id != null;
   }
 
   static isEdgeModelExpression(expression: QueryExpression): boolean {
-    // $FlowIgnore
     return expression.type != null && expression.inID != null && expression.outID != null;
   }
 

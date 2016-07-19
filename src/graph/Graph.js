@@ -14,7 +14,7 @@ import EntityWriter from '../query-writers/EntityWriter';
 import AWSConvertor from '../query-helpers/AWSConvertor';
 import ToNodesConnectionResolver from '../query-resolvers/ToNodesConnectionResolver';
 import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
-import type { NodeQueryExpression, ConnectionArgs, Options } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs, Options } from '../flow/Types';
 
 export default class Graph {
   _writer: EntityWriter;
@@ -45,7 +45,7 @@ export default class Graph {
     ];
   }
 
-  v(expression: NodeQueryExpression, connectionArgs: ConnectionArgs): NodeConnectionQuery {
+  v(expression: QueryExpression, connectionArgs: ConnectionArgs): NodeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 

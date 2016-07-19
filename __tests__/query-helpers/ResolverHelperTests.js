@@ -7,11 +7,11 @@ const tableDescription = {
   AttributeDefinitions: [
     {
       AttributeName: 'MyAttributeName1',
-      AttributeType: 'MyAttributeType1'
+      AttributeType: 'S'
     },
     {
       AttributeName: 'MyAttributeName2',
-      AttributeType: 'MyAttributeType2'
+      AttributeType: 'S'
     }
   ],
   CreationDateTime: 0,
@@ -42,7 +42,7 @@ describe('ResolverHelperTests', () => {
 
   it('GetAttributeTypeReturnsCorrectAttribute', () => {
     let attributeType = ResolverHelper.getAttributeType(tableDescription, 'MyAttributeName2');
-    expect(attributeType).to.equal('MyAttributeType2');
+    expect(attributeType).to.equal('S');
   });
 
   it('GetAttributeTypeThrowsInvariant', () => {

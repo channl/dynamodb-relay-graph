@@ -312,7 +312,7 @@ declare module 'aws-sdk-promise' {
 
   declare type DynamoDBAttributeDefinition = {
     AttributeName: string,
-    AttributeType: string,
+    AttributeType: 'B' | 'BOOL' | 'BS' | 'L' | 'M' | 'N' | 'NS' | 'NULL' | 'S' | 'SS'
   };
 
   declare type DynamoDBKeySchema = DynamoDBKeySchemaItem[];

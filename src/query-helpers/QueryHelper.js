@@ -1,9 +1,9 @@
 /* @flow */
-import { warning, invariant } from '../Global';
+import { warning, invariant, json } from '../Global';
 import uuid from 'node-uuid';
 import ResolverHelper from '../query-helpers/ResolverHelper';
 import AWSConvertor from '../query-helpers/AWSConvertor';
-import type { ConnectionArgs } from '../flow/Types';
+import type { Value, ConnectionArgs, QueryExpression, ExpressionValue } from '../flow/Types';
 import type { DynamoDBTable, KeyDefinition, DynamoDBKeySchema } from 'aws-sdk-promise';
 
 export default class QueryHelper {
@@ -78,7 +78,7 @@ export default class QueryHelper {
     invariant(false, 'First or Last must be specified');
   }
 
-  static getExpressionAttributeNames(expression: Object,
+  static getExpressionAttributeNames(expression: QueryExpression,
     connectionArgs: ConnectionArgs, include: string[]) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
@@ -98,7 +98,7 @@ export default class QueryHelper {
     return result;
   }
 
-  static getIndexSchema(expression: Object,
+  static getIndexSchema(expression: QueryExpression,
     connectionArgs: ConnectionArgs, tableSchema: DynamoDBTable) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
@@ -110,9 +110,10 @@ export default class QueryHelper {
         .keys(expression)
         .filter(name => name !== 'type')
         .map(name => {
+          let value = expression[name];
           return {
             AttributeName: name,
-            KeyType: this.getExpressionKeyType(expression[name])
+            KeyType: this.getExpressionKeyType(value),
           };
         });
 
@@ -154,12 +155,12 @@ export default class QueryHelper {
 
     } catch (ex) {
       warning(false, JSON.stringify({
-        class: 'QueryResolver',
+        class: 'QueryHelper',
         function: 'getIndexSchema',
         expression,
         connectionArgs,
         requiredKeySchema,
-        tableSchema}));
+        tableSchema}, null, json.padding));
       throw ex;
     }
   }
@@ -198,12 +199,12 @@ export default class QueryHelper {
     return hashKeySatisfied;
   }
 
-  static getExpressionKeyType(expression: Object) {
+  static getExpressionKeyType(expression: ExpressionValue) {
     invariant(expression, 'Argument \'expression\' is null');
 
-    if (typeof expression.after !== 'undefined' ||
-      typeof expression.before !== 'undefined' ||
-      typeof expression.begins_with !== 'undefined') {
+    if (expression.after != null ||
+      expression.before != null ||
+      expression.begins_with != null) {
       return 'RANGE';
     }
 
@@ -215,15 +216,15 @@ export default class QueryHelper {
     }
 
     warning(false, JSON.stringify({
-      class: 'QueryResolver',
+      class: 'QueryHelper',
       function: 'getExpressionKeyType',
       expression
     }));
 
-    throw new Error('NotSupportedError');
+    invariant(false, 'ExpressionKeyType NotSupported');
   }
 
-  static getProjectionExpression(expression: any,
+  static getProjectionExpression(expression: QueryExpression,
     connectionArgs: ConnectionArgs, include: string[]) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
@@ -245,7 +246,7 @@ export default class QueryHelper {
     return '#res' + name;
   }
 
-  static getExpressionAttributeValues(expression: any, tableSchema: any) {
+  static getExpressionAttributeValues(expression: QueryExpression, tableSchema: DynamoDBTable) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(tableSchema, 'Argument \'tableSchema\' is null');
 
@@ -258,14 +259,17 @@ export default class QueryHelper {
     }
 
     let result = {};
-    names.forEach(name => this.getExpressionAttributeValue(
-      name, expression[name], result, tableSchema));
+    names.forEach(name => {
+      let value = expression[name];
+      return this.getExpressionAttributeValue(name, value, result, tableSchema);
+    });
+
     return result;
   }
 
   static getExpressionAttributeValue(name: string,
-    expression: any, result: any, tableSchema: DynamoDBTable) {
-    invariant(name, 'Argument \'name\' is null');
+    expression: ExpressionValue, result: Object, tableSchema: DynamoDBTable) {
+    invariant(typeof name === 'string', 'Argument \'name\' is not a string');
     invariant(expression, 'Argument \'expression\' is null');
     invariant(result, 'Argument \'result\' is null');
     invariant(tableSchema, 'Argument \'tableSchema\' is null');
@@ -281,15 +285,17 @@ export default class QueryHelper {
 
     if (typeof expression.after !== 'undefined') {
       let exp = {};
-      exp[attributeType] = this.getAfterAttributeValueAsType(
-        expression.after, attributeType);
+      let afterValue = expression.after === null ? this.getTypeMinValue(attributeType) :
+        expression.after;
+      exp[attributeType] = this.getValueAsType(afterValue, attributeType);
       result[':v_after_' + name] = exp;
     }
 
     if (typeof expression.before !== 'undefined') {
       let exp = {};
-      exp[attributeType] = this.getBeforeAttributeValueAsType(
-        expression.before, attributeType);
+      let beforeValue = expression.before === null ? this.getTypeMaxValue(attributeType) :
+        expression.before;
+      exp[attributeType] = this.getValueAsType(beforeValue, attributeType);
       result[':v_before_' + name] = exp;
     }
 
@@ -301,84 +307,84 @@ export default class QueryHelper {
     }
   }
 
-  static getBeginsWithAttributeValueAsType(
-    value: any, asType: string) { // eslint-disable-line no-unused-vars
-    invariant(value, 'Argument \'value\' is null');
-    invariant(asType, 'Argument \'asType\' is null');
+  static getBeginsWithAttributeValueAsType(value: Value, asType: string) {
+    invariant(typeof value !== 'undefined', 'Argument \'value\' is undefined');
+    invariant(typeof asType === 'string', 'Argument \'asType\' is not a string');
     return value;
   }
 
-  static getBeforeAttributeValueAsType(
-    value: any, asType: string) {
-    invariant(value, 'Argument \'value\' is null');
-    invariant(asType, 'Argument \'asType\' is null');
+  static getValueAsType(value: Value, asType: string) {
+    invariant(typeof value !== 'undefined', 'Argument \'value\' is undefined');
+    invariant(typeof asType === 'string', 'Argument \'asType\' is not a string');
 
-    // TODO this function needs rewriting
-    if (typeof value !== 'undefined' && value !== null) {
+    if (value === null) {
       return value;
     }
 
-    // Values cannot be null so use a default for each Type
-    if (asType === 'S') {
-      return 'ZZZZZZZZZZ';
+    if (asType === 'S' && typeof value === 'string') {
+      return value;
     }
 
-    if (asType === 'N') {
-      return Number.MAX_SAFE_INTEGER.toString();
+    if (asType === 'N' && typeof value === 'number') {
+      return value.toString();
     }
 
-    if (asType === 'B') {
-      return new Buffer(uuid.parse('ffffffff-ffff-ffff-ffff-ffffffffffff'));
+    if (asType === 'N' && typeof value === 'string') {
+      return value;
     }
+
+    if (asType === 'B' && value instanceof Buffer) {
+      return value;
+    }
+
+    // this.logFrameDetail();
 
     throw new Error('NotSupportedError (getAttributeValueAsType)');
   }
 
-  static getAfterAttributeValueAsType(value: any, asType: string) {
-    invariant(value, 'Argument \'value\' is null');
-    invariant(asType, 'Argument \'asType\' is null');
-    let localValue = value;
-    // eslint-disable-next-line eqeqeq
-    if (typeof localValue === 'undefined' || localValue == null) {
-      switch (asType) {
-        case 'S':
-          localValue = ' ';
-          break;
-        case 'N':
-          localValue = '0';
-          break;
-        case 'B':
-          localValue = uuid.parse('00000000-0000-0000-0000-000000000000');
-          break;
-      }
+  static getTypeMaxValue(asType: string): Value {
+    invariant(typeof asType === 'string', 'Argument \'asType\' is not a string');
+
+    switch (asType) {
+      case 'S':
+        return 'ZZZZZZZZZZ';
+      case 'N':
+        return Number.MAX_SAFE_INTEGER;
+      case 'B':
+        return new Buffer(uuid.parse('ffffffff-ffff-ffff-ffff-ffffffffffff'));
+      default:
+        invariant(false, 'NotSupportedError');
     }
-
-    // Values cannot be null so use a default for each Type
-    if (asType === 'S') {
-      return localValue;
-    }
-
-    if (asType === 'N') {
-      if (typeof localValue === 'number') {
-        localValue = localValue.toString();
-      }
-
-      return localValue;
-    }
-
-    if (asType === 'B') {
-      return new Buffer(localValue);
-    }
-
-    throw new Error('NotSupportedError (getAttributeValueAsType)');
   }
 
-  static getKeyConditionExpression(expression: any) {
+  static getTypeMinValue(asType: string): Value {
+    invariant(typeof asType === 'string', 'Argument \'asType\' is not a string');
+
+    switch (asType) {
+      case 'S':
+        return ' ';
+      case 'N':
+        return '0';
+      case 'B':
+        return new Buffer(uuid.parse('00000000-0000-0000-0000-000000000000'));
+      default:
+        invariant(false, 'NotSupportedError');
+    }
+  }
+
+  static logFrameDetail(error: ?Error) {
+    // eslint-disable-next-line no-caller
+    let caller = arguments.callee.caller;
+    let args = caller.arguments;
+    let method = caller.name;
+    let type = this.name;
+    warning(false, JSON.stringify({ type, method, args, error }, null, 2));
+  }
+
+  static getKeyConditionExpression(expression: QueryExpression) {
     invariant(expression, 'Argument \'expression\' is null');
-    let names = Object
-      .keys(expression)
-      .filter(name => name !== 'type');
 
+    let names = Object.keys(expression).filter(name => name !== 'type');
     if (names.length === 0) {
       return undefined;
     }
@@ -388,11 +394,11 @@ export default class QueryHelper {
       .reduce((pre, cur) => pre === '' ? cur : pre + ' AND ' + cur, '');
   }
 
-  static getKeyConditionExpressionItem(name: string, expression: any) {
+  static getKeyConditionExpressionItem(name: string, expression: ExpressionValue) {
     invariant(name, 'Argument \'name\' is null');
+    invariant(expression, 'Argument \'expression\' is null');
 
-    if (typeof expression === 'string' ||
-      typeof expression === 'number' ||
+    if (typeof expression === 'string' || typeof expression === 'number' ||
       expression instanceof Buffer) {
       return this.getExpressionAttributeName(name) + ' = :v_equals_' + name;
     }

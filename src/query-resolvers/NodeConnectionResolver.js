@@ -104,13 +104,12 @@ export default class NodeConnectionResolver extends BaseResolver {
 
       // Generate the full expression using the query and any previous result
       let expression = this.getExpression(query, innerResult);
-      if (ExpressionHelper.isGlobalIdExpression(expression)) {
-
+      if (ExpressionHelper.isGlobalIdExpression(expression) && typeof expression === 'string') {
         // TODO THIS MIGHT NOT EXIST!!!
         // Type and id are supplied so get the item direct
         return {
           edges: [ {
-            id: query.expression
+            id: expression
           } ],
           pageInfo: {
             hasPreviousPage: false,

@@ -5,16 +5,13 @@ import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
 import Graph from '../graph/Graph';
 import type { Connection } from 'graphql-relay';
-import type {
-  EdgeQueryExpression,
-  ConnectionArgs,
-} from '../flow/Types';
+import type { QueryExpression, ConnectionArgs } from '../flow/Types';
 
 export default class ToNodesConnectionQuery extends BaseQuery {
   isOut: boolean;
-  expression: EdgeQueryExpression;
+  expression: QueryExpression;
 
-  constructor(graph: Graph, inner: ?BaseQuery, isOut: boolean, expression: EdgeQueryExpression) {
+  constructor(graph: Graph, inner: ?BaseQuery, isOut: boolean, expression: QueryExpression) {
     super(graph, inner);
     invariant(typeof isOut === 'boolean', 'Argument \'isOut\' must be boolean');
     invariant(expression, 'Argument \'expression\' is null');
@@ -22,13 +19,13 @@ export default class ToNodesConnectionQuery extends BaseQuery {
     this.expression = expression;
   }
 
-  out(expression: EdgeQueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
+  out(expression: QueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, true);
   }
 
-  in(expression: EdgeQueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
+  in(expression: QueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, false);

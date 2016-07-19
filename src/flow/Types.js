@@ -22,12 +22,11 @@ export type Options = {
   log?: boolean,
   stats?: MeasuredCollection
 };
-
+/*
 export type QueryExpression = NodeQueryExpression | EdgeQueryExpression;
 
-export type NodeQueryExpression = any
-| TypeOnlyNodeQueryExpression
-| TypeAndIdNodeQueryExpression;
+export type NodeQueryExpression = TypeOnlyNodeQueryExpression |
+  TypeAndIdNodeQueryExpression | TypeAndAnyNodeQueryExpression;
 
 export type TypeOnlyNodeQueryExpression = {
   type: string
@@ -35,20 +34,30 @@ export type TypeOnlyNodeQueryExpression = {
 
 export type TypeAndIdNodeQueryExpression = {
  type: string,
- id: Value,
+ id: ExpressionValue,
+};
+
+export type TypeAndAnyNodeQueryExpression = {
+ type: string,
+ [name: string]: ExpressionValue,
 };
 
 export type EdgeQueryExpression = InEdgeQueryExpression | OutEdgeQueryExpression;
 
 export type InEdgeQueryExpression = {
   type: string,
-  inID: Value,
+  inID: ExpressionValue,
 };
 
 export type OutEdgeQueryExpression = {
   type: string,
-  outID: Value,
+  outID: ExpressionValue,
 };
+*/
+
+export type QueryExpression = {
+  [name: string]: ExpressionValue,
+}
 
 export type TypeAndKey = {
   type: string,
@@ -63,7 +72,22 @@ export type TableMetadata = {
   typeAndKeys: TypeAndKey[],
 };
 
-export type Value = string | Buffer | number | boolean;
+export type ExpressionValue = Value | ExpressionValueBefore |
+  ExpressionValueAfter | ExpressionValueBeginsWith;
+
+export type Value = string | Buffer | number | boolean | null;
+
+export type ExpressionValueBefore = {
+  before: Value
+};
+
+export type ExpressionValueAfter = {
+  after: Value
+};
+
+export type ExpressionValueBeginsWith = {
+  begins_with: Value
+};
 
 export type Model = {
   type: string,

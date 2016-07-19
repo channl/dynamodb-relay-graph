@@ -1,7 +1,7 @@
 /* @flow */
 import { warning, invariant } from '../Global';
 import { fromGlobalId, toGlobalId } from 'graphql-relay';
-import type { TypeAndKey, Model } from '../flow/Types';
+import type { Value, TypeAndKey, Model } from '../flow/Types';
 import type { AttributeMap } from 'aws-sdk-promise';
 
 export default class AWSConvertor {
@@ -82,7 +82,7 @@ export default class AWSConvertor {
     }
   }
 
-  static getGlobalIdFromModel(model: Model): string {
+  static getGlobalIdFromModel(model: any): string {
     try {
       invariant(model, 'Argument \'model\' is null');
 
@@ -215,8 +215,7 @@ export default class AWSConvertor {
     }
   }
 
-  static setAWSAttribute(name: string,
-    value: Buffer | number | string | boolean, awsItem: AttributeMap) {
+  static setAWSAttribute(name: string, value: Value, awsItem: AttributeMap) {
     invariant(typeof name === 'string', 'Argument \'name\' is not a string');
     invariant(value, 'Argument \'value\' is null');
     invariant(awsItem, 'Argument \'awsItem\' is null');

@@ -2,7 +2,7 @@ import measured from 'measured';
 import _warning from 'warning';
 import _invariant from 'invariant';
 
-export const json = { padding: 0 };
+export const json = { padding: 2 };
 
 export const stats = measured.createCollection();
 
