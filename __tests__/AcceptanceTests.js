@@ -1,6 +1,6 @@
 /* @flow
 import Graph from '../src/graph/Graph';
-import AWSConvertor from '../src/query-helpers/AWSConvertor';
+import TypeHelper from '../src/query-helpers/TypeHelper';
 import { log } from '../src/Global';
 // import { expect } from 'chai';
 import { describe, it } from 'mocha';
@@ -12,7 +12,7 @@ describe('AcceptanceTests', () => {
   it('Can update node', () => {
     try {
 
-      let convertor = new AWSConvertor();
+      let convertor = new TypeHelper();
       // eslint-disable-next-line max-len
       let model = convertor.getModelFromGlobalId('UGFyZW50VGFnQ2hpbGRUYWdFZGdlOlM3ZEVkbUttYlJYT' +
       'zhYbi9HNi9KckpBPT1TTktFNm1Sa3FRaW16TzN0TGcxTCtBUT09');

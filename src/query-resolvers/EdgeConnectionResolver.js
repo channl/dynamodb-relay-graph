@@ -5,7 +5,9 @@ import EntityResolver from '../query-resolvers/EntityResolver';
 import QueryHelper from '../query-helpers/QueryHelper';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import ExpressionHelper from '../query-helpers/ExpressionHelper';
-import AWSConvertor from '../query-helpers/AWSConvertor';
+import TypeHelper from '../query-helpers/TypeHelper';
+import AWSItemHelper from '../query-helpers/AWSItemHelper';
+import CursorHelper from '../query-helpers/CursorHelper';
 import DynamoDB from '../aws/DynamoDB';
 import { log, invariant, warning } from '../Global';
 import type { Options, ConnectionArgs } from '../flow/Types';
@@ -45,7 +47,7 @@ export default class EdgeConnectionResolver extends BaseResolver {
       if (ExpressionHelper.isEdgeModelExpression(expression)) {
 
         // Type and id are supplied so get the item direct
-        let globalId = ExpressionHelper.getGlobalIdFromExpression(expression);
+        let globalId = ExpressionHelper.toGlobalId(expression);
         let item = await this._entityResolver.getAsync(globalId);
         let edges = item ? [ {cursor: 'xxx', node: item} ] : [];
         let startCursor = edges[0] ? edges[0].cursor : null;
@@ -181,7 +183,7 @@ export default class EdgeConnectionResolver extends BaseResolver {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    let tableName = AWSConvertor.getTableName(expression.type);
+    let tableName = TypeHelper.getTableName(expression.type);
     let tableSchema = this._schema.tables.find(ts => ts.TableName === tableName);
     let indexSchema = QueryHelper.getIndexSchema(
       expression,
@@ -224,12 +226,12 @@ export default class EdgeConnectionResolver extends BaseResolver {
 
     let edges = response.data.Items.map(item => {
 
-      let edge = AWSConvertor.getModelFromAWSItem(expression.type, item);
+      let edge = AWSItemHelper.toModel(expression.type, item);
       let result = {
         type: expression.type,
         inID: edge.inID,
         outID: edge.outID,
-        cursor: AWSConvertor.toCursor(edge, connectionArgs.order)
+        cursor: CursorHelper.fromModel(edge, connectionArgs.order)
       };
 
       return result;
@@ -274,7 +276,8 @@ export default class EdgeConnectionResolver extends BaseResolver {
     invariant(query, 'Argument \'query\' is null');
 
     if (typeof query.connectionArgs.before !== 'undefined') {
-      let cursor = AWSConvertor.fromCursor(query.connectionArgs.before);
+      let cursor = CursorHelper.toAWSKey(query.connectionArgs.before);
+      invariant(typeof query.connectionArgs.order !== 'undefined', 'TODO');
       let value = cursor[query.connectionArgs.order].S;
       return value;
     }
@@ -286,7 +289,8 @@ export default class EdgeConnectionResolver extends BaseResolver {
     invariant(query, 'Argument \'query\' is null');
 
     if (typeof query.connectionArgs.after !== 'undefined') {
-      let cursor = AWSConvertor.fromCursor(query.connectionArgs.after);
+      let cursor = CursorHelper.toAWSKey(query.connectionArgs.after);
+      invariant(typeof query.connectionArgs.order !== 'undefined', 'TODO');
       let value = cursor[query.connectionArgs.order].S;
       return value;
     }

@@ -200,21 +200,27 @@ declare module 'aws-sdk-promise' {
   };
 
   declare type AttributeMap = {
-    [keyName: string]: AttributeValue;
+    [keyName: string]: AttributeValue,
   };
 
   declare type AttributeValue = {
-    B?: Buffer | string,
+    B?: Buffer, // | string,
     BOOL?: boolean,
-    BS?: Buffer[] | string[],
-    L?: Object[],
-    M?: Object[],
+    BS?: Buffer[], // | string[],
+    L?: SingleValue[],
+    M?: SingleValueMap,
     N?: string,
     NS?: string[],
     NULL?: boolean,
     S?: string,
     SS?: string[],
   };
+
+  declare type SingleValueMap = {
+    [keyName: string]: SingleValue,
+  };
+
+  declare type SingleValue = Buffer | string | number | boolean;
 
   declare type BatchGetItemResponse = {
     ConsumedCapacity: ConsumedCapacity[],

@@ -2,7 +2,7 @@
 import { warning, invariant, json } from '../Global';
 import uuid from 'node-uuid';
 import ResolverHelper from '../query-helpers/ResolverHelper';
-import AWSConvertor from '../query-helpers/AWSConvertor';
+import CursorHelper from '../query-helpers/CursorHelper';
 import type { Value, ConnectionArgs, QueryExpression, ExpressionValue } from '../flow/Types';
 import type { DynamoDBTable, KeyDefinition, DynamoDBKeySchema } from 'aws-sdk-promise';
 
@@ -14,13 +14,13 @@ export default class QueryHelper {
     if (connectionArgs.first != null) {
       return connectionArgs.after == null ?
         undefined :
-        AWSConvertor.fromCursor(connectionArgs.after);
+        CursorHelper.toAWSKey(connectionArgs.after);
     }
 
     if (connectionArgs.last != null) {
       return connectionArgs.before == null ?
         undefined :
-        AWSConvertor.fromCursor(connectionArgs.before);
+        CursorHelper.toAWSKey(connectionArgs.before);
     }
 
     invariant(false, 'First or Last must be specified');

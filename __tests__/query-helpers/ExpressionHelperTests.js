@@ -4,15 +4,9 @@ import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
 describe('ExpressionHelperTests', () => {
-/*
-  it('isGlobalIdExpressionIsTrueForStrings', () => {
-    let result = ExpressionHelper.isGlobalIdExpression('GLOBALID');
-    expect(result).to.equal(true);
-  });
-*/
-  it('isGlobalIdExpressionIsFalseForNode', () => {
-    let result = ExpressionHelper.isGlobalIdExpression({ type: 'type', id: 'id' });
-    expect(result).to.equal(false);
+  it('toGlobalIdFromExpression', () => {
+    let result = ExpressionHelper.toGlobalId({ type: 'type', id: 'id' });
+    expect(result).to.equal('dHlwZTpTaWQ=');
   });
 
   it('isModelExpressionReturnsTrue', () => {

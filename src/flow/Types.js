@@ -72,10 +72,10 @@ export type TableMetadata = {
   typeAndKeys: TypeAndKey[],
 };
 
+export type Value = Buffer | Buffer[] | string | string[] | number | number[] | boolean | boolean[];
+
 export type ExpressionValue = Value | ExpressionValueBefore |
   ExpressionValueAfter | ExpressionValueBeginsWith;
-
-export type Value = string | Buffer | number | boolean | null;
 
 export type ExpressionValueBefore = {
   before: Value

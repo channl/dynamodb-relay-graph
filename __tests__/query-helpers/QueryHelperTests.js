@@ -517,7 +517,7 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-
+/*
   it('getExpressionAttributeValueOfAfterNullString', () => {
     let name = 'id';
     let value = { after: null };
@@ -646,7 +646,7 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-
+*/
   it('getExpressionAttributeValueOfBeforeString', () => {
     let name = 'id';
     let value = { before: 'ABC' };
@@ -690,6 +690,7 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
+/*
   it('getExpressionAttributeValueOfBeforeNullString', () => {
     let name = 'id';
     let value = { before: null };
@@ -732,7 +733,9 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
+*/
 
+/*
   it('getExpressionAttributeValueOfBeforeNullNumber', () => {
     let name = 'id';
     let value = { before: null };
@@ -775,7 +778,8 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-
+*/
+/*
   it('getExpressionAttributeValueOfBeforeNullBuffer', () => {
     let name = 'id';
     let value = { before: null };
@@ -818,6 +822,7 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
+*/
 
   it('getExpressionAttributeValueOfBeginsWith', () => {
     let name = 'id';

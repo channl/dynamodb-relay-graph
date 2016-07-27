@@ -1,12 +1,14 @@
 /* @flow */
 import { warning, invariant } from '../Global';
 import DynamoDB from '../aws/DynamoDB';
-import AWSConvertor from '../query-helpers/AWSConvertor';
+import TypeHelper from '../query-helpers/TypeHelper';
+import AWSKeyHelper from '../query-helpers/AWSKeyHelper';
+import ModelHelper from '../query-helpers/ModelHelper';
 import type { BatchWriteItemRequest } from 'aws-sdk-promise';
 
 export default class EntityWriter {
   dynamoDB: DynamoDB;
-  convertor: AWSConvertor;
+  convertor: TypeHelper;
   batchSize: number;
   timeout: number;
   initialRetryDelay: number;
@@ -16,7 +18,7 @@ export default class EntityWriter {
     invariant(dynamoDB, 'Argument \'dynamoDB\' is null');
 
     this.dynamoDB = dynamoDB;
-    this.convertor = new AWSConvertor();
+    this.convertor = new TypeHelper();
     this.batchSize = 25;
     this.timeout = 120000;
     this.initialRetryDelay = 50;
@@ -168,7 +170,7 @@ export default class EntityWriter {
     let request = {RequestItems: {}};
 
     itemsToPut.forEach(item => {
-      let tableName = AWSConvertor.getTableName(item.type);
+      let tableName = TypeHelper.getTableName(item.type);
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = [];
       }
@@ -176,14 +178,14 @@ export default class EntityWriter {
       let tableReq = request.RequestItems[tableName];
       let newItem = {
         PutRequest: {
-          Item: AWSConvertor.getAWSItemFromModel(item)
+          Item: ModelHelper.toAWSItem(item)
         }
       };
       tableReq.push(newItem);
     });
 
     itemsToDelete.forEach(item => {
-      let tableName = AWSConvertor.getTableName(item.type);
+      let tableName = TypeHelper.getTableName(item.type);
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = [];
       }
@@ -191,7 +193,7 @@ export default class EntityWriter {
       let tableReq = request.RequestItems[tableName];
       let newItem = {
         DeleteRequest: {
-          Key: AWSConvertor.getAWSKeyFromModel(item, null)
+          Key: AWSKeyHelper.fromModel(item, null)
         }
       };
       tableReq.push(newItem);

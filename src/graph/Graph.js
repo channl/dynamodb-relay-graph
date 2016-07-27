@@ -11,10 +11,11 @@ import NodeConnectionResolver from '../query-resolvers/NodeConnectionResolver';
 import SingleResolver from '../query-resolvers/SingleResolver';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityWriter from '../query-writers/EntityWriter';
-import AWSConvertor from '../query-helpers/AWSConvertor';
+import ModelHelper from '../query-helpers/ModelHelper';
+import CursorHelper from '../query-helpers/CursorHelper';
 import ToNodesConnectionResolver from '../query-resolvers/ToNodesConnectionResolver';
 import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
-import type { QueryExpression, ConnectionArgs, Options } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs, Options, Model } from '../flow/Types';
 
 export default class Graph {
   _writer: EntityWriter;
@@ -116,15 +117,15 @@ export default class Graph {
     return await resolver.resolveAsync(query, innerResult, options);
   }
 
-  getCursor(model: Object, order: ?string) {
+  getCursor(model: Model, order: ?string): string {
     invariant(model, 'Argument \'model\' is null');
 
-    return AWSConvertor.toCursor(model, order);
+    return CursorHelper.fromModel(model, order);
   }
 
-  getGlobalId(model: Object): string {
+  getGlobalId(model: Model): string {
     invariant(model, 'Argument \'model\' is null');
 
-    return AWSConvertor.getGlobalIdFromModel(model);
+    return ModelHelper.toGlobalId(model);
   }
 }

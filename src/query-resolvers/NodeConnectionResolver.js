@@ -5,7 +5,10 @@ import EntityResolver from '../query-resolvers/EntityResolver';
 import QueryHelper from '../query-helpers/QueryHelper';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import ExpressionHelper from '../query-helpers/ExpressionHelper';
-import AWSConvertor from '../query-helpers/AWSConvertor';
+import TypeHelper from '../query-helpers/TypeHelper';
+import AWSItemHelper from '../query-helpers/AWSItemHelper';
+import CursorHelper from '../query-helpers/CursorHelper';
+import ModelHelper from '../query-helpers/ModelHelper';
 import DynamoDB from '../aws/DynamoDB';
 import { log, invariant, warning } from '../Global';
 import type { Options, ConnectionArgs } from '../flow/Types';
@@ -51,7 +54,7 @@ export default class NodeConnectionResolver extends BaseResolver {
       // Have to filter out nulls due to getNodeIdConnection implementation
       nodes = nodes.filter(n => n !== null);
       let edges = nodes.map(node => {
-        let cursor = AWSConvertor.toCursor(node, query.connectionArgs.order);
+        let cursor = CursorHelper.fromModel(node, query.connectionArgs.order);
         return {
           cursor,
           node
@@ -104,27 +107,13 @@ export default class NodeConnectionResolver extends BaseResolver {
 
       // Generate the full expression using the query and any previous result
       let expression = this.getExpression(query, innerResult);
-      if (ExpressionHelper.isGlobalIdExpression(expression) && typeof expression === 'string') {
-        // TODO THIS MIGHT NOT EXIST!!!
-        // Type and id are supplied so get the item direct
-        return {
-          edges: [ {
-            id: expression
-          } ],
-          pageInfo: {
-            hasPreviousPage: false,
-            hasNextPage: false
-          }
-        };
-      }
-
       if (ExpressionHelper.isModelExpression(expression)) {
 
         // TODO THIS MIGHT NOT EXIST!!!
         // Type and id are supplied so get the item direct
         return {
           edges: [ {
-            id: AWSConvertor.getGlobalIdFromModel(expression)
+            id: ModelHelper.toGlobalId(expression)
           } ],
           pageInfo: {
             hasPreviousPage: false,
@@ -170,10 +159,6 @@ export default class NodeConnectionResolver extends BaseResolver {
     innerResult: any) { // eslint-disable-line no-unused-vars
     invariant(query, 'Argument \'query\' is null');
     invariant(innerResult, 'Argument \'innerResult\' is null');
-
-    if (ExpressionHelper.isGlobalIdExpression(query.expression)) {
-      return query.expression;
-    }
 
     if (ExpressionHelper.isModelExpression(query.expression)) {
       return query.expression;
@@ -225,7 +210,7 @@ export default class NodeConnectionResolver extends BaseResolver {
       invariant(expression, 'Argument \'expression\' is null');
       invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-      let tableName = AWSConvertor.getTableName(expression.type);
+      let tableName = TypeHelper.getTableName(expression.type);
 
       let projectionExpression = QueryHelper.getProjectionExpression(
         expression,
@@ -259,7 +244,7 @@ export default class NodeConnectionResolver extends BaseResolver {
       invariant(expression, 'Argument \'expression\' is null');
       invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-      let tableName = AWSConvertor.getTableName(expression.type);
+      let tableName = TypeHelper.getTableName(expression.type);
       let tableSchema = this
         ._schema
         .tables
@@ -348,9 +333,9 @@ export default class NodeConnectionResolver extends BaseResolver {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(item, 'Argument \'item\' is null');
 
-    let model = AWSConvertor.getModelFromAWSItem(expression.type, item);
+    let model = AWSItemHelper.toModel(expression.type, item);
     return {
-      id: AWSConvertor.getGlobalIdFromModel({type: expression.type, id: model.id})
+      id: ModelHelper.toGlobalId({type: expression.type, id: model.id})
     };
   }
 }
