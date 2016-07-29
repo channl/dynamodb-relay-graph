@@ -6,6 +6,8 @@ import type { AttributeMap } from 'aws-sdk-promise';
 export default class AttributeMapHelper {
 
   static areEqual(a: AttributeMap, b: ?AttributeMap) {
+    invariant(a != null, 'Argument \'a\' is null');
+
     if (b == null) {
       return false;
     }
@@ -14,10 +16,9 @@ export default class AttributeMapHelper {
       return false;
     }
 
-    for (let key of Object.keys(a)) {
-      if (!AttributeValueHelper.areEqual(a[key], b[key])) {
-        return false;
-      }
+    // $FlowIgnore
+    if (Object.keys(a).some(key => !AttributeValueHelper.areEqual(a[key], b[key]))) {
+      return false;
     }
 
     return true;
@@ -27,12 +28,18 @@ export default class AttributeMapHelper {
     invariant(superset != null, 'Argument \'superset\' is null');
     invariant(base != null, 'Argument \'base\' is null');
 
-    for (let key of Object.keys(base)) {
-      if (!AttributeValueHelper.areEqual(base[key], superset[key])) {
-        return false;
-      }
+    if (Object.keys(base).some(key => !AttributeValueHelper.areEqual(base[key], superset[key]))) {
+      return false;
     }
 
     return true;
+  }
+
+  static toCursor(key: AttributeMap): string {
+    invariant(key, 'Argument \'key\' is null');
+
+    let cursorData = JSON.stringify(key);
+    let b = new Buffer(cursorData);
+    return b.toString('base64');
   }
 }

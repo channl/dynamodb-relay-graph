@@ -7,7 +7,6 @@ import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
 import AWSItemHelper from '../query-helpers/AWSItemHelper';
-import CursorHelper from '../query-helpers/CursorHelper';
 import ModelHelper from '../query-helpers/ModelHelper';
 import DynamoDB from '../aws/DynamoDB';
 import { log, invariant, warning } from '../Global';
@@ -54,7 +53,7 @@ export default class NodeConnectionResolver extends BaseResolver {
       // Have to filter out nulls due to getNodeIdConnection implementation
       nodes = nodes.filter(n => n !== null);
       let edges = nodes.map(node => {
-        let cursor = CursorHelper.fromModel(node, query.connectionArgs.order);
+        let cursor = ModelHelper.toCursor(node, query.connectionArgs.order);
         return {
           cursor,
           node

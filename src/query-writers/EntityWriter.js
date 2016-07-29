@@ -2,7 +2,6 @@
 import { warning, invariant } from '../Global';
 import DynamoDB from '../aws/DynamoDB';
 import TypeHelper from '../query-helpers/TypeHelper';
-import AWSKeyHelper from '../query-helpers/AWSKeyHelper';
 import ModelHelper from '../query-helpers/ModelHelper';
 import type { BatchWriteItemRequest } from 'aws-sdk-promise';
 
@@ -193,7 +192,7 @@ export default class EntityWriter {
       let tableReq = request.RequestItems[tableName];
       let newItem = {
         DeleteRequest: {
-          Key: AWSKeyHelper.fromModel(item, null)
+          Key: ModelHelper.toAWSKey(item, null)
         }
       };
       tableReq.push(newItem);

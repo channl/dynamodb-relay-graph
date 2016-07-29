@@ -12,7 +12,6 @@ import SingleResolver from '../query-resolvers/SingleResolver';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityWriter from '../query-writers/EntityWriter';
 import ModelHelper from '../query-helpers/ModelHelper';
-import CursorHelper from '../query-helpers/CursorHelper';
 import ToNodesConnectionResolver from '../query-resolvers/ToNodesConnectionResolver';
 import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
 import type { QueryExpression, ConnectionArgs, Options, Model } from '../flow/Types';
@@ -120,7 +119,7 @@ export default class Graph {
   getCursor(model: Model, order: ?string): string {
     invariant(model, 'Argument \'model\' is null');
 
-    return CursorHelper.fromModel(model, order);
+    return ModelHelper.toCursor(model, order);
   }
 
   getGlobalId(model: Model): string {

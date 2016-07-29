@@ -6,14 +6,21 @@ import type { QueryExpression } from '../../src/flow/Types';
 
 describe('QueryHelperTests', () => {
 
-  it('GetExclusiveStartKeyFirst', () => {
+  it('getExclusiveStartKeyFirst', () => {
     let connectionArgs = { first: 2 };
     let result = QueryHelper.getExclusiveStartKey(connectionArgs);
     let expected;
     expect(result).to.deep.equal(expected);
   });
 
-  it('GetExclusiveStartKeyFirstAfter', () => {
+  it('getExclusiveStartThrowsOnInValidArgs', () => {
+    let connectionArgs = { };
+    // $FlowIgnore
+    let func = () => QueryHelper.getExclusiveStartKey(connectionArgs);
+    expect(func).to.throw('First or Last must be specified');
+  });
+
+  it('getExclusiveStartKeyFirstAfter', () => {
     let connectionArgs = {
       first: 2,
       after: 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbMCwxNl19fX0='
@@ -27,14 +34,14 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('GetExclusiveStartKeyLast', () => {
+  it('getExclusiveStartKeyLast', () => {
     let connectionArgs = { last: 2 };
     let result = QueryHelper.getExclusiveStartKey(connectionArgs);
     let expected;
     expect(result).to.deep.equal(expected);
   });
 
-  it('GetExclusiveStartKeyLastBefore', () => {
+  it('getExclusiveStartKeyLastBefore', () => {
     let connectionArgs = {
       last: 2,
       before: 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbMCwxNl19fX0='
@@ -62,6 +69,13 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
+  it('getExclusiveStartThrowsOnInValidArgs', () => {
+    let connectionArgs = { };
+    // $FlowIgnore
+    let func = () => QueryHelper.isForwardScan(connectionArgs);
+    expect(func).to.throw('First or Last must be specified');
+  });
+
   it('getScanIndexForwardFirst', () => {
     let connectionArgs = { first: 2 };
     let result = QueryHelper.getScanIndexForward(connectionArgs);
@@ -77,17 +91,24 @@ describe('QueryHelperTests', () => {
   });
 
   it('getScanIndexForwardLast', () => {
-    let connectionArgs = { first: 2 };
+    let connectionArgs = { last: 2 };
     let result = QueryHelper.getScanIndexForward(connectionArgs);
-    let expected = true;
+    let expected = false;
     expect(result).to.deep.equal(expected);
   });
 
   it('getScanIndexForwardLastOrderDesc', () => {
-    let connectionArgs = { first: 2, orderDesc: true };
+    let connectionArgs = { last: 2, orderDesc: true };
     let result = QueryHelper.getScanIndexForward(connectionArgs);
-    let expected = false;
+    let expected = true;
     expect(result).to.deep.deep.equal(expected);
+  });
+
+  it('getScanIndexForwardThrowsOnInValidArgs', () => {
+    let connectionArgs = { };
+    // $FlowIgnore
+    let func = () => QueryHelper.getScanIndexForward(connectionArgs);
+    expect(func).to.throw('First or Last must be specified');
   });
 
   it('getLimitFirst', () => {
@@ -102,6 +123,13 @@ describe('QueryHelperTests', () => {
     let result = QueryHelper.getLimit(connectionArgs);
     let expected = 2;
     expect(result).to.deep.deep.equal(expected);
+  });
+
+  it('getLimitThrowsOnInValidArgs', () => {
+    let connectionArgs = { };
+    // $FlowIgnore
+    let func = () => QueryHelper.getLimit(connectionArgs);
+    expect(func).to.throw('First or Last must be specified');
   });
 
   it('getExpressionAttributeNames', () => {
@@ -136,6 +164,60 @@ describe('QueryHelperTests', () => {
     let result = QueryHelper.getIndexSchema(expression, connectionArgs, tableSchema);
     let expected;
     expect(result).to.equal(expected);
+  });
+
+  it('getIndexSchemaUsingLocalIndex', () => {
+    let expression = { type: 'Test', id: '0', name: 'ABC' };
+    let connectionArgs = { first: 2 };
+    let tableSchema = {
+      TableName: 'Test',
+      AttributeDefinitions: [ {
+        AttributeName: 'id', AttributeType: 'S',
+      }, {
+        AttributeName: 'name', AttributeType: 'S',
+      } ],
+      KeySchema: [ {
+        AttributeName: 'id', KeyType: 'HASH',
+      } ],
+      LocalSecondaryIndexes: [ {
+        IndexName: 'name',
+        Projection: {
+          ProjectionType: 'ALL',
+        },
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH'
+        }, {
+          AttributeName: 'name', KeyType: 'RANGE',
+        } ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
+        }
+      } ],
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 1,
+        WriteCapacityUnits: 1,
+      }
+    };
+    let result = QueryHelper.getIndexSchema(expression, connectionArgs, tableSchema);
+    let expected = {
+      IndexName: 'name',
+      KeySchema: [ {
+        AttributeName: 'id',
+        KeyType: 'HASH',
+      }, {
+        AttributeName: 'name',
+        KeyType: 'RANGE',
+      } ],
+      Projection: {
+        ProjectionType: 'ALL',
+      },
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 1,
+        WriteCapacityUnits: 1,
+      }
+    };
+    expect(result).to.deep.equal(expected);
   });
 
   it('getIndexSchemaUsingIndex', () => {
@@ -190,6 +272,97 @@ describe('QueryHelperTests', () => {
       }
     };
     expect(result).to.deep.equal(expected);
+  });
+
+  it('getIndexSchemaUsingIndexAndOrder', () => {
+    let expression = { type: 'Test', id: '0', name: 'ABC' };
+    let connectionArgs = { first: 2, order: 'name' };
+    let tableSchema = {
+      TableName: 'Test',
+      AttributeDefinitions: [ {
+        AttributeName: 'id', AttributeType: 'S',
+      }, {
+        AttributeName: 'name', AttributeType: 'S',
+      } ],
+      KeySchema: [ {
+        AttributeName: 'id', KeyType: 'HASH',
+      } ],
+      GlobalSecondaryIndexes: [ {
+        IndexName: 'name',
+        Projection: {
+          ProjectionType: 'ALL',
+        },
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH'
+        }, {
+          AttributeName: 'name', KeyType: 'RANGE',
+        } ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
+        }
+      } ],
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 1,
+        WriteCapacityUnits: 1,
+      }
+    };
+    let result = QueryHelper.getIndexSchema(expression, connectionArgs, tableSchema);
+    let expected = {
+      IndexName: 'name',
+      KeySchema: [ {
+        AttributeName: 'id',
+        KeyType: 'HASH',
+      }, {
+        AttributeName: 'name',
+        KeyType: 'RANGE',
+      } ],
+      Projection: {
+        ProjectionType: 'ALL',
+      },
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 1,
+        WriteCapacityUnits: 1,
+      }
+    };
+    expect(result).to.deep.equal(expected);
+  });
+
+  it('getIndexSchemaThrowsWhenNotAvailable', () => {
+    let expression = { type: 'Test', id: '0', name: 'ABC' };
+    let connectionArgs = { first: 2, order: 'notavailable' };
+    let tableSchema = {
+      TableName: 'Test',
+      AttributeDefinitions: [ {
+        AttributeName: 'id', AttributeType: 'S',
+      }, {
+        AttributeName: 'name', AttributeType: 'S',
+      } ],
+      KeySchema: [ {
+        AttributeName: 'id', KeyType: 'HASH',
+      } ],
+      GlobalSecondaryIndexes: [ {
+        IndexName: 'name',
+        Projection: {
+          ProjectionType: 'ALL',
+        },
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH'
+        }, {
+          AttributeName: 'name', KeyType: 'RANGE',
+        } ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
+        }
+      } ],
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 1,
+        WriteCapacityUnits: 1,
+      }
+    };
+    let func = () => QueryHelper.getIndexSchema(expression, connectionArgs, tableSchema);
+    expect(func).to.throw('Corresponding LocalSecondaryIndex Or GlobalSecondaryIndex not found');
   });
 
   it('isKeySchemaSatisfiedUsingNull', () => {
@@ -338,6 +511,13 @@ describe('QueryHelperTests', () => {
     let result = QueryHelper.getExpressionKeyType(expression);
     let expected = '*';
     expect(result).to.deep.equal(expected);
+  });
+
+  it('getExpressionKeyTypeUsingFunc', () => {
+    let expression = {};
+    // $FlowIgnore
+    let func = () => QueryHelper.getExpressionKeyType(expression);
+    expect(func).to.throw('ExpressionKeyType cannot be determined');
   });
 
   it('getProjectionExpression', () => {

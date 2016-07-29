@@ -1,5 +1,5 @@
 /* @flow */
-import { warning, invariant, json } from '../Global';
+import { invariant } from '../Global';
 import uuid from 'node-uuid';
 import ResolverHelper from '../query-helpers/ResolverHelper';
 import CursorHelper from '../query-helpers/CursorHelper';
@@ -104,65 +104,52 @@ export default class QueryHelper {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     invariant(tableSchema, 'Argument \'tableSchema\' is null');
 
-    let requiredKeySchema = null;
-    try {
-      requiredKeySchema = Object
-        .keys(expression)
-        .filter(name => name !== 'type')
-        .map(name => {
-          let value = expression[name];
-          return {
-            AttributeName: name,
-            KeyType: this.getExpressionKeyType(value),
-          };
-        });
+    let requiredKeySchema = Object
+      .keys(expression)
+      .filter(name => name !== 'type')
+      .map(name => {
+        let value = expression[name];
+        return {
+          AttributeName: name,
+          KeyType: this.getExpressionKeyType(value),
+        };
+      });
 
-      if (typeof connectionArgs.order !== 'undefined') {
-        requiredKeySchema.push({
-          AttributeName: connectionArgs.order,
-          KeyType: 'RANGE'
-        });
-      }
-
-      // If the primary key is a match then we dont need an index at all
-      if (this.isKeySchemaSatisfied(tableSchema.KeySchema, requiredKeySchema)) {
-        return undefined;
-      }
-
-      // Search the local secondary indexes for a match
-      if (tableSchema.LocalSecondaryIndexes) {
-        let lsi = tableSchema
-          .LocalSecondaryIndexes
-          .find(index =>
-            this.isKeySchemaSatisfied(index.KeySchema, requiredKeySchema));
-        if (lsi) {
-          return lsi;
-        }
-      }
-
-      // Search the global secondary indexes for a match
-      if (tableSchema.GlobalSecondaryIndexes) {
-        let gsi = tableSchema
-          .GlobalSecondaryIndexes
-          .find(index =>
-            this.isKeySchemaSatisfied(index.KeySchema, requiredKeySchema));
-        if (gsi) {
-          return gsi;
-        }
-      }
-
-      throw new Error('IndexNotFoundError');
-
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'QueryHelper',
-        function: 'getIndexSchema',
-        expression,
-        connectionArgs,
-        requiredKeySchema,
-        tableSchema}, null, json.padding));
-      throw ex;
+    if (typeof connectionArgs.order !== 'undefined') {
+      requiredKeySchema.push({
+        AttributeName: connectionArgs.order,
+        KeyType: 'RANGE'
+      });
     }
+
+    // If the primary key is a match then we dont need an index at all
+    if (this.isKeySchemaSatisfied(tableSchema.KeySchema, requiredKeySchema)) {
+      return undefined;
+    }
+
+    // Search the local secondary indexes for a match
+    if (tableSchema.LocalSecondaryIndexes) {
+      let lsi = tableSchema
+        .LocalSecondaryIndexes
+        .find(index =>
+          this.isKeySchemaSatisfied(index.KeySchema, requiredKeySchema));
+      if (lsi) {
+        return lsi;
+      }
+    }
+
+    // Search the global secondary indexes for a match
+    if (tableSchema.GlobalSecondaryIndexes) {
+      let gsi = tableSchema
+        .GlobalSecondaryIndexes
+        .find(index =>
+          this.isKeySchemaSatisfied(index.KeySchema, requiredKeySchema));
+      if (gsi) {
+        return gsi;
+      }
+    }
+
+    throw new Error('Corresponding LocalSecondaryIndex Or GlobalSecondaryIndex not found');
   }
 
   static isKeySchemaSatisfied(proposed: DynamoDBKeySchema, required: ?DynamoDBKeySchema) {
@@ -215,13 +202,7 @@ export default class QueryHelper {
       return '*';
     }
 
-    warning(false, JSON.stringify({
-      class: 'QueryHelper',
-      function: 'getExpressionKeyType',
-      expression
-    }));
-
-    invariant(false, 'ExpressionKeyType NotSupported');
+    invariant(false, 'ExpressionKeyType cannot be determined');
   }
 
   static getProjectionExpression(expression: QueryExpression,
@@ -372,15 +353,6 @@ export default class QueryHelper {
     }
   }
 
-  static logFrameDetail(error: ?Error) {
-    // eslint-disable-next-line no-caller
-    let caller = arguments.callee.caller;
-    let args = caller.arguments;
-    let method = caller.name;
-    let type = this.name;
-    warning(false, JSON.stringify({ type, method, args, error }, null, 2));
-  }
-
   static getKeyConditionExpression(expression: QueryExpression) {
     invariant(expression, 'Argument \'expression\' is null');
 
@@ -424,12 +396,6 @@ export default class QueryHelper {
         ', :v_begins_with_' + name + ')';
     }
 
-    warning(false, JSON.stringify({
-      class: 'QueryResolver',
-      function: 'getKeyConditionExpressionItem',
-      name, expression
-    }));
-
-    throw new Error('NotSupportedError (getKeyConditionExpressionItem)');
+    invariant(false, 'NotSupportedError (getKeyConditionExpressionItem)');
   }
 }

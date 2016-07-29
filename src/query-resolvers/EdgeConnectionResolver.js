@@ -7,6 +7,7 @@ import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
 import AWSItemHelper from '../query-helpers/AWSItemHelper';
+import ModelHelper from '../query-helpers/ModelHelper';
 import CursorHelper from '../query-helpers/CursorHelper';
 import DynamoDB from '../aws/DynamoDB';
 import { log, invariant, warning } from '../Global';
@@ -231,7 +232,7 @@ export default class EdgeConnectionResolver extends BaseResolver {
         type: expression.type,
         inID: edge.inID,
         outID: edge.outID,
-        cursor: CursorHelper.fromModel(edge, connectionArgs.order)
+        cursor: ModelHelper.toCursor(edge, connectionArgs.order)
       };
 
       return result;

@@ -5,7 +5,7 @@ import type { AttributeValue } from 'aws-sdk-promise';
 
 export default class AttributeValueHelper {
 
-  static areEqual(a: AttributeValue, b?: AttributeValue) {
+  static areEqual(a: AttributeValue, b: ?AttributeValue) {
     if (b == null) {
       return false;
     }
@@ -62,6 +62,6 @@ export default class AttributeValueHelper {
       return a.SS.every((aa, i) => SingleValueHelper.areEqual(aa, b.SS[i]));
     }
 
-    invariant(false, 'AttributeValue type not supported');
+    invariant(false, 'AttributeValue not found or invalid');
   }
 }

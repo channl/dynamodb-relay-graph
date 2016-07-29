@@ -39,6 +39,13 @@ describe('AttributeMapHelperTests', () => {
     expect(result).to.deep.equal(false);
   });
 
+  it('AreEqualTrueUsingEmpty', () => {
+    let a = {};
+    let b = {};
+    let result = AttributeMapHelper.areEqual(a, b);
+    expect(result).to.deep.equal(true);
+  });
+
   it('AreEqualFalseUsingSuperset', () => {
     let a = {
       id: { B: new Buffer('ABCsHX4SP2y3tJBdcZMOw==', 'base64') },

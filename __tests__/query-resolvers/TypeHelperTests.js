@@ -5,9 +5,15 @@ import { describe, it } from 'mocha';
 
 describe('TypeHelperTests', () => {
 
-  it('GetTableName', () => {
+  it('getTableName', () => {
     let result = TypeHelper.getTableName('User');
     let expected = 'Users';
+    expect(result).to.deep.equal(expected);
+  });
+
+  it('getTypeName', () => {
+    let result = TypeHelper.getTypeName('Users');
+    let expected = 'User';
     expect(result).to.deep.equal(expected);
   });
 });

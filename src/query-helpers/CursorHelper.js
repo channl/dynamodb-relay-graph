@@ -1,8 +1,6 @@
 /* @flow */
 import { invariant } from '../Global';
-import AWSKeyHelper from '../query-helpers/AWSKeyHelper';
 import type { AttributeMap } from 'aws-sdk-promise';
-import type { Model } from '../flow/Types';
 
 export default class CursorHelper {
 
@@ -26,20 +24,5 @@ export default class CursorHelper {
       });
 
     return item;
-  }
-
-  static fromASWKey(key: AttributeMap): string {
-    invariant(key, 'Argument \'key\' is null');
-
-    let cursorData = JSON.stringify(key);
-    let b = new Buffer(cursorData);
-    return b.toString('base64');
-  }
-
-  static fromModel(item: Model, order: ?string): string {
-    invariant(item, 'Argument \'item\' is null');
-
-    let key = AWSKeyHelper.fromModel(item, order);
-    return this.fromASWKey(key);
   }
 }
