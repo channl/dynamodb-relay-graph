@@ -2,7 +2,7 @@
 import { invariant } from '../Global';
 import type { DynamoDBTable } from 'aws-sdk-promise';
 
-export default class ExpressionHelper {
+export default class DynamoDBTableHelper {
 
   static getAttributeType(tableSchema: DynamoDBTable, attributeName: string) {
     invariant(tableSchema, 'Argument \'tableSchema\' is null');

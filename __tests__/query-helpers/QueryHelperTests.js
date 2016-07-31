@@ -613,9 +613,7 @@ describe('QueryHelperTests', () => {
   });
 
   it('getExpressionAttributeValueOfString', () => {
-    let name = 'id';
-    let value = 'ABC';
-    let result = {};
+    let expression = { id: 'ABC' };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -646,7 +644,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_equals_id': {
         S: 'ABC'
@@ -656,9 +654,7 @@ describe('QueryHelperTests', () => {
   });
 
   it('getExpressionAttributeValueOfAfterString', () => {
-    let name = 'id';
-    let value = { after: 'ABC' };
-    let result = {};
+    let expression = { id: { after: 'ABC' } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -689,7 +685,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_after_id': {
         S: 'ABC'
@@ -697,11 +693,10 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-/*
+
   it('getExpressionAttributeValueOfAfterNullString', () => {
-    let name = 'id';
-    let value = { after: null };
-    let result = {};
+    // $FlowIgnore
+    let expression = { id: { after: null } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -732,7 +727,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_after_id': {
         S: ' '
@@ -742,9 +737,8 @@ describe('QueryHelperTests', () => {
   });
 
   it('getExpressionAttributeValueOfAfterNullNumber', () => {
-    let name = 'id';
-    let value = { after: null };
-    let result = {};
+    // $FlowIgnore
+    let expression = { id: { after: null } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -775,7 +769,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_after_id': {
         N: '0'
@@ -785,9 +779,8 @@ describe('QueryHelperTests', () => {
   });
 
   it('getExpressionAttributeValueOfAfterNullBuffer', () => {
-    let name = 'id';
-    let value = { after: null };
-    let result = {};
+    // $FlowIgnore
+    let expression = { id: { after: null } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -818,7 +811,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_after_id': {
         B: new Buffer('AAAAAAAAAAAAAAAAAAAAAA==', 'base64')
@@ -826,11 +819,9 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-*/
+
   it('getExpressionAttributeValueOfBeforeString', () => {
-    let name = 'id';
-    let value = { before: 'ABC' };
-    let result = {};
+    let expression = { id: { before: 'ABC' } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -861,7 +852,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_before_id': {
         S: 'ABC'
@@ -870,11 +861,9 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-/*
   it('getExpressionAttributeValueOfBeforeNullString', () => {
-    let name = 'id';
-    let value = { before: null };
-    let result = {};
+    // $FlowIgnore
+    let expression = { id: { before: null } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -905,7 +894,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_before_id': {
         S: 'ZZZZZZZZZZ'
@@ -913,13 +902,10 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-*/
 
-/*
   it('getExpressionAttributeValueOfBeforeNullNumber', () => {
-    let name = 'id';
-    let value = { before: null };
-    let result = {};
+    // $FlowIgnore
+    let expression = { id: { before: null } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -950,7 +936,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_before_id': {
         N: Number.MAX_SAFE_INTEGER.toString()
@@ -958,12 +944,10 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-*/
-/*
+
   it('getExpressionAttributeValueOfBeforeNullBuffer', () => {
-    let name = 'id';
-    let value = { before: null };
-    let result = {};
+    // $FlowIgnore
+    let expression = { id: { before: null } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -994,7 +978,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_before_id': {
         B: new Buffer('/////////////////////w==', 'base64')
@@ -1002,13 +986,10 @@ describe('QueryHelperTests', () => {
     };
     expect(result).to.deep.equal(expected);
   });
-*/
 
   it('getExpressionAttributeValueOfBeginsWith', () => {
-    let name = 'id';
     // eslint-disable-next-line camelcase
-    let value = { begins_with: 'ABC' };
-    let result = {};
+    let expression = { id: { begins_with: 'ABC' } };
     let tableSchema = {
       TableName: 'Tests',
       AttributeDefinitions: [ {
@@ -1039,7 +1020,7 @@ describe('QueryHelperTests', () => {
         WriteCapacityUnits: 1,
       }
     };
-    QueryHelper.getExpressionAttributeValue(name, value, result, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
     let expected = {
       ':v_begins_with_id': {
         S: 'ABC'
@@ -1048,44 +1029,110 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  /*
-  it('getBeginsWithAttributeValueAsType', () => {
-    let value = '';
-    let asType = '';
-    let result = QueryHelper.getBeginsWithAttributeValueAsType(value, asType);
-    let expected = {};
-    expect(result).to.deep.equal(expected);
-  });
-
-  it('getBeforeAttributeValueAsType', () => {
-    let value = '';
-    let asType = '';
-    let result = QueryHelper.getBeforeAttributeValueAsType(value, asType);
-    let expected = {};
-    expect(result).to.deep.equal(expected);
-  });
-
-  it('getAfterAttributeValueAsType', () => {
-    let value = '';
-    let asType = '';
-    let result = QueryHelper.getAfterAttributeValueAsType(value, asType);
-    let expected = {};
-    expect(result).to.deep.equal(expected);
+  it('getExpressionAttributeThrowsOnInValid', () => {
+    // $FlowIgnore
+    let expression = { id: { unknown: 'value' } };
+    let tableSchema = {
+      TableName: 'Tests',
+      AttributeDefinitions: [ {
+        AttributeName: 'id', AttributeType: 'S',
+      }, {
+        AttributeName: 'name', AttributeType: 'S',
+      } ],
+      KeySchema: [ {
+        AttributeName: 'id', KeyType: 'HASH',
+      } ],
+      GlobalSecondaryIndexes: [ {
+        IndexName: 'name',
+        Projection: {
+          ProjectionType: 'ALL',
+        },
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH'
+        }, {
+          AttributeName: 'name', KeyType: 'RANGE',
+        } ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
+        }
+      } ],
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 1,
+        WriteCapacityUnits: 1,
+      }
+    };
+    let func = () => QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    expect(func).to.throw('ExpressionValue type was invalid');
   });
 
   it('getKeyConditionExpression', () => {
     let expression = {};
     let result = QueryHelper.getKeyConditionExpression(expression);
-    let expected = {};
+    let expected;
     expect(result).to.deep.equal(expected);
   });
 
-  it('getKeyConditionExpressionItem', () => {
-    let name = '';
-    let expression = {};
-    let result = QueryHelper.getKeyConditionExpressionItem(name, expression);
-    let expected = {};
+  it('getKeyConditionExpressionWithString', () => {
+    let expression = { id: 'string' };
+    let result = QueryHelper.getKeyConditionExpression(expression);
+    let expected = '#resid = :v_equals_id';
     expect(result).to.deep.equal(expected);
   });
-*/
+
+  it('getKeyConditionExpressionWithStrings', () => {
+    let expression = { id: 'string', idd: 'string2' };
+    let result = QueryHelper.getKeyConditionExpression(expression);
+    let expected = '#resid = :v_equals_id AND #residd = :v_equals_idd';
+    expect(result).to.deep.equal(expected);
+  });
+
+  it('getKeyConditionExpressionWithNumber', () => {
+    let expression = { id: 2 };
+    let result = QueryHelper.getKeyConditionExpression(expression);
+    let expected = '#resid = :v_equals_id';
+    expect(result).to.deep.equal(expected);
+  });
+
+  it('getKeyConditionExpressionWithBuffer', () => {
+    let expression = { id: new Buffer('ABC', 'base64') };
+    let result = QueryHelper.getKeyConditionExpression(expression);
+    let expected = '#resid = :v_equals_id';
+    expect(result).to.deep.equal(expected);
+  });
+
+  it('getKeyConditionExpressionAfter', () => {
+    let expression = { id: { after: 2 } };
+    let result = QueryHelper.getKeyConditionExpression(expression);
+    let expected = '#resid > :v_after_id';
+    expect(result).to.deep.equal(expected);
+  });
+
+  it('getKeyConditionExpressionBefore', () => {
+    let expression = { id: { before: 2 } };
+    let result = QueryHelper.getKeyConditionExpression(expression);
+    let expected = '#resid < :v_before_id';
+    expect(result).to.deep.equal(expected);
+  });
+
+  it('getKeyConditionExpressionBeginsWith', () => {
+    // eslint-disable-next-line camelcase
+    let expression = { id: { begins_with: 'prefix' } };
+    let result = QueryHelper.getKeyConditionExpression(expression);
+    let expected = 'begins_with(#resid, :v_begins_with_id)';
+    expect(result).to.deep.equal(expected);
+  });
+
+  it('getKeyConditionExpressionBeforeAndAfter', () => {
+    let expression = { id: { before: 10, after: 2 } };
+    let func = () => QueryHelper.getKeyConditionExpression(expression);
+    expect(func).to.throw('NotSupportedError (after and before used together)');
+  });
+
+  it('getKeyConditionExpressionThrowsOnInValid', () => {
+    // $FlowIgnore
+    let expression = { id: { unknown: 10 } };
+    let func = () => QueryHelper.getKeyConditionExpression(expression);
+    expect(func).to.throw('ExpressionValue type was invalid');
+  });
 });

@@ -5,6 +5,38 @@ import type { Value } from '../flow/Types';
 
 export default class ValueHelper {
 
+  static isValue(value: Value): boolean {
+    if (value instanceof Buffer) {
+      return true;
+    }
+
+    if (typeof value === 'string') {
+      return true;
+    }
+
+    if (typeof value === 'number') {
+      return true;
+    }
+
+    if (typeof value === 'boolean') {
+      return true;
+    }
+
+    if (Array.isArray(value) && value.every(i => i instanceof Buffer)) {
+      return true;
+    }
+
+    if (Array.isArray(value) && value.every(i => typeof i === 'string')) {
+      return true;
+    }
+
+    if (Array.isArray(value) && value.every(i => typeof i === 'number')) {
+      return true;
+    }
+
+    return false;
+  }
+
   static toAttributeValue(value: Value): AttributeValue {
     if (value instanceof Buffer) {
       return { B: value };

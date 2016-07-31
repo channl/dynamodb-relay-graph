@@ -1,5 +1,5 @@
 /* @flow */
-import ResolverHelper from '../../src/query-helpers/ResolverHelper';
+import DynamoDBTableHelper from '../../src/query-helpers/DynamoDBTableHelper';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
@@ -38,15 +38,15 @@ const tableDescription = {
   TableStatus: ''
 };
 
-describe('ResolverHelperTests', () => {
+describe('DynamoDBTableHelperTests', () => {
 
   it('GetAttributeTypeReturnsCorrectAttribute', () => {
-    let attributeType = ResolverHelper.getAttributeType(tableDescription, 'MyAttributeName2');
+    let attributeType = DynamoDBTableHelper.getAttributeType(tableDescription, 'MyAttributeName2');
     expect(attributeType).to.equal('S');
   });
 
   it('GetAttributeTypeThrowsInvariant', () => {
-    let func = () => ResolverHelper.getAttributeType(tableDescription, 'MyAttributeName3');
+    let func = () => DynamoDBTableHelper.getAttributeType(tableDescription, 'MyAttributeName3');
     expect(func).to.throw('AttributeDefinition was not found');
   });
 

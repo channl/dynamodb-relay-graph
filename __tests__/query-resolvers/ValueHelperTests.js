@@ -63,4 +63,53 @@ describe('ValueHelperTests', () => {
     let func = () => ValueHelper.areEqual(a, b);
     expect(func).to.throw('Value could not be converted to an AttributeValue');
   });
+
+  it('isValueBuffer', () => {
+    let value = new Buffer('ABC', 'base64');
+    let result = ValueHelper.isValue(value);
+    expect(result).to.deep.equal(true);
+  });
+
+  it('isValueString', () => {
+    let value = 'string';
+    let result = ValueHelper.isValue(value);
+    expect(result).to.deep.equal(true);
+  });
+
+  it('isValueNumber', () => {
+    let value = 2;
+    let result = ValueHelper.isValue(value);
+    expect(result).to.deep.equal(true);
+  });
+
+  it('isValueBoolean', () => {
+    let value = true;
+    let result = ValueHelper.isValue(value);
+    expect(result).to.deep.equal(true);
+  });
+
+  it('isValueArrayBuffer', () => {
+    let value = [ new Buffer('ABC', 'base64'), new Buffer('DEF', 'base64') ];
+    let result = ValueHelper.isValue(value);
+    expect(result).to.deep.equal(true);
+  });
+
+  it('isValueArrayString', () => {
+    let value = [ 'ABC', 'DEF' ];
+    let result = ValueHelper.isValue(value);
+    expect(result).to.deep.equal(true);
+  });
+
+  it('isValueArrayNumber', () => {
+    let value = [ 1, 2 ];
+    let result = ValueHelper.isValue(value);
+    expect(result).to.deep.equal(true);
+  });
+
+  it('isValueFalse', () => {
+    let value = { unkwown: 2 };
+    // $FlowIgnore
+    let result = ValueHelper.isValue(value);
+    expect(result).to.deep.equal(false);
+  });
 });

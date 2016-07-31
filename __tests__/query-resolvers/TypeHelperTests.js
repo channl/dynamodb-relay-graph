@@ -16,4 +16,14 @@ describe('TypeHelperTests', () => {
     let expected = 'User';
     expect(result).to.deep.equal(expected);
   });
+
+  it('getTypeMaxValue', () => {
+    let func = () => TypeHelper.getTypeMaxValue('X');
+    expect(func).to.throws('Type was invalid');
+  });
+
+  it('getTypeMinValue', () => {
+    let func = () => TypeHelper.getTypeMinValue('X');
+    expect(func).to.throws('Type was invalid');
+  });
 });
