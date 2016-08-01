@@ -46,7 +46,7 @@ export default class NodeConnectionResolver extends BaseResolver {
       let expression = QueryHelper.getExpression(query);
 
       if (ExpressionHelper.isModelExpression(expression)) {
-        let node = await this._entityResolver.getAsync(ModelHelper.toGlobalId(expression));
+        let node = await this._entityResolver.getAsync(ExpressionHelper.toGlobalId(expression));
         return ModelHelper.toConnection([ node ], false, false, null);
       }
 
@@ -88,6 +88,7 @@ export default class NodeConnectionResolver extends BaseResolver {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     invariant(typeof expression.type === 'string', 'Type must be string');
+
     return {
       TableName: TypeHelper.getTableName(expression.type),
       IndexName: QueryHelper.getIndexName(expression, connectionArgs, this._schema),

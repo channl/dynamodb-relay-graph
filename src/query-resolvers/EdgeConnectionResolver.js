@@ -9,9 +9,9 @@ import TypeHelper from '../query-helpers/TypeHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import ModelHelper from '../query-helpers/ModelHelper';
 import DynamoDB from '../aws/DynamoDB';
-import { log, invariant, warning } from '../Global';
-import type { Options, ConnectionArgs } from '../flow/Types';
-import type { DynamoDBSchema } from 'aws-sdk-promise';
+import { invariant } from '../Global';
+import type { Options, ConnectionArgs, QueryExpression } from '../flow/Types';
+import type { DynamoDBSchema, ScanQueryResponse } from 'aws-sdk-promise';
 
 export default class EdgeConnectionResolver extends BaseResolver {
   _dynamoDB: DynamoDB;
@@ -37,75 +37,20 @@ export default class EdgeConnectionResolver extends BaseResolver {
     invariant(innerResult, 'Argument \'innerResult\' is null');
 
     let sw = null;
-    if (options && options.stats) {
-      sw = options.stats.timer('EdgeConnectionResolver.resolveAsync').start();
-    }
-
     try {
-      let expression = this.getExpression(innerResult, query);
+      if (options && options.stats) {
+        sw = options.stats.timer('EdgeConnectionResolver.resolveAsync').start();
+      }
 
+      let expression = QueryHelper.getEdgeExpression(innerResult, query);
       if (ExpressionHelper.isEdgeModelExpression(expression)) {
-
-        // Type and id are supplied so get the item direct
-        let globalId = ExpressionHelper.toGlobalId(expression);
-        let item = await this._entityResolver.getAsync(globalId);
-        let edges = item ? [ {cursor: 'xxx', node: item} ] : [];
-        let startCursor = edges[0] ? edges[0].cursor : null;
-        let endCursor = edges[edges.length - 1] ?
-          edges[edges.length - 1].cursor :
-          null;
-        let result = {
-          edges,
-          pageInfo: {
-            startCursor,
-            endCursor,
-            hasPreviousPage: false,
-            hasNextPage: false
-          }
-        };
-
-        if (options && options.logs) {
-          log(JSON.stringify({
-            class: 'EdgeConnectionResolver',
-            function: 'succeeded',
-            query: query.clone(),
-            innerResult,
-            result}));
-        }
-
-        return result;
+        let item = await this._entityResolver.getAsync(ExpressionHelper.toGlobalId(expression));
+        return ModelHelper.toConnection([ item ], false, false, null);
       }
 
-      let request = this.getRequest(
-        expression,
-        query.connectionArgs,
-        query.isOut);
-
+      let request = this._getQueryRequest(expression, query.connectionArgs, query.isOut);
       let response = await this._dynamoDB.queryAsync(request);
-      let result = this.getResult(response, expression, query.connectionArgs);
-
-      if (options && options.logs) {
-        log(
-          JSON.stringify({
-            class: 'EdgeConnectionResolver',
-            function: 'resolveAsync',
-            query: query.clone(),
-            request,
-            innerResult,
-            result
-          }));
-      }
-
-      return result;
-
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'EdgeConnectionResolver',
-        function: 'resolveAsync',
-        query: query.clone(),
-        innerResult
-      }));
-      throw ex;
+      return this._getResponseAsConnection(query, response);
     } finally {
       if (sw) {
         sw.end();
@@ -113,162 +58,61 @@ export default class EdgeConnectionResolver extends BaseResolver {
     }
   }
 
-  getExpression(innerResult: any, query: EdgeConnectionQuery) {
-    try {
-      invariant(innerResult, 'Argument \'innerResult\' is null');
-      invariant(query, 'Argument \'query\' is null');
-
-      if (ExpressionHelper.isEdgeModelExpression(query.expression)) {
-        // This expression has type+inID+outID so it already has
-        // all it needs to find a particular edge
-        return query.expression;
-      }
-
-      if (typeof query.expression.type !== 'undefined' &&
-          typeof query.expression.inID !== 'undefined' &&
-          typeof query.expression.outID === 'undefined') {
-        // This expression has type+inID so it already has
-        // all it needs to find a particular set of edges
-        // if (typeof query.expression.inID === 'string') {
-          // query.expression.inID =
-          //   new Buffer(uuid.parse(query.expression.inID));
-        // }
-        return query.expression;
-      }
-
-      if (typeof query.expression.type !== 'undefined' &&
-          typeof query.expression.inID === 'undefined' &&
-          typeof query.expression.outID !== 'undefined') {
-        // This expression has type+outID so it already has
-        // all it needs to find a particular set of edges
-        // if (typeof query.expression.outID === 'string') {
-          // query.expression.outID =
-          //   new Buffer(uuid.parse(query.expression.outID));
-        // }
-        return query.expression;
-      }
-
-      // Ok so the expression is currently missing enough information to make a
-      // query.  Most likely this is an node to edge traversal and we need to set
-      // the ids at run time.
-      // NOTE : Only traversal from a single node is supported currently
-      if (innerResult.edges.length !== 1) {
-        throw new Error('NotSupportedError(getExpression)');
-      }
-
-
-      if (query.isOut) {
-        return {
-          type: query.expression.type,
-          outID: innerResult.edges[0].node.id
-        };
-      }
-
-      return {
-        type: query.expression.type,
-        inID: innerResult.edges[0].node.id
-      };
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'EdgeConnectionResolver',
-        function: 'getExpression',
-        query: query.clone(),
-        innerResult
-      }));
-      throw ex;
-    }
-  }
-
-  getRequest(expression: any, connectionArgs: ConnectionArgs) {
+  _getQueryRequest(expression: QueryExpression, connectionArgs: ConnectionArgs) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-
-    let tableName = TypeHelper.getTableName(expression.type);
-    let tableSchema = this._schema.tables.find(ts => ts.TableName === tableName);
-    let indexSchema = QueryHelper.getIndexSchema(
-      expression,
-      connectionArgs,
-      tableSchema);
-
-    let indexName = indexSchema ? indexSchema.IndexName : undefined;
-    let projectionExpression = QueryHelper.getProjectionExpression(
-      expression,
-      connectionArgs,
-      [ 'inID', 'outID', 'createDate' ]);
-
-    let keyConditionExpression = QueryHelper.getKeyConditionExpression(expression);
-    let expressionAttributeValues = QueryHelper.getExpressionAttributeValues(
-      expression,
-      this._schema);
-
-    let expressionAttributeNames = QueryHelper.getExpressionAttributeNames(
-      expression,
-      connectionArgs,
-      [ 'inID', 'outID', 'createDate' ]);
+    invariant(typeof expression.type === 'string', 'Type must be string');
 
     return {
-      TableName: tableName,
-      IndexName: indexName,
+      TableName: TypeHelper.getTableName(expression.type),
+      IndexName: QueryHelper.getIndexName(expression, connectionArgs, this._schema),
       ExclusiveStartKey: QueryHelper.getExclusiveStartKey(connectionArgs),
       Limit: QueryHelper.getLimit(connectionArgs),
       ScanIndexForward: QueryHelper.getScanIndexForward(connectionArgs),
-      ProjectionExpression: projectionExpression,
-      KeyConditionExpression: keyConditionExpression,
-      ExpressionAttributeValues: expressionAttributeValues,
-      ExpressionAttributeNames: expressionAttributeNames
+      ProjectionExpression: QueryHelper.getProjectionExpression(expression, connectionArgs,
+        [ 'inID', 'outID', 'createDate' ]),
+      KeyConditionExpression: QueryHelper.getKeyConditionExpression(expression),
+      ExpressionAttributeValues: QueryHelper.getExpressionAttributeValues(expression, this._schema),
+      ExpressionAttributeNames: QueryHelper.getExpressionAttributeNames(expression, connectionArgs,
+        [ 'inID', 'outID', 'createDate' ])
     };
   }
 
-  getResult(response: any, expression: any, connectionArgs: ConnectionArgs) {
+  _getResponseAsConnection(query: EdgeConnectionQuery, response: ScanQueryResponse) {
+    invariant(query, 'Argument \'query\' is null');
     invariant(response, 'Argument \'response\' is null');
-    invariant(expression, 'Argument \'expression\' is null');
-    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    let edges = response.data.Items.map(item => {
-
-      let edge = AttributeMapHelper.toModel(expression.type, item);
-      let result = {
-        type: expression.type,
+    let edges = response.Items.map(item => {
+      invariant(typeof query.expression.type === 'string', 'Type must be string');
+      let edge = AttributeMapHelper.toModel(query.expression.type, item);
+      return {
+        type: query.expression.type,
         inID: edge.inID,
         outID: edge.outID,
-        cursor: ModelHelper.toCursor(edge, connectionArgs.order)
+        cursor: ModelHelper.toCursor(edge, query.connectionArgs.order)
       };
-
-      return result;
     });
 
-    if (QueryHelper.isForwardScan(connectionArgs)) {
-
-      let startCursor = edges[0] ? edges[0].cursor : null;
-      let endCursor = edges[edges.length - 1] ?
-        edges[edges.length - 1].cursor :
-        null;
-
-      let result = {
-        edges,
-        pageInfo: {
-          startCursor,
-          endCursor,
-          hasNextPage: typeof response.data.LastEvaluatedKey !== 'undefined',
-          hasPreviousPage: false
-        }
+    if (QueryHelper.isForwardScan(query.connectionArgs)) {
+      let pageInfo = {
+        startCursor: edges[0] ? edges[0].cursor : null,
+        endCursor: edges[edges.length - 1] ? edges[edges.length - 1].cursor : null,
+        hasNextPage: typeof response.LastEvaluatedKey !== 'undefined',
+        hasPreviousPage: false
       };
-
-      return result;
+      return { edges, pageInfo };
     }
 
-    edges.reverse();
-    let result = {
-      edges,
-      pageInfo: {
-        startCursor: edges[0] ? edges[0].cursor : null,
-        endCursor: edges[edges.length - 1] ?
-          edges[edges.length - 1].cursor : null,
-        hasNextPage: false,
-        hasPreviousPage: typeof response.data.LastEvaluatedKey !== 'undefined'
-      }
+    let pageInfo = {
+      startCursor: edges[0] ? edges[0].cursor : null,
+      endCursor: edges[edges.length - 1] ? edges[edges.length - 1].cursor : null,
+      hasNextPage: false,
+      hasPreviousPage: typeof response.LastEvaluatedKey !== 'undefined'
     };
 
-    return result;
+    return {
+      edges: edges.reverse(),
+      pageInfo
+    };
   }
 }

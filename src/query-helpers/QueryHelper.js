@@ -1,6 +1,7 @@
 /* @flow */
 import { invariant } from '../Global';
 import type NodeConnectionQuery from '../query/NodeConnectionQuery';
+import type EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import ExpressionValueHelper from '../query-helpers/ExpressionValueHelper';
 import DynamoDBTableHelper from '../query-helpers/DynamoDBTableHelper';
 import ValueHelper from '../query-helpers/ValueHelper';
@@ -354,7 +355,7 @@ export default class QueryHelper {
     return indexName;
   }
 
-  static getExpression(query: NodeConnectionQuery) {
+  static getExpression(query: NodeConnectionQuery): QueryExpression {
     invariant(query, 'Argument \'query\' is null');
 
     if (ExpressionHelper.isModelExpression(query.expression)) {
@@ -375,5 +376,60 @@ export default class QueryHelper {
     }
 
     return expr;
+  }
+
+  static getEdgeExpression(innerResult: any, query: EdgeConnectionQuery): QueryExpression {
+    invariant(innerResult, 'Argument \'innerResult\' is null');
+    invariant(query, 'Argument \'query\' is null');
+
+    if (ExpressionHelper.isEdgeModelExpression(query.expression)) {
+      // This expression has type+inID+outID so it already has
+      // all it needs to find a particular edge
+      return query.expression;
+    }
+
+    if (typeof query.expression.type !== 'undefined' &&
+        typeof query.expression.inID !== 'undefined' &&
+        typeof query.expression.outID === 'undefined') {
+      // This expression has type+inID so it already has
+      // all it needs to find a particular set of edges
+      // if (typeof query.expression.inID === 'string') {
+        // query.expression.inID =
+        //   new Buffer(uuid.parse(query.expression.inID));
+      // }
+      return query.expression;
+    }
+
+    if (typeof query.expression.type !== 'undefined' &&
+        typeof query.expression.inID === 'undefined' &&
+        typeof query.expression.outID !== 'undefined') {
+      // This expression has type+outID so it already has
+      // all it needs to find a particular set of edges
+      // if (typeof query.expression.outID === 'string') {
+        // query.expression.outID =
+        //   new Buffer(uuid.parse(query.expression.outID));
+      // }
+      return query.expression;
+    }
+
+    // Ok so the expression is currently missing enough information to make a
+    // query.  Most likely this is an node to edge traversal and we need to set
+    // the ids at run time.
+    // NOTE : Only traversal from a single node is supported currently
+    if (innerResult.edges.length !== 1) {
+      throw new Error('NotSupportedError(getExpression)');
+    }
+
+    if (query.isOut) {
+      return {
+        type: query.expression.type,
+        outID: innerResult.edges[0].node.id
+      };
+    }
+
+    return {
+      type: query.expression.type,
+      inID: innerResult.edges[0].node.id
+    };
   }
 }
