@@ -7,6 +7,25 @@ import type { Model, Value } from '../flow/Types';
 
 export default class ModelHelper {
 
+  static toConnection(items: Model[], hasPreviousPage: boolean, hasNextPage: boolean,
+    order: ?string) {
+    let edges = items.filter(n => n !== null).map(node => {
+      return {
+        cursor: ModelHelper.toCursor(node, order),
+        node
+      };
+    });
+
+    let pageInfo = {
+      startCursor: edges[0] ? edges[0].cursor : null,
+      endCursor: edges[edges.length - 1] ? edges[edges.length - 1].cursor : null,
+      hasPreviousPage,
+      hasNextPage,
+    };
+
+    return { edges, pageInfo };
+  }
+
   static toAWSKey(item: Model, indexedByAttributeName: ?string) {
     invariant(item, 'Argument \'item\' is null');
 

@@ -1,7 +1,6 @@
 /* @flow */
 import { invariant } from '../Global';
 import TypeHelper from '../query-helpers/TypeHelper';
-import AWSItemHelper from '../query-helpers/AWSItemHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import type { BatchGetItemRequest, BatchGetItemResponse } from 'aws-sdk-promise';
 import type { TypeAndKey, Model } from '../flow/Types';
@@ -28,7 +27,6 @@ export default class TypeAndKeyHelper {
     typeAndKeys: TypeAndKey[]): Model[] {
     invariant(response != null, 'Argument \'response\' is null');
     invariant(typeAndKeys != null, 'Argument \'typeAndKeys\' is null');
-
     let result = typeAndKeys.map(typeAndKey => this._getModelFromResponse(typeAndKey, response));
     return result;
   }
@@ -39,6 +37,6 @@ export default class TypeAndKeyHelper {
     let responseItem = responseItems
       .find(item => AttributeMapHelper.isSupersetOf(item, typeAndKey.key));
     invariant(responseItem != null, 'Response item is null');
-    return AWSItemHelper.toModel(typeAndKey.type, responseItem);
+    return AttributeMapHelper.toModel(typeAndKey.type, responseItem);
   }
 }

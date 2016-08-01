@@ -1,12 +1,15 @@
 /* @flow */
 import { invariant } from '../Global';
+import type NodeConnectionQuery from '../query/NodeConnectionQuery';
 import ExpressionValueHelper from '../query-helpers/ExpressionValueHelper';
 import DynamoDBTableHelper from '../query-helpers/DynamoDBTableHelper';
 import ValueHelper from '../query-helpers/ValueHelper';
 import CursorHelper from '../query-helpers/CursorHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
+import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import type { ConnectionArgs, QueryExpression, ExpressionValue } from '../flow/Types';
-import type { DynamoDBTable, KeyDefinition, DynamoDBKeySchema } from 'aws-sdk-promise';
+import type { DynamoDBTable, KeyDefinition, DynamoDBKeySchema,
+  DynamoDBSchema } from 'aws-sdk-promise';
 
 export default class QueryHelper {
 
@@ -229,9 +232,14 @@ export default class QueryHelper {
     return '#res' + name;
   }
 
-  static getExpressionAttributeValues(expression: QueryExpression, table: DynamoDBTable) {
-    invariant(expression, 'Argument \'expression\' is null');
-    invariant(table, 'Argument \'table\' is null');
+  static getExpressionAttributeValues(expression: QueryExpression, schema: DynamoDBSchema) {
+    invariant(expression != null, 'Argument \'expression\' is null');
+    invariant(schema != null, 'Argument \'schema\' is null');
+
+    invariant(typeof expression.type === 'string', 'Type must be string');
+    let tableName = TypeHelper.getTableName(expression.type);
+    let table = schema.tables.find(ts => ts.TableName === tableName);
+    invariant(table != null, 'Table not found');
 
     let names = Object.keys(expression).filter(name => name !== 'type');
     if (names.length === 0) {
@@ -299,8 +307,8 @@ export default class QueryHelper {
   }
 
   static getKeyConditionExpressionItem(name: string, expression: ExpressionValue) {
-    invariant(name, 'Argument \'name\' is null');
-    invariant(expression, 'Argument \'expression\' is null');
+    invariant(name != null, 'Argument \'name\' is null');
+    invariant(expression != null, 'Argument \'expression\' is null');
 
     if (typeof expression === 'string' || typeof expression === 'number' ||
       expression instanceof Buffer) {
@@ -329,5 +337,43 @@ export default class QueryHelper {
     }
 
     invariant(false, 'ExpressionValue type was invalid');
+  }
+
+  static getIndexName(expression: QueryExpression, connectionArgs: ConnectionArgs,
+    schema: DynamoDBSchema): any {
+    invariant(expression != null, 'Argument \'expression\' is null');
+    invariant(schema != null, 'Argument \'schema\' is null');
+    invariant(typeof expression.type === 'string', 'Type must be string');
+
+    let tableName = TypeHelper.getTableName(expression.type);
+    let tableSchema = schema.tables.find(ts => ts.TableName === tableName);
+    invariant(tableSchema, 'TableSchema ' + tableName + ' not found');
+
+    let indexSchema = QueryHelper.getIndexSchema(expression, connectionArgs, tableSchema);
+    let indexName = indexSchema ? indexSchema.IndexName : undefined;
+    return indexName;
+  }
+
+  static getExpression(query: NodeConnectionQuery) {
+    invariant(query, 'Argument \'query\' is null');
+
+    if (ExpressionHelper.isModelExpression(query.expression)) {
+      return query.expression;
+    }
+
+    let expr = query.expression;
+    if (typeof query.connectionArgs.query !== 'undefined') {
+      // Transfer over the connection query expression parameters
+      let connectionQueryExpression = JSON.parse(query.connectionArgs.query);
+      Object.keys(connectionQueryExpression).forEach(key => {
+        if (expr[key]) {
+          throw new Error('NotSupportedError (ConnectionQueryExpression)');
+        }
+
+        expr[key] = connectionQueryExpression[key];
+      });
+    }
+
+    return expr;
   }
 }

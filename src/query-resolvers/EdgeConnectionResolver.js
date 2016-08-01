@@ -6,9 +6,8 @@ import QueryHelper from '../query-helpers/QueryHelper';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
-import AWSItemHelper from '../query-helpers/AWSItemHelper';
+import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import ModelHelper from '../query-helpers/ModelHelper';
-import CursorHelper from '../query-helpers/CursorHelper';
 import DynamoDB from '../aws/DynamoDB';
 import { log, invariant, warning } from '../Global';
 import type { Options, ConnectionArgs } from '../flow/Types';
@@ -32,8 +31,8 @@ export default class EdgeConnectionResolver extends BaseResolver {
     return (query instanceof EdgeConnectionQuery);
   }
 
-  async resolveAsync(query: EdgeConnectionQuery,
-    innerResult: Object, options: ?Options): Promise<?Object> {
+  async resolveAsync(query: EdgeConnectionQuery, innerResult: Object,
+    options: ?Options): Promise<?Object> { // eslint-disable-line no-unused-vars
     invariant(query, 'Argument \'query\' is null');
     invariant(innerResult, 'Argument \'innerResult\' is null');
 
@@ -200,7 +199,7 @@ export default class EdgeConnectionResolver extends BaseResolver {
     let keyConditionExpression = QueryHelper.getKeyConditionExpression(expression);
     let expressionAttributeValues = QueryHelper.getExpressionAttributeValues(
       expression,
-      tableSchema);
+      this._schema);
 
     let expressionAttributeNames = QueryHelper.getExpressionAttributeNames(
       expression,
@@ -227,7 +226,7 @@ export default class EdgeConnectionResolver extends BaseResolver {
 
     let edges = response.data.Items.map(item => {
 
-      let edge = AWSItemHelper.toModel(expression.type, item);
+      let edge = AttributeMapHelper.toModel(expression.type, item);
       let result = {
         type: expression.type,
         inID: edge.inID,
@@ -271,42 +270,5 @@ export default class EdgeConnectionResolver extends BaseResolver {
     };
 
     return result;
-  }
-
-  getBeforeParam(query: EdgeConnectionQuery) {
-    invariant(query, 'Argument \'query\' is null');
-
-    if (typeof query.connectionArgs.before !== 'undefined') {
-      let cursor = CursorHelper.toAWSKey(query.connectionArgs.before);
-      invariant(typeof query.connectionArgs.order !== 'undefined', 'TODO');
-      let value = cursor[query.connectionArgs.order].S;
-      return value;
-    }
-
-    return null;
-  }
-
-  getAfterParam(query: EdgeConnectionQuery) {
-    invariant(query, 'Argument \'query\' is null');
-
-    if (typeof query.connectionArgs.after !== 'undefined') {
-      let cursor = CursorHelper.toAWSKey(query.connectionArgs.after);
-      invariant(typeof query.connectionArgs.order !== 'undefined', 'TODO');
-      let value = cursor[query.connectionArgs.order].S;
-      return value;
-    }
-
-    return null;
-  }
-
-  getOrderExpression(query: EdgeConnectionQuery) {
-    invariant(query, 'Argument \'query\' is null');
-
-    if (typeof query.connectionArgs.orderDesc !== 'undefined' &&
-      query.connectionArgs.orderDesc) {
-      return { before: this.getBeforeParam(query) };
-    }
-
-    return { after: this.getAfterParam(query) };
   }
 }

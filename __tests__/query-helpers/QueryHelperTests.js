@@ -538,37 +538,39 @@ describe('QueryHelperTests', () => {
 
   it('getExpressionAttributeValues', () => {
     let expression = { type: 'Test', id: 'ABC' };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_equals_id': { S: 'ABC' }
     };
@@ -576,75 +578,79 @@ describe('QueryHelperTests', () => {
   });
 
   it('getExpressionAttributeValuesWithTypeOnlyReturnsUndefined', () => {
-    let expression = { type: 'User' };
-    let tableSchema = {
-      TableName: 'Test',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test' };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected;
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfString', () => {
-    let expression = { id: 'ABC' };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+  it('getExpressionAttributeValuesOfString', () => {
+    let expression = { type: 'Test', id: 'ABC' };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_equals_id': {
         S: 'ABC'
@@ -653,39 +659,41 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfAfterString', () => {
-    let expression = { id: { after: 'ABC' } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+  it('getExpressionAttributeValuesOfAfterString', () => {
+    let expression = { type: 'Test', id: { after: 'ABC' } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_after_id': {
         S: 'ABC'
@@ -694,40 +702,42 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfAfterNullString', () => {
+  it('getExpressionAttributeValuesOfAfterNullString', () => {
     // $FlowIgnore
-    let expression = { id: { after: null } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test', id: { after: null } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_after_id': {
         S: ' '
@@ -736,40 +746,42 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfAfterNullNumber', () => {
+  it('getExpressionAttributeValuesOfAfterNullNumber', () => {
     // $FlowIgnore
-    let expression = { id: { after: null } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'N',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test', id: { after: null } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'N',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_after_id': {
         N: '0'
@@ -778,40 +790,42 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfAfterNullBuffer', () => {
+  it('getExpressionAttributeValuesOfAfterNullBuffer', () => {
     // $FlowIgnore
-    let expression = { id: { after: null } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'B',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test', id: { after: null } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'B',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_after_id': {
         B: new Buffer('AAAAAAAAAAAAAAAAAAAAAA==', 'base64')
@@ -820,39 +834,41 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfBeforeString', () => {
-    let expression = { id: { before: 'ABC' } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+  it('getExpressionAttributeValuesOfBeforeString', () => {
+    let expression = { type: 'Test', id: { before: 'ABC' } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_before_id': {
         S: 'ABC'
@@ -861,40 +877,42 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfBeforeNullString', () => {
+  it('getExpressionAttributeValuesOfBeforeNullString', () => {
     // $FlowIgnore
-    let expression = { id: { before: null } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test', id: { before: null } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_before_id': {
         S: 'ZZZZZZZZZZ'
@@ -903,40 +921,42 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfBeforeNullNumber', () => {
+  it('getExpressionAttributeValuesOfBeforeNullNumber', () => {
     // $FlowIgnore
-    let expression = { id: { before: null } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'N',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test', id: { before: null } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'N',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_before_id': {
         N: Number.MAX_SAFE_INTEGER.toString()
@@ -945,40 +965,42 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfBeforeNullBuffer', () => {
+  it('getExpressionAttributeValuesOfBeforeNullBuffer', () => {
     // $FlowIgnore
-    let expression = { id: { before: null } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'B',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test', id: { before: null } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'B',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_before_id': {
         B: new Buffer('/////////////////////w==', 'base64')
@@ -987,40 +1009,42 @@ describe('QueryHelperTests', () => {
     expect(result).to.deep.equal(expected);
   });
 
-  it('getExpressionAttributeValueOfBeginsWith', () => {
+  it('getExpressionAttributeValuesOfBeginsWith', () => {
     // eslint-disable-next-line camelcase
-    let expression = { id: { begins_with: 'ABC' } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test', id: { begins_with: 'ABC' } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let result = QueryHelper.getExpressionAttributeValues(expression, schema);
     let expected = {
       ':v_begins_with_id': {
         S: 'ABC'
@@ -1031,38 +1055,40 @@ describe('QueryHelperTests', () => {
 
   it('getExpressionAttributeThrowsOnInValid', () => {
     // $FlowIgnore
-    let expression = { id: { unknown: 'value' } };
-    let tableSchema = {
-      TableName: 'Tests',
-      AttributeDefinitions: [ {
-        AttributeName: 'id', AttributeType: 'S',
-      }, {
-        AttributeName: 'name', AttributeType: 'S',
-      } ],
-      KeySchema: [ {
-        AttributeName: 'id', KeyType: 'HASH',
-      } ],
-      GlobalSecondaryIndexes: [ {
-        IndexName: 'name',
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        KeySchema: [ {
-          AttributeName: 'id', KeyType: 'HASH'
+    let expression = { type: 'Test', id: { unknown: 'value' } };
+    let schema = {
+      tables: [ {
+        TableName: 'Tests',
+        AttributeDefinitions: [ {
+          AttributeName: 'id', AttributeType: 'S',
         }, {
-          AttributeName: 'name', KeyType: 'RANGE',
+          AttributeName: 'name', AttributeType: 'S',
+        } ],
+        KeySchema: [ {
+          AttributeName: 'id', KeyType: 'HASH',
+        } ],
+        GlobalSecondaryIndexes: [ {
+          IndexName: 'name',
+          Projection: {
+            ProjectionType: 'ALL',
+          },
+          KeySchema: [ {
+            AttributeName: 'id', KeyType: 'HASH'
+          }, {
+            AttributeName: 'name', KeyType: 'RANGE',
+          } ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          }
         } ],
         ProvisionedThroughput: {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1,
         }
-      } ],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 1,
-        WriteCapacityUnits: 1,
-      }
+      } ]
     };
-    let func = () => QueryHelper.getExpressionAttributeValues(expression, tableSchema);
+    let func = () => QueryHelper.getExpressionAttributeValues(expression, schema);
     expect(func).to.throw('ExpressionValue type was invalid');
   });
 
