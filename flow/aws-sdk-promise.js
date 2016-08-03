@@ -171,10 +171,10 @@ declare module 'aws-sdk-promise' {
   declare type PutItemResponse = {
     Attributes: AttributeMap,
     ConsumedCapacity: ConsumedCapacity,
-    ItemCollectionMetrics: ItemCollectionMetrics,
+    ItemCollectionMetrics: Map<string, ItemCollectionMetric>,
   };
 
-  declare type ItemCollectionMetrics = {
+  declare type ItemCollectionMetric = {
     ItemCollectionKey: AttributeMap,
     SizeEstimateRangeGB: number[],
   }
@@ -273,7 +273,7 @@ declare module 'aws-sdk-promise' {
 
   declare type BatchWriteItemResponse = {
     ConsumedCapacity: ConsumedCapacity[],
-    ItemCollectionMetrics: ItemCollectionMetrics,
+    ItemCollectionMetrics: Map<string, ItemCollectionMetric>,
     UnprocessedItems: BatchWriteRequestItems,
   };
 
@@ -293,7 +293,7 @@ declare module 'aws-sdk-promise' {
   declare type DeleteItemResponse = {
     Attributes: AttributeMap,
     ConsumedCapacity: ConsumedCapacity,
-    ItemCollectionMetrics: ItemCollectionMetrics,
+    ItemCollectionMetrics: Map<string, ItemCollectionMetric>,
   };
 
   declare type UpdateItemRequest = {
@@ -313,7 +313,7 @@ declare module 'aws-sdk-promise' {
   declare type UpdateItemResponse = {
     Attributes: AttributeMap,
     ConsumedCapacity: ConsumedCapacity,
-    ItemCollectionMetrics: ItemCollectionMetrics,
+    ItemCollectionMetrics: Map<string, ItemCollectionMetric>,
   };
 
   declare type DynamoDBAttributeDefinition = {
@@ -371,10 +371,10 @@ declare module 'aws-sdk-promise' {
   };
 
   declare type DynamoDBConfig = {
-    apiVersion: string,
-    region: string,
-    dynamoDbCrc32: boolean,
-    httpOptions: HTTPOptions,
+    apiVersion?: string,
+    region?: string,
+    dynamoDbCrc32?: boolean,
+    httpOptions?: HTTPOptions,
   };
 
   // DynamoDB

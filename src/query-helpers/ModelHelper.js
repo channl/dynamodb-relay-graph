@@ -1,11 +1,51 @@
 /* @flow */
 import { invariant } from '../Global';
 import ValueHelper from '../query-helpers/ValueHelper';
+import TypeHelper from '../query-helpers/TypeHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import { toGlobalId } from 'graphql-relay';
+import type { BatchWriteItemRequest } from 'aws-sdk-promise';
 import type { Model, Value } from '../flow/Types';
 
 export default class ModelHelper {
+
+  static toBatchWriteItemRequest(itemsToPut: Model[],
+    itemsToDelete: Model[]): BatchWriteItemRequest {
+
+    let request = { RequestItems: {} };
+
+    itemsToPut.forEach(item => {
+      let tableName = TypeHelper.getTableName(item.type);
+      if (!request.RequestItems[tableName]) {
+        request.RequestItems[tableName] = [];
+      }
+
+      let tableReq = request.RequestItems[tableName];
+      let newItem = {
+        PutRequest: {
+          Item: ModelHelper.toAWSItem(item)
+        }
+      };
+      tableReq.push(newItem);
+    });
+
+    itemsToDelete.forEach(item => {
+      let tableName = TypeHelper.getTableName(item.type);
+      if (!request.RequestItems[tableName]) {
+        request.RequestItems[tableName] = [];
+      }
+
+      let tableReq = request.RequestItems[tableName];
+      let newItem = {
+        DeleteRequest: {
+          Key: ModelHelper.toAWSKey(item, null)
+        }
+      };
+      tableReq.push(newItem);
+    });
+
+    return request;
+  }
 
   static toConnection(items: Model[], hasPreviousPage: boolean, hasNextPage: boolean,
     order: ?string) {

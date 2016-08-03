@@ -2,6 +2,7 @@
 import warning from 'warning';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityResolver from '../query-resolvers/EntityResolver';
+import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import { log, invariant } from '../Global';
 import type { Options } from '../flow/Types';
@@ -84,10 +85,12 @@ export default class ToNodesConnectionResolver extends BaseResolver {
     return innerResult
       .edges
       .map(edge => {
-        return {
+        invariant(typeof query.expression.type === 'string', 'Type must be string');
+        let model = {
           type: query.expression.type,
           id: query.isOut ? edge.outID : edge.inID
         };
+        return ExpressionHelper.toGlobalId(model);
       });
   }
 }

@@ -6,6 +6,7 @@ import GlobalIdHelper from '../query-helpers/GlobalIdHelper';
 import { invariant } from '../Global';
 import BatchingDynamoDB from '../utils/BatchingDynamoDB';
 import TypeAndKeyHelper from '../query-helpers/TypeAndKeyHelper';
+import type { Model } from '../flow/Types';
 
 export default class EntityResolver {
   _dataLoader: any;
@@ -18,17 +19,17 @@ export default class EntityResolver {
     this._dynamoDB = new BatchingDynamoDB(dynamoDB);
   }
 
-  async getAsync(globalId: string) {
-    invariant(globalId != null, 'Argument \'globalId\' is null');
+  async getAsync(globalId: string): Promise<Model> {
+    invariant(typeof globalId === 'string', 'Argument \'globalId\' is not a string');
     return this._dataLoader.load(globalId);
   }
 
-  async _loadAsync(globalIds: string[]) {
+  async _loadAsync(globalIds: string[]): Promise<Model[]> {
     try {
       invariant(globalIds, 'Argument \'globalIds\' is null');
 
       // Convert to type and attribute map
-      let typeAndKeys = globalIds.map(GlobalIdHelper.toTypeAndAWSKey);
+      let typeAndKeys = globalIds.map(id => GlobalIdHelper.toTypeAndAWSKey(id));
 
       // Convert to a dynamo request
       let request = TypeAndKeyHelper.toBatchGetItemRequest(typeAndKeys);

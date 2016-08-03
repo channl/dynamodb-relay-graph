@@ -93,7 +93,7 @@ describe('BatchingDynamoDBTests', () => {
       }
     };
 
-    let result = BatchingDynamoDB._getSplitRequests(fullRequest, 2);
+    let result = BatchingDynamoDB._getSplitBatchGetItemRequests(fullRequest, 2);
     expect(result).to.deep.equal([
       {
         RequestItems: {
@@ -169,7 +169,7 @@ describe('BatchingDynamoDBTests', () => {
       UnprocessedKeys: {},
     };
 
-    let result = BatchingDynamoDB._getCombinedResponse(responses);
+    let result = BatchingDynamoDB._getCombinedBatchGetItemResponse(responses);
     expect(result).to.deep.equal(expected);
   });
 

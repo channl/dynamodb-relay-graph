@@ -11,31 +11,26 @@ import NodeConnectionResolver from '../query-resolvers/NodeConnectionResolver';
 import SingleResolver from '../query-resolvers/SingleResolver';
 import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityWriter from '../query-writers/EntityWriter';
-import ModelHelper from '../query-helpers/ModelHelper';
 import ToNodesConnectionResolver from '../query-resolvers/ToNodesConnectionResolver';
 import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
-import type { QueryExpression, ConnectionArgs, Options, Model } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs, Options } from '../flow/Types';
 
 export default class Graph {
   _writer: EntityWriter;
   _resolvers: BaseResolver[];
 
   constructor(dynamoDBConfig: DynamoDBConfig, schema: DynamoDBSchema) {
-
     invariant(dynamoDBConfig, 'Argument \'dynamoDBConfig\' is null');
 
     let dynamoDB = new DynamoDB(dynamoDBConfig);
     let entityResolver = new EntityResolver(dynamoDB);
-
     this._writer = new EntityWriter(dynamoDB);
-
     let res1 = new AggregateResolver((query, innerResult, stats) =>
       this.getQueryAsync(query, innerResult, stats));
     let res2 = new EdgeConnectionResolver(dynamoDB, schema, entityResolver);
     let res3 = new NodeConnectionResolver(dynamoDB, schema, entityResolver);
     let res4 = new SingleResolver();
     let res5 = new ToNodesConnectionResolver(entityResolver);
-
     this._resolvers = [
       res1,
       res2,
@@ -48,14 +43,12 @@ export default class Graph {
   v(expression: QueryExpression, connectionArgs: ConnectionArgs): NodeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-
     return new NodeConnectionQuery(this, null, expression, connectionArgs);
   }
 
   e(expression: any, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-
     return new EdgeConnectionQuery(this, null, expression, connectionArgs, true);
   }
 
@@ -114,17 +107,5 @@ export default class Graph {
     }
 
     return await resolver.resolveAsync(query, innerResult, options);
-  }
-
-  getCursor(model: Model, order: ?string): string {
-    invariant(model, 'Argument \'model\' is null');
-
-    return ModelHelper.toCursor(model, order);
-  }
-
-  getGlobalId(model: Model): string {
-    invariant(model, 'Argument \'model\' is null');
-
-    return ModelHelper.toGlobalId(model);
   }
 }
