@@ -27,16 +27,20 @@ export default class TypeAndKeyHelper {
     typeAndKeys: TypeAndKey[]): Model[] {
     invariant(response != null, 'Argument \'response\' is null');
     invariant(typeAndKeys != null, 'Argument \'typeAndKeys\' is null');
+    // $FlowIgnore
     let result = typeAndKeys.map(typeAndKey => this._getModelFromResponse(typeAndKey, response));
     return result;
   }
 
-  static _getModelFromResponse(typeAndKey: TypeAndKey, response: BatchGetItemResponse): Model {
+  static _getModelFromResponse(typeAndKey: TypeAndKey, response: BatchGetItemResponse): ?Model {
     let tableName = TypeHelper.getTableName(typeAndKey.type);
     let responseItems = response.Responses[tableName];
     let responseItem = responseItems
       .find(item => AttributeMapHelper.isSupersetOf(item, typeAndKey.key));
-    invariant(responseItem != null, 'Response item is null');
+    if (responseItem == null) {
+      return null;
+    }
+
     return AttributeMapHelper.toModel(typeAndKey.type, responseItem);
   }
 }

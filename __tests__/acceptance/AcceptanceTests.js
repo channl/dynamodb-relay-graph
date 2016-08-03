@@ -1,6 +1,5 @@
 /* @flow */
 import Graph from '../../src/graph/Graph';
-import { log } from '../../src/Global';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
@@ -41,13 +40,9 @@ describe('AcceptanceTests', () => {
 
         await graph.addAsync(item);
       }
-
-    } catch (e) {
-      log(e);
-      log(e.stack);
-      throw e;
-    } finally {
       done();
+    } catch (e) {
+      done(e);
     }
   });
 
@@ -84,16 +79,26 @@ describe('AcceptanceTests', () => {
       let graph = new Graph(dbConfig, dbSchema);
 
       let result = await graph
-        .v({type: 'User'}, {first: 100})
+        .v({type: 'User'}, {first: 2})
         .getAsync();
 
-      expect(result);
-    } catch (e) {
-      log(e);
-      log(e.stack);
-      throw e;
-    } finally {
+      let expected = {
+        edges: [ null, null ],
+        pageInfo: {
+          // eslint-disable-next-line max-len
+          startCursor: 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbNDgsMTgxLDc5LDE3NiwxMTcsMjQ4LDcyLDI1MywxNzgsMjIyLDIxMCw2NSwxMTcsMTk4LDc2LDU5XX19fQ==',
+          // eslint-disable-next-line max-len
+          endCursor: 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbNTksMTA5LDg0LDcwLDIxNSw2NSw3Myw1OCwxNDEsNDYsODcsNzMsNTcsMTY3LDEyMCw5M119fX0=',
+          hasPreviousPage: false,
+          hasNextPage: true
+        }
+      };
+
+      expect(result.edges.length).to.deep.equal(expected.edges.length);
+      expect(result.pageInfo).to.deep.equal(expected.pageInfo);
       done();
+    } catch (e) {
+      done(e);
     }
   });
 
@@ -134,12 +139,62 @@ describe('AcceptanceTests', () => {
         .getAsync();
 
       expect(result);
-    } catch (e) {
-      log(e);
-      log(e.stack);
-      throw e;
-    } finally {
       done();
+    } catch (e) {
+      done(e);
+    }
+  });
+
+  it('Can query for node that does not exist', async function(done) {
+    try {
+      this.timeout(10000);
+
+      let dbConfig = {
+        apiVersion: '2012-08-10',
+        region: 'us-east-1',
+        dynamoDbCrc32: false,
+      };
+
+      let dbSchema = {
+        tables: [ {
+          TableName: 'Users',
+          AttributeDefinitions: [
+            { AttributeName: 'id', AttributeType: 'B' },
+            { AttributeName: 'phoneNumber', AttributeType: 'S' },
+          ],
+          KeySchema: [
+            { AttributeName: 'id', KeyType: 'HASH' },
+          ],
+          ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
+          GlobalSecondaryIndexes: [ {
+            IndexName: 'PhoneNumber',
+            KeySchema: [ { AttributeName: 'phoneNumber', KeyType: 'HASH' } ],
+            Projection: { ProjectionType: 'KEYS_ONLY' },
+            ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+          } ]
+        } ]
+      };
+
+      let graph = new Graph(dbConfig, dbSchema);
+
+      let result = await graph
+        .v({type: 'User', id: new Buffer('ABCPsHX4SP2y3tJBdcZMOw==', 'base64')}, {first: 1})
+        .getAsync();
+
+      let expected = {
+        edges: [],
+        pageInfo: {
+          startCursor: null,
+          endCursor: null,
+          hasPreviousPage: false,
+          hasNextPage: false
+        }
+      };
+
+      expect(result).to.deep.equal(expected);
+      done();
+    } catch (e) {
+      done(e);
     }
   });
 
@@ -251,13 +306,23 @@ describe('AcceptanceTests', () => {
         .in({type: 'Contact'})
         .getAsync();
 
-      expect(result);
-    } catch (e) {
-      log(e);
-      log(e.stack);
-      throw e;
-    } finally {
+      let expected = {
+        edges: [ null, null, null ],
+        pageInfo: {
+          // eslint-disable-next-line max-len
+          startCursor: 'eyJvdXRJRCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbNDgsMTgxLDc5LDE3NiwxMTcsMjQ4LDcyLDI1MywxNzgsMjIyLDIxMCw2NSwxMTcsMTk4LDc2LDU5XX19LCJpbklEIjp7IkIiOnsidHlwZSI6IkJ1ZmZlciIsImRhdGEiOls1MSw0OCw5OCw1Myw1MiwxMDIsOTgsNDgsNDUsNTUsNTMsMTAyLDU2LDQ1LDUyLDU2LDEwMiwxMDAsNDUsOTgsNTAsMTAwLDEwMSw0NSwxMDAsNTAsNTIsNDksNTUsNTMsOTksNTQsNTIsOTksNTEsOTgsOTQsNDAsNTMsNTMsNTMsNDEsMzIsNTMsNTQsNTIsNDUsNTYsNTMsNTYsNTFdfX19',
+          // eslint-disable-next-line max-len
+          endCursor: 'eyJvdXRJRCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbNDgsMTgxLDc5LDE3NiwxMTcsMjQ4LDcyLDI1MywxNzgsMjIyLDIxMCw2NSwxMTcsMTk4LDc2LDU5XX19LCJpbklEIjp7IkIiOnsidHlwZSI6IkJ1ZmZlciIsImRhdGEiOls1MSw0OCw5OCw1Myw1MiwxMDIsOTgsNDgsNDUsNTUsNTMsMTAyLDU2LDQ1LDUyLDU2LDEwMiwxMDAsNDUsOTgsNTAsMTAwLDEwMSw0NSwxMDAsNTAsNTIsNDksNTUsNTMsOTksNTQsNTIsOTksNTEsOTgsOTQsNDMsNDksNTAsNTMsNTQsNTUsNTEsNDgsNTEsNDgsNTUsNDhdfX19',
+          hasPreviousPage: false,
+          hasNextPage: true
+        }
+      };
+
+      expect(result.edges.length).to.deep.equal(expected.edges.length);
+      expect(result.pageInfo).to.deep.equal(expected.pageInfo);
       done();
+    } catch (e) {
+      done(e);
     }
   });
 });
