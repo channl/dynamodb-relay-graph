@@ -521,7 +521,7 @@ describe('QueryHelperTests', () => {
   });
 
   it('getProjectionExpression', () => {
-    let expression = { name: 'ABC', other: 'DEF' };
+    let expression = { type: 'Test', name: 'ABC', other: 'DEF' };
     let connectionArgs = { first: 2 };
     let include = [];
     let result = QueryHelper.getProjectionExpression(expression, connectionArgs, include);
@@ -1093,49 +1093,49 @@ describe('QueryHelperTests', () => {
   });
 
   it('getKeyConditionExpression', () => {
-    let expression = {};
+    let expression = { type: 'Test' };
     let result = QueryHelper.getKeyConditionExpression(expression);
     let expected;
     expect(result).to.deep.equal(expected);
   });
 
   it('getKeyConditionExpressionWithString', () => {
-    let expression = { id: 'string' };
+    let expression = { type: 'Test', id: 'string' };
     let result = QueryHelper.getKeyConditionExpression(expression);
     let expected = '#resid = :v_equals_id';
     expect(result).to.deep.equal(expected);
   });
 
   it('getKeyConditionExpressionWithStrings', () => {
-    let expression = { id: 'string', idd: 'string2' };
+    let expression = { type: 'Test', id: 'string', idd: 'string2' };
     let result = QueryHelper.getKeyConditionExpression(expression);
     let expected = '#resid = :v_equals_id AND #residd = :v_equals_idd';
     expect(result).to.deep.equal(expected);
   });
 
   it('getKeyConditionExpressionWithNumber', () => {
-    let expression = { id: 2 };
+    let expression = { type: 'Test', id: 2 };
     let result = QueryHelper.getKeyConditionExpression(expression);
     let expected = '#resid = :v_equals_id';
     expect(result).to.deep.equal(expected);
   });
 
   it('getKeyConditionExpressionWithBuffer', () => {
-    let expression = { id: new Buffer('ABC', 'base64') };
+    let expression = { type: 'Test', id: new Buffer('ABC', 'base64') };
     let result = QueryHelper.getKeyConditionExpression(expression);
     let expected = '#resid = :v_equals_id';
     expect(result).to.deep.equal(expected);
   });
 
   it('getKeyConditionExpressionAfter', () => {
-    let expression = { id: { after: 2 } };
+    let expression = { type: 'Test', id: { after: 2 } };
     let result = QueryHelper.getKeyConditionExpression(expression);
     let expected = '#resid > :v_after_id';
     expect(result).to.deep.equal(expected);
   });
 
   it('getKeyConditionExpressionBefore', () => {
-    let expression = { id: { before: 2 } };
+    let expression = { type: 'Test', id: { before: 2 } };
     let result = QueryHelper.getKeyConditionExpression(expression);
     let expected = '#resid < :v_before_id';
     expect(result).to.deep.equal(expected);
@@ -1143,21 +1143,21 @@ describe('QueryHelperTests', () => {
 
   it('getKeyConditionExpressionBeginsWith', () => {
     // eslint-disable-next-line camelcase
-    let expression = { id: { begins_with: 'prefix' } };
+    let expression = { type: 'Test', id: { begins_with: 'prefix' } };
     let result = QueryHelper.getKeyConditionExpression(expression);
     let expected = 'begins_with(#resid, :v_begins_with_id)';
     expect(result).to.deep.equal(expected);
   });
 
   it('getKeyConditionExpressionBeforeAndAfter', () => {
-    let expression = { id: { before: 10, after: 2 } };
+    let expression = { type: 'Test', id: { before: 10, after: 2 } };
     let func = () => QueryHelper.getKeyConditionExpression(expression);
     expect(func).to.throw('NotSupportedError (after and before used together)');
   });
 
   it('getKeyConditionExpressionThrowsOnInValid', () => {
     // $FlowIgnore
-    let expression = { id: { unknown: 10 } };
+    let expression = { type: 'Test', id: { unknown: 10 } };
     let func = () => QueryHelper.getKeyConditionExpression(expression);
     expect(func).to.throw('ExpressionValue type was invalid');
   });

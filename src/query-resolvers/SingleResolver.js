@@ -1,37 +1,17 @@
 /* @flow */
-import warning from 'warning';
-import BaseResolver from '../query-resolvers/BaseResolver';
+import Instrument from '../utils/Instrument';
 import SingleQuery from '../query/SingleQuery';
-import { log, invariant } from '../Global';
-import type { Options } from '../flow/Types';
+import { invariant } from '../Global';
 
-export default class SingleResolver extends BaseResolver {
-  canResolve(query: any): boolean {
-    return (query instanceof SingleQuery);
-  }
+export default class SingleResolver {
 
-  async resolveAsync(query: SingleQuery,
-    innerResult: Object, options: ?Options): Promise<?Object> {
-    invariant(query, 'Argument \'query\' is null');
-    invariant(innerResult, 'Argument \'innerResult\' is null');
+  async resolveAsync(query: SingleQuery, innerResult: ?Object): Promise<?Object> {
+    return await Instrument.funcAsync(this, async () => {
+      invariant(query, 'Argument \'query\' is null');
+      invariant(innerResult, 'Argument \'innerResult\' is null');
 
-    let sw = null;
-    if (options && options.stats) {
-      sw = options.stats.timer('SingleResolver.resolveAsync').start();
-    }
-
-    try {
       if (innerResult && innerResult.edges && innerResult.edges.length === 1) {
         let result = innerResult.edges[0].node;
-
-        if (options && options.logs) {
-          log(JSON.stringify({
-            class: 'SingleResolver',
-            query: query.clone(),
-            innerResult,
-            result}));
-        }
-
         return result;
       }
 
@@ -56,20 +36,6 @@ export default class SingleResolver extends BaseResolver {
       }
 
       throw new Error('NotSupportedError (getSingleAsync)');
-
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'SingleResolver',
-        function: 'resolveAsync',
-        query: query.clone(),
-        innerResult
-      }));
-
-      throw ex;
-    } finally {
-      if (sw) {
-        sw.end();
-      }
-    }
+    });
   }
 }

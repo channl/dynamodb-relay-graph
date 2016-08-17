@@ -1,6 +1,6 @@
 /* @flow */
 import DataLoader from 'dataloader';
-import warning from 'warning';
+import Instrument from '../utils/Instrument';
 import DynamoDB from '../aws/DynamoDB';
 import GlobalIdHelper from '../query-helpers/GlobalIdHelper';
 import { invariant } from '../Global';
@@ -25,7 +25,7 @@ export default class EntityResolver {
   }
 
   async _loadAsync(globalIds: string[]): Promise<Model[]> {
-    try {
+    return await Instrument.funcAsync(this, async () => {
       invariant(globalIds, 'Argument \'globalIds\' is null');
 
       // Convert to type and attribute map
@@ -40,13 +40,6 @@ export default class EntityResolver {
       // Convert to models and return
       let result = TypeAndKeyHelper.fromBatchGetItemResponse(response, typeAndKeys);
       return result;
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'EntityResolver',
-        function: '_loadAsync',
-        globalIds
-      }));
-      throw ex;
-    }
+    });
   }
 }

@@ -1,10 +1,10 @@
 /* @flow */
 import { invariant } from '../Global';
-import type { DynamoDBTable } from 'aws-sdk-promise';
+import type { TableDefinition } from 'aws-sdk-promise';
 
-export default class DynamoDBTableHelper {
+export default class TableDefinitionHelper {
 
-  static getAttributeType(tableSchema: DynamoDBTable, attributeName: string) {
+  static getAttributeType(tableSchema: TableDefinition, attributeName: string) {
     invariant(tableSchema, 'Argument \'tableSchema\' is null');
     invariant(attributeName, 'Argument \'attributeName\' is null');
 

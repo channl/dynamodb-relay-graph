@@ -1,5 +1,4 @@
 /* @flow */
-import { MeasuredCollection } from 'measured';
 import type { AttributeMap } from 'aws-sdk-promise';
 
 export type ConnectionArgs = FirstConnectionArgs | LastConnectionArgs;
@@ -18,44 +17,8 @@ export type LastConnectionArgs = {
   orderDesc?: boolean,
 };
 
-export type Options = {
-  log?: boolean,
-  stats?: MeasuredCollection
-};
-/*
-export type QueryExpression = NodeQueryExpression | EdgeQueryExpression;
-
-export type NodeQueryExpression = TypeOnlyNodeQueryExpression |
-  TypeAndIdNodeQueryExpression | TypeAndAnyNodeQueryExpression;
-
-export type TypeOnlyNodeQueryExpression = {
-  type: string
-};
-
-export type TypeAndIdNodeQueryExpression = {
- type: string,
- id: ExpressionValue,
-};
-
-export type TypeAndAnyNodeQueryExpression = {
- type: string,
- [name: string]: ExpressionValue,
-};
-
-export type EdgeQueryExpression = InEdgeQueryExpression | OutEdgeQueryExpression;
-
-export type InEdgeQueryExpression = {
-  type: string,
-  inID: ExpressionValue,
-};
-
-export type OutEdgeQueryExpression = {
-  type: string,
-  outID: ExpressionValue,
-};
-*/
-
 export type QueryExpression = {
+  type: string,
   [name: string]: ExpressionValue,
 }
 
@@ -93,3 +56,23 @@ export type Model = {
   type: string,
   [propertyName: string]: Value,
 };
+
+export type DRGEdge = {
+  type: string,
+  outID: Value,
+  inID: Value,
+};
+
+/*
+export type PartialEdgeConnection = {
+  edges: PartialEdge[],
+  pageInfo: PageInfo,
+};
+
+export type PartialEdge = {
+  type: string,
+  inID: Buffer,
+  outID: Buffer,
+  cursor: string,
+};
+*/

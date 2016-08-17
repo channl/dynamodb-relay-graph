@@ -3,9 +3,9 @@ import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
-import Graph from '../graph/Graph';
+import Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
-import type { QueryExpression, ConnectionArgs } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs, DRGEdge } from '../flow/Types';
 
 export default class ToNodesConnectionQuery extends BaseQuery {
   isOut: boolean;
@@ -40,6 +40,28 @@ export default class ToNodesConnectionQuery extends BaseQuery {
   }
 
   async getAsync(): Promise<Connection> {
-    return this.graph.getAsync(this);
+    let innerResult = await this.getInnerResultAsync();
+    return await this.graph._toNodesConnectionResolver.resolveAsync(this, innerResult);
+  }
+
+  async getInnerResultAsync(): Promise<Connection<DRGEdge>> {
+    if (this.inner == null) {
+      let result: Connection<DRGEdge> = {
+        edges: [],
+        pageInfo: {
+          startCursor: null,
+          endCursor: null,
+          hasPreviousPage: false,
+          hasNextPage: false,
+        }
+      };
+      return result;
+    }
+
+    if (this.inner instanceof EdgeConnectionQuery) {
+      return await this.inner.getAsync();
+    }
+
+    invariant(false, 'Inner query type \'' + this.inner.constructor.name + '\' was not supported');
   }
 }

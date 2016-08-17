@@ -1,11 +1,53 @@
 /* @flow */
-import Graph from '../../src/graph/Graph';
+// import fs from 'fs';
+import Graph from '../../src/Graph';
+// import DynamoDB from '../../src/aws/DynamoDB';
+// import EntityWriter from '../../src/query-writers/EntityWriter';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
 // import type { NodeQueryExpression } from '../src/flow/Types';
 
 describe('AcceptanceTests', () => {
+
+/*
+  it('Can do test upload', async function(done) {
+    try {
+      this.timeout(10000);
+
+      let dbConfig = {
+        apiVersion: '2012-08-10',
+        region: 'us-east-1',
+        dynamoDbCrc32: false,
+      };
+
+      // let dbSchema = DynamoDBSchema;
+      let db = new DynamoDB(dbConfig);
+      let writer = new EntityWriter(db);
+
+      let readFileAsync = async path => {
+        return new Promise((resolve, reject) => {
+          fs.readFile(path, (err, data) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            resolve(data);
+          });
+        });
+      };
+
+      let content = await readFileAsync('./__tests__/acceptance/TestUpload.json');
+      let json = JSON.parse(content);
+      await writer.writeManyAsync(json.itemsToPut, json.itemsToDelete);
+
+      done();
+    } catch (e) {
+      done(e);
+    }
+  });
+*/
 
   it('Can update node', async function(done) {
     try {
@@ -325,4 +367,5 @@ describe('AcceptanceTests', () => {
       done(e);
     }
   });
+
 });

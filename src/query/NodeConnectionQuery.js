@@ -3,15 +3,15 @@ import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
 import { invariant } from '../Global';
-import Graph from '../graph/Graph';
+import Graph from '../Graph';
+import type { Connection } from 'graphql-relay';
 import type { QueryExpression, ConnectionArgs } from '../flow/Types';
 
 export default class NodeConnectionQuery extends BaseQuery {
   expression: QueryExpression;
   connectionArgs: ConnectionArgs;
 
-  constructor(graph: Graph, inner: ?BaseQuery,
-    expression: QueryExpression,
+  constructor(graph: Graph, inner: ?BaseQuery, expression: QueryExpression,
     connectionArgs: ConnectionArgs) {
     super(graph, inner);
 
@@ -39,5 +39,13 @@ export default class NodeConnectionQuery extends BaseQuery {
 
   singleOrNull(): SingleQuery {
     return new SingleQuery(this.graph, this, true);
+  }
+
+  async getAsync(): Promise<Connection> {
+    if(this.inner != null) {
+      invariant(false, 'Inner query type \'' +
+      this.inner.constructor.name + '\' was not supported');
+    }
+    return await this.graph._nodeConnectionResolver.resolveAsync(this);
   }
 }

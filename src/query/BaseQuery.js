@@ -1,6 +1,6 @@
 /* @flow */
 import { invariant } from '../Global';
-import Graph from '../graph/Graph';
+import Graph from '../Graph';
 
 export default class BaseQuery {
   graph: Graph;
@@ -10,14 +10,5 @@ export default class BaseQuery {
     invariant(typeof graph !== 'undefined', 'Argument \'graph\' is undefined');
     this.graph = graph;
     this.inner = inner;
-  }
-
-  async getAsync(): Promise<any> {
-    return this.graph.getAsync(this);
-  }
-
-  clone() {
-    let copy = { query: 'todo' };
-    return copy;
   }
 }

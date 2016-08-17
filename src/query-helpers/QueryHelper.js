@@ -3,13 +3,14 @@ import { invariant } from '../Global';
 import type NodeConnectionQuery from '../query/NodeConnectionQuery';
 import type EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import ExpressionValueHelper from '../query-helpers/ExpressionValueHelper';
-import DynamoDBTableHelper from '../query-helpers/DynamoDBTableHelper';
+import TableDefinitionHelper from '../query-helpers/TableDefinitionHelper';
 import ValueHelper from '../query-helpers/ValueHelper';
 import CursorHelper from '../query-helpers/CursorHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
 import ExpressionHelper from '../query-helpers/ExpressionHelper';
+import type { Connection } from 'graphql-relay';
 import type { ConnectionArgs, QueryExpression, ExpressionValue } from '../flow/Types';
-import type { DynamoDBTable, KeyDefinition, DynamoDBKeySchema,
+import type { TableDefinition, KeyDefinition, KeySchema,
   DynamoDBSchema } from 'aws-sdk-promise';
 
 export default class QueryHelper {
@@ -105,7 +106,7 @@ export default class QueryHelper {
   }
 
   static getIndexSchema(expression: QueryExpression,
-    connectionArgs: ConnectionArgs, tableSchema: DynamoDBTable) {
+    connectionArgs: ConnectionArgs, tableSchema: TableDefinition) {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     invariant(tableSchema, 'Argument \'tableSchema\' is null');
@@ -158,7 +159,7 @@ export default class QueryHelper {
     throw new Error('Corresponding LocalSecondaryIndex Or GlobalSecondaryIndex not found');
   }
 
-  static isKeySchemaSatisfied(proposed: DynamoDBKeySchema, required: ?DynamoDBKeySchema) {
+  static isKeySchemaSatisfied(proposed: KeySchema, required: ?KeySchema) {
     invariant(proposed, 'Argument \'proposed\' is null');
     invariant(required, 'Argument \'required\' is null');
 
@@ -251,7 +252,7 @@ export default class QueryHelper {
     names.forEach(name => {
       let expr = expression[name];
       if (ExpressionValueHelper.isAfterExpression(expr) && expr.after == null) {
-        let attributeType = DynamoDBTableHelper.getAttributeType(table, name);
+        let attributeType = TableDefinitionHelper.getAttributeType(table, name);
         result[':v_after_' + name] = ValueHelper
           .toAttributeValue(TypeHelper.getTypeMinValue(attributeType));
         return;
@@ -264,7 +265,7 @@ export default class QueryHelper {
       }
 
       if (ExpressionValueHelper.isBeforeExpression(expr) && expr.before == null) {
-        let attributeType = DynamoDBTableHelper.getAttributeType(table, name);
+        let attributeType = TableDefinitionHelper.getAttributeType(table, name);
         result[':v_before_' + name] = ValueHelper
           .toAttributeValue(TypeHelper.getTypeMaxValue(attributeType));
         return;
@@ -378,7 +379,7 @@ export default class QueryHelper {
     return expr;
   }
 
-  static getEdgeExpression(innerResult: any, query: EdgeConnectionQuery): QueryExpression {
+  static getEdgeExpression(innerResult: Connection, query: EdgeConnectionQuery): QueryExpression {
     invariant(innerResult, 'Argument \'innerResult\' is null');
     invariant(query, 'Argument \'query\' is null');
 

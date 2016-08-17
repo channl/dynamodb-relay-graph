@@ -1,5 +1,5 @@
 /* @flow */
-import DynamoDBTableHelper from '../../src/query-helpers/DynamoDBTableHelper';
+import TableDefinitionHelper from '../../src/query-helpers/TableDefinitionHelper';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
@@ -38,15 +38,16 @@ const tableDescription = {
   TableStatus: ''
 };
 
-describe('DynamoDBTableHelperTests', () => {
+describe('TableDefinitionHelperTests', () => {
 
   it('GetAttributeTypeReturnsCorrectAttribute', () => {
-    let attributeType = DynamoDBTableHelper.getAttributeType(tableDescription, 'MyAttributeName2');
+    let attributeType = TableDefinitionHelper
+      .getAttributeType(tableDescription, 'MyAttributeName2');
     expect(attributeType).to.equal('S');
   });
 
   it('GetAttributeTypeThrowsInvariant', () => {
-    let func = () => DynamoDBTableHelper.getAttributeType(tableDescription, 'MyAttributeName3');
+    let func = () => TableDefinitionHelper.getAttributeType(tableDescription, 'MyAttributeName3');
     expect(func).to.throw('AttributeDefinition was not found');
   });
 

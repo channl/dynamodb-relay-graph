@@ -10,7 +10,7 @@
     "type": "git",
     "url": "http://github.com/tmitchel2/dynamodb-relay-graph.git"
   },
-  "main": "dist/index.js",
+  "main": "src/Graph.js",
   "options": {
     "mocha": "--check-leaks --full-trace ./__tests__/**/*.js"
   },
@@ -26,7 +26,7 @@
     "cover:lcov": "babel-node ./node_modules/.bin/isparta cover --root src --report lcovonly _mocha -- $npm_package_options_mocha"
   },
   "files": [
-    "dist",
+    "src",
     "README.md"
   ],
   "dependencies": {

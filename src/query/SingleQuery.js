@@ -1,7 +1,7 @@
 /* @flow */
 import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
-import Graph from '../graph/Graph';
+import Graph from '../Graph';
 
 export default class SingleQuery extends BaseQuery {
   isNullValid: boolean;

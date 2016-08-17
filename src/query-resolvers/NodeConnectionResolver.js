@@ -1,6 +1,4 @@
 /* @flow */
-import BaseQuery from '../query/BaseQuery';
-import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import QueryHelper from '../query-helpers/QueryHelper';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
@@ -9,38 +7,26 @@ import TypeHelper from '../query-helpers/TypeHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import ModelHelper from '../query-helpers/ModelHelper';
 import DynamoDB from '../aws/DynamoDB';
+import Instrument from '../utils/Instrument';
 import { invariant } from '../Global';
-import type { Options, ConnectionArgs, QueryExpression } from '../flow/Types';
+import type { ConnectionArgs, QueryExpression } from '../flow/Types';
+import type { Connection } from 'graphql-relay';
 import type { DynamoDBSchema, ScanQueryResponse } from 'aws-sdk-promise';
 
-export default class NodeConnectionResolver extends BaseResolver {
+export default class NodeConnectionResolver {
   _dynamoDB: DynamoDB;
   _schema: DynamoDBSchema;
   _entityResolver: EntityResolver;
 
   constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema, entityResolver: EntityResolver) {
-    super();
-
     this._dynamoDB = dynamoDB;
     this._schema = schema;
     this._entityResolver = entityResolver;
   }
 
-  canResolve(query: BaseQuery): boolean {
-    invariant(query, 'Argument \'query\' is null');
-    return (query instanceof NodeConnectionQuery);
-  }
-
-  async resolveAsync(query: NodeConnectionQuery, innerResult: Object,
-    options: ?Options): Promise<?Object> { // eslint-disable-line no-unused-vars
-    invariant(query, 'Argument \'query\' is null');
-    invariant(innerResult, 'Argument \'innerResult\' is null');
-
-    let sw = null;
-    try {
-      if (options && options.stats) {
-        sw = options.stats.timer('NodeConnectionResolver.resolveAsync').start();
-      }
+  async resolveAsync(query: NodeConnectionQuery): Promise<Connection> {
+    return await Instrument.funcAsync(this, async () => {
+      invariant(query != null, 'Argument \'query\' is null');
 
       // Generate the full expression using the query and any previous result
       let expression = QueryHelper.getExpression(query);
@@ -61,12 +47,7 @@ export default class NodeConnectionResolver extends BaseResolver {
       let response = await this._dynamoDB.queryAsync(request);
       invariant(typeof expression.type === 'string', 'Type must be string');
       return await this._getResponseAsConnectionAsync(query, response);
-
-    } finally {
-      if (sw) {
-        sw.end();
-      }
-    }
+    });
   }
 
   _getScanRequest(expression: QueryExpression, connectionArgs: ConnectionArgs) {

@@ -2,10 +2,11 @@
 import SingleQuery from '../query/SingleQuery';
 import BaseQuery from '../query/BaseQuery';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
+import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import { invariant } from '../Global';
-import Graph from '../graph/Graph';
-
-import type { QueryExpression, ConnectionArgs } from '../flow/Types';
+import Graph from '../Graph';
+import type { Connection } from 'graphql-relay';
+import type { QueryExpression, ConnectionArgs, DRGEdge } from '../flow/Types';
 
 export default class EdgeConnectionQuery extends BaseQuery {
   expression: QueryExpression;
@@ -44,5 +45,31 @@ export default class EdgeConnectionQuery extends BaseQuery {
 
   singleOrNull(): SingleQuery {
     return new SingleQuery(this.graph, this, true);
+  }
+
+  async getAsync(): Promise<Connection<DRGEdge>> {
+    let innerResult = await this.getInnerResultAsync();
+    return await this.graph._edgeConnectionResolver.resolveAsync(this, innerResult);
+  }
+
+  async getInnerResultAsync(): Promise<Connection> {
+    if (this.inner == null) {
+      let result: Connection = {
+        edges: [],
+        pageInfo: {
+          startCursor: null,
+          endCursor: null,
+          hasPreviousPage: false,
+          hasNextPage: false,
+        }
+      };
+      return result;
+    }
+
+    if (this.inner instanceof NodeConnectionQuery) {
+      return await this.inner.getAsync();
+    }
+
+    invariant(false, 'Inner query type \'' + this.inner.constructor.name + '\' was not supported');
   }
 }

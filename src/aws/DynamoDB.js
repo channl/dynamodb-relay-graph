@@ -1,6 +1,7 @@
 /* @flow */
 import AWS from 'aws-sdk-promise';
 import { json, stats, warning, invariant } from '../Global';
+import Instrument from '../utils/Instrument';
 import type {
   DynamoDBConfig,
   DescribeTableRequest,
@@ -221,20 +222,10 @@ export default class DynamoDB {
   }
 
   async batchWriteItemAsync(params: BatchWriteItemRequest): Promise<BatchWriteItemResponse> {
-    let sw = stats.timer('Dynamo.batchWriteItemAsync').start();
-    try {
+    return await Instrument.funcAsync(this, async () => {
       let res = await this._db.batchWriteItem(params).promise();
       return res.data;
-    } catch (ex) {
-      warning(false, JSON.stringify({
-        class: 'DynamoDB',
-        function: 'batchWriteItemAsync',
-        params
-      }));
-      throw ex;
-    } finally {
-      sw.end();
-    }
+    });
   }
 
   async deleteItemAsync(params: DeleteItemRequest): Promise<DeleteItemResponse> {

@@ -1,27 +1,19 @@
-/* @flow */
+/* @flow
 import warning from 'warning';
-import BaseResolver from '../query-resolvers/BaseResolver';
-import BaseQuery from '../query/BaseQuery';
 import AggregateQuery from '../query/AggregateQuery';
 import { log, invariant } from '../Global';
 import type { Options } from '../flow/Types';
 
-export default class AggregateResolver extends BaseResolver {
+export default class AggregateResolver {
   getQueryAsync: any;
 
   constructor(getQueryAsync: any) {
-    super();
     invariant(getQueryAsync, 'Argument \'getQueryAsync\' is null');
     this.getQueryAsync = getQueryAsync;
   }
 
-  canResolve(query: BaseQuery): boolean {
-    invariant(query, 'Argument \'query\' is null');
-    return (query instanceof AggregateQuery);
-  }
-
   async resolveAsync(query: AggregateQuery,
-    innerResult: Object, options: ?Options): Promise<?Object> {
+    innerResult: ?Object, options: ?Options): Promise<?Object> {
     invariant(query, 'Argument \'query\' is null');
     invariant(innerResult, 'Argument \'innerResult\' is null');
 
@@ -54,7 +46,6 @@ export default class AggregateResolver extends BaseResolver {
       if (options && options.logs) {
         log('AggregateResolver succeeded',
           JSON.stringify({
-            query: query.clone(),
             innerResult,
             result}));
       }
@@ -64,7 +55,6 @@ export default class AggregateResolver extends BaseResolver {
       warning(false, JSON.stringify({
         class: 'AggregateResolver',
         function: 'resolveAsync',
-        query: query.clone(),
         innerResult}));
       throw ex;
     } finally {
@@ -74,3 +64,4 @@ export default class AggregateResolver extends BaseResolver {
     }
   }
 }
+*/

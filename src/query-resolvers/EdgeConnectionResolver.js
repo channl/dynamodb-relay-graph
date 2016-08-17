@@ -1,6 +1,4 @@
 /* @flow */
-import BaseQuery from '../query/BaseQuery';
-import BaseResolver from '../query-resolvers/BaseResolver';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import QueryHelper from '../query-helpers/QueryHelper';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
@@ -9,53 +7,39 @@ import TypeHelper from '../query-helpers/TypeHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import ModelHelper from '../query-helpers/ModelHelper';
 import DynamoDB from '../aws/DynamoDB';
+import Instrument from '../utils/Instrument';
 import { invariant } from '../Global';
-import type { Options, ConnectionArgs, QueryExpression } from '../flow/Types';
+import type { ConnectionArgs, QueryExpression, DRGEdge } from '../flow/Types';
+import type { Connection, Edge } from 'graphql-relay';
 import type { DynamoDBSchema, ScanQueryResponse } from 'aws-sdk-promise';
 
-export default class EdgeConnectionResolver extends BaseResolver {
+export default class EdgeConnectionResolver {
   _dynamoDB: DynamoDB;
   _schema: DynamoDBSchema;
   _entityResolver: EntityResolver;
 
   constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema, entityResolver: EntityResolver) {
-    super();
-
     this._dynamoDB = dynamoDB;
     this._schema = schema;
     this._entityResolver = entityResolver;
   }
 
-  canResolve(query: BaseQuery): boolean {
-    invariant(query, 'Argument \'query\' is null');
-    return (query instanceof EdgeConnectionQuery);
-  }
-
-  async resolveAsync(query: EdgeConnectionQuery, innerResult: Object,
-    options: ?Options): Promise<?Object> { // eslint-disable-line no-unused-vars
-    invariant(query, 'Argument \'query\' is null');
-    invariant(innerResult, 'Argument \'innerResult\' is null');
-
-    let sw = null;
-    try {
-      if (options && options.stats) {
-        sw = options.stats.timer('EdgeConnectionResolver.resolveAsync').start();
-      }
+  async resolveAsync(query: EdgeConnectionQuery,
+    innerResult: Connection): Promise<Connection<DRGEdge>> {
+    return await Instrument.funcAsync(this, async () => {
+      invariant(query, 'Argument \'query\' is null');
+      invariant(innerResult, 'Argument \'innerResult\' is null');
 
       let expression = QueryHelper.getEdgeExpression(innerResult, query);
       if (ExpressionHelper.isEdgeModelExpression(expression)) {
         let item = await this._entityResolver.getAsync(ExpressionHelper.toGlobalId(expression));
-        return ModelHelper.toConnection([ item ], false, false, null);
+        return ModelHelper.toPartialEdgeConnection([ item ], false, false, null);
       }
 
       let request = this._getQueryRequest(expression, query.connectionArgs, query.isOut);
       let response = await this._dynamoDB.queryAsync(request);
       return this._getResponseAsConnection(query, response);
-    } finally {
-      if (sw) {
-        sw.end();
-      }
-    }
+    });
   }
 
   _getQueryRequest(expression: QueryExpression, connectionArgs: ConnectionArgs) {
@@ -78,19 +62,24 @@ export default class EdgeConnectionResolver extends BaseResolver {
     };
   }
 
-  _getResponseAsConnection(query: EdgeConnectionQuery, response: ScanQueryResponse) {
+  _getResponseAsConnection(query: EdgeConnectionQuery,
+    response: ScanQueryResponse): Connection<DRGEdge> {
     invariant(query, 'Argument \'query\' is null');
     invariant(response, 'Argument \'response\' is null');
 
     let edges = response.Items.map(item => {
-      invariant(typeof query.expression.type === 'string', 'Type must be string');
       let edge = AttributeMapHelper.toModel(query.expression.type, item);
-      return {
+      let cursor = ModelHelper.toCursor(edge, query.connectionArgs.order);
+      let node: DRGEdge = {
         type: query.expression.type,
         inID: edge.inID,
         outID: edge.outID,
-        cursor: ModelHelper.toCursor(edge, query.connectionArgs.order)
       };
+      let partialEdge: Edge<DRGEdge> = {
+        node,
+        cursor,
+      };
+      return partialEdge;
     });
 
     if (QueryHelper.isForwardScan(query.connectionArgs)) {

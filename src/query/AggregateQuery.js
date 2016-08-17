@@ -2,7 +2,7 @@
 import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import SingleQuery from '../query/SingleQuery';
-import Graph from '../graph/Graph';
+import Graph from '../Graph';
 
 export default class AggregateQuery extends BaseQuery {
   items: any[];
