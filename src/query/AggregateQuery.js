@@ -2,6 +2,7 @@
 import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import SingleQuery from '../query/SingleQuery';
+import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import Graph from '../Graph';
 
 export default class AggregateQuery extends BaseQuery {
@@ -15,10 +16,10 @@ export default class AggregateQuery extends BaseQuery {
   }
 
   single(): SingleQuery {
-    return new SingleQuery(this.graph, this, false);
+    return new SingleQuery(this.graph, this);
   }
 
-  singleOrNull(): SingleQuery {
-    return new SingleQuery(this.graph, this, true);
+  singleOrNull(): SingleOrNullQuery {
+    return new SingleOrNullQuery(this.graph, this);
   }
 }

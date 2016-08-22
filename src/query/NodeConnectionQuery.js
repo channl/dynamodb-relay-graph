@@ -2,6 +2,7 @@
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
+import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import { invariant } from '../Global';
 import Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
@@ -34,11 +35,11 @@ export default class NodeConnectionQuery extends BaseQuery {
   }
 
   single(): SingleQuery {
-    return new SingleQuery(this.graph, this, false);
+    return new SingleQuery(this.graph, this);
   }
 
-  singleOrNull(): SingleQuery {
-    return new SingleQuery(this.graph, this, true);
+  singleOrNull(): SingleOrNullQuery {
+    return new SingleOrNullQuery(this.graph, this);
   }
 
   async getAsync(): Promise<Connection> {

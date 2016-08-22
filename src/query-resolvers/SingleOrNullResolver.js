@@ -1,19 +1,27 @@
 /* @flow */
 import Instrument from '../utils/Instrument';
-import SingleQuery from '../query/SingleQuery';
+import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import { invariant } from '../Global';
 import type { Connection } from 'graphql-relay';
 import type { Model } from '../flow/Types';
 
-export default class SingleResolver {
+export default class SingleOrNullResolver {
 
-  async resolveAsync(query: SingleQuery, innerResult: Connection): Promise<Model> {
+  async resolveAsync(query: SingleOrNullQuery, innerResult: Connection): Promise<?Model> {
     return await Instrument.funcAsync(this, async () => {
       invariant(query, 'Argument \'query\' is null');
       invariant(innerResult, 'Argument \'innerResult\' is null');
 
       if (innerResult && innerResult.edges && innerResult.edges.length === 1) {
-        return innerResult.edges[0].node;
+        let result = innerResult.edges[0].node;
+        return result;
+      }
+
+      if (innerResult &&
+        innerResult.edges &&
+        innerResult.edges.length === 0 &&
+        query.isNullValid) {
+        return null;
       }
 
       if (innerResult &&

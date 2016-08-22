@@ -24,8 +24,8 @@ export default class EdgeConnectionResolver {
     this._entityResolver = entityResolver;
   }
 
-  async resolveAsync(query: EdgeConnectionQuery,
-    innerResult: Connection): Promise<Connection<DRGEdge>> {
+  async resolveAsync<T: DRGEdge>(query: EdgeConnectionQuery,
+    innerResult: Connection): Promise<Connection<T>> {
     return await Instrument.funcAsync(this, async () => {
       invariant(query, 'Argument \'query\' is null');
       invariant(innerResult, 'Argument \'innerResult\' is null');

@@ -3,6 +3,7 @@ import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
+import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
 import type { QueryExpression, ConnectionArgs, DRGEdge } from '../flow/Types';
@@ -32,11 +33,11 @@ export default class ToNodesConnectionQuery extends BaseQuery {
   }
 
   single(): SingleQuery {
-    return new SingleQuery(this.graph, this, false);
+    return new SingleQuery(this.graph, this);
   }
 
-  singleOrNull(): SingleQuery {
-    return new SingleQuery(this.graph, this, true);
+  singleOrNull(): SingleOrNullQuery {
+    return new SingleOrNullQuery(this.graph, this);
   }
 
   async getAsync(): Promise<Connection> {

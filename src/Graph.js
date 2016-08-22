@@ -9,6 +9,7 @@ import EntityResolver from './query-resolvers/EntityResolver';
 import EdgeConnectionResolver from './query-resolvers/EdgeConnectionResolver';
 import NodeConnectionResolver from './query-resolvers/NodeConnectionResolver';
 import SingleResolver from './query-resolvers/SingleResolver';
+import SingleOrNullResolver from './query-resolvers/SingleOrNullResolver';
 import EntityWriter from './query-writers/EntityWriter';
 import ToNodesConnectionResolver from './query-resolvers/ToNodesConnectionResolver';
 import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
@@ -20,6 +21,7 @@ export default class Graph {
   _edgeConnectionResolver: EdgeConnectionResolver;
   _nodeConnectionResolver: NodeConnectionResolver;
   _singleResolver: SingleResolver;
+  _singleOrNullResolver: SingleOrNullResolver;
   _toNodesConnectionResolver: ToNodesConnectionResolver;
 
   constructor(dynamoDBConfig: DynamoDBConfig, schema: DynamoDBSchema) {
@@ -33,6 +35,7 @@ export default class Graph {
     this._nodeConnectionResolver = new NodeConnectionResolver(
       dynamoDB, schema, this._entityResolver);
     this._singleResolver = new SingleResolver();
+    this._singleOrNullResolver = new SingleOrNullResolver();
     this._toNodesConnectionResolver = new ToNodesConnectionResolver(this._entityResolver);
   }
 

@@ -1,5 +1,6 @@
 /* @flow */
 import SingleQuery from '../query/SingleQuery';
+import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import BaseQuery from '../query/BaseQuery';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
@@ -40,14 +41,14 @@ export default class EdgeConnectionQuery extends BaseQuery {
   }
 
   single(): SingleQuery {
-    return new SingleQuery(this.graph, this, false);
+    return new SingleQuery(this.graph, this);
   }
 
-  singleOrNull(): SingleQuery {
-    return new SingleQuery(this.graph, this, true);
+  singleOrNull(): SingleOrNullQuery {
+    return new SingleOrNullQuery(this.graph, this);
   }
 
-  async getAsync(): Promise<Connection<DRGEdge>> {
+  async getAsync<T: DRGEdge>(): Promise<Connection<T>> {
     let innerResult = await this.getInnerResultAsync();
     return await this.graph._edgeConnectionResolver.resolveAsync(this, innerResult);
   }

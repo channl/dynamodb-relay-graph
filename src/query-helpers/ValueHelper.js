@@ -75,6 +75,29 @@ export default class ValueHelper {
       '\' could not be converted to an AttributeValue');
   }
 
+  static compare(a: Value, b: Value) {
+    invariant(a != null, 'Argument \'a\' was null');
+    invariant(b != null, 'Argument \'b\' was null');
+
+    if (a instanceof Buffer && b instanceof Buffer) {
+      return a.compare(b);
+    }
+
+    if (typeof a === 'string' && typeof b === 'string') {
+      return a.localeCompare(b);
+    }
+
+    if (typeof a === 'number' && typeof b === 'number') {
+      return a - b;
+    }
+
+    if (typeof a === 'boolean' && typeof b === 'boolean') {
+      return (a ? 1 : 0) - (b ? 1 : 0);
+    }
+
+    invariant(false, 'Value could not be converted to an AttributeValue');
+  }
+
   static areEqual(a: Value, b: Value) {
     invariant(a != null, 'Argument \'a\' was null');
     invariant(b != null, 'Argument \'b\' was null');
