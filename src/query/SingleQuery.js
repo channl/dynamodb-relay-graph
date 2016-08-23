@@ -3,6 +3,7 @@ import invariant from 'invariant';
 import BaseQuery from '../query/BaseQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import Graph from '../Graph';
+// eslint-disable-next-line no-unused-vars
 import type { Model } from '../flow/Types';
 
 export default class SingleQuery extends BaseQuery {
@@ -10,7 +11,7 @@ export default class SingleQuery extends BaseQuery {
     super(graph, inner);
   }
 
-  async getAsync(): Promise<Model> {
+  async getAsync<T: Model>(): Promise<T> {
     if (this.inner instanceof NodeConnectionQuery) {
       let innerResult = await this.inner.getAsync();
       let result = await this.graph._singleResolver.resolveAsync(this, innerResult);

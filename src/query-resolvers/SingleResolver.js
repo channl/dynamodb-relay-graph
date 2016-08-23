@@ -3,11 +3,12 @@ import Instrument from '../utils/Instrument';
 import SingleQuery from '../query/SingleQuery';
 import { invariant } from '../Global';
 import type { Connection } from 'graphql-relay';
+// eslint-disable-next-line no-unused-vars
 import type { Model } from '../flow/Types';
 
 export default class SingleResolver {
 
-  async resolveAsync(query: SingleQuery, innerResult: Connection): Promise<Model> {
+  async resolveAsync<T: Model>(query: SingleQuery, innerResult: Connection): Promise<T> {
     return await Instrument.funcAsync(this, async () => {
       invariant(query, 'Argument \'query\' is null');
       invariant(innerResult, 'Argument \'innerResult\' is null');

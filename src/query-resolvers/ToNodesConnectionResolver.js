@@ -14,8 +14,8 @@ export default class ToNodesConnectionResolver {
     this._entityResolver = entityResolver;
   }
 
-  async resolveAsync(query: ToNodesConnectionQuery, innerResult: Connection<DRGEdge>)
-    : Promise<Connection> {
+  async resolveAsync<T: DRGEdge>(query: ToNodesConnectionQuery, innerResult: Connection<DRGEdge>)
+    : Promise<Connection<T>> {
     return await Instrument.funcAsync(this, async () => {
       invariant(query != null, 'Argument \'query\' is null');
       invariant(innerResult != null, 'Argument \'innerResult\' is null');

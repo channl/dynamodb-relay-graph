@@ -6,7 +6,8 @@ import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import { invariant } from '../Global';
 import Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
-import type { QueryExpression, ConnectionArgs } from '../flow/Types';
+// eslint-disable-next-line no-unused-vars
+import type { QueryExpression, ConnectionArgs, Model } from '../flow/Types';
 
 export default class NodeConnectionQuery extends BaseQuery {
   expression: QueryExpression;
@@ -42,7 +43,7 @@ export default class NodeConnectionQuery extends BaseQuery {
     return new SingleOrNullQuery(this.graph, this);
   }
 
-  async getAsync(): Promise<Connection> {
+  async getAsync<T: Model>(): Promise<Connection<T>> {
     if(this.inner != null) {
       invariant(false, 'Inner query type \'' +
       this.inner.constructor.name + '\' was not supported');

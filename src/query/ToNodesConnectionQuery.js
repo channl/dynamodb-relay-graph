@@ -40,7 +40,7 @@ export default class ToNodesConnectionQuery extends BaseQuery {
     return new SingleOrNullQuery(this.graph, this);
   }
 
-  async getAsync(): Promise<Connection> {
+  async getAsync<T: DRGEdge>(): Promise<Connection<T>> {
     let innerResult = await this.getInnerResultAsync();
     return await this.graph._toNodesConnectionResolver.resolveAsync(this, innerResult);
   }

@@ -7,6 +7,7 @@ import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import { invariant } from '../Global';
 import Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
+// eslint-disable-next-line no-unused-vars
 import type { QueryExpression, ConnectionArgs, DRGEdge } from '../flow/Types';
 
 export default class EdgeConnectionQuery extends BaseQuery {
