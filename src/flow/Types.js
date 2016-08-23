@@ -61,6 +61,7 @@ export type DRGEdge = {
   type: string,
   outID: Value,
   inID: Value,
+  [propertyName: string]: Value,
 };
 
 /*

@@ -6,7 +6,8 @@ import SingleQuery from '../query/SingleQuery';
 import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
-import type { QueryExpression, ConnectionArgs, DRGEdge } from '../flow/Types';
+// eslint-disable-next-line no-unused-vars
+import type { QueryExpression, ConnectionArgs, DRGEdge, Model } from '../flow/Types';
 
 export default class ToNodesConnectionQuery extends BaseQuery {
   isOut: boolean;
@@ -40,7 +41,7 @@ export default class ToNodesConnectionQuery extends BaseQuery {
     return new SingleOrNullQuery(this.graph, this);
   }
 
-  async getAsync<T: DRGEdge>(): Promise<Connection<T>> {
+  async getAsync<T: Model>(): Promise<Connection<T>> {
     let innerResult = await this.getInnerResultAsync();
     return await this.graph._toNodesConnectionResolver.resolveAsync(this, innerResult);
   }
