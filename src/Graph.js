@@ -51,32 +51,32 @@ export default class Graph {
     return new EdgeConnectionQuery(this, null, expression, connectionArgs, true);
   }
 
-  async addAsync(item: Object): Promise {
+  async addAsync(item: Object): Promise<void> {
     invariant(item, 'Argument \'item\' is null');
     return this._writer.writeManyAsync([ item ], [ ]);
   }
 
-  async addManyAsync(items: Object[]): Promise {
+  async addManyAsync(items: Object[]): Promise<void> {
     invariant(items, 'Argument \'items\' is null');
     return this._writer.writeManyAsync(items, [ ]);
   }
 
-  async removeAsync(item: Object): Promise {
+  async removeAsync(item: Object): Promise<void> {
     invariant(item, 'Argument \'item\' is null');
     return this._writer.writeManyAsync([ ], [ item ]);
   }
 
-  async removeManyAsync(items: Object[]): Promise {
+  async removeManyAsync(items: Object[]): Promise<void> {
     invariant(items, 'Argument \'items\' is null');
     return this._writer.writeManyAsync([ ], items);
   }
 
-  async putAsync(item: Object): Promise {
+  async putAsync(item: Object): Promise<void> {
     invariant(item, 'Argument \'item\' is null');
     return this._writer.writeManyAsync([ item ], [ ]);
   }
 
-  async putManyAsync(items: Object[]): Promise {
+  async putManyAsync(items: Object[]): Promise<void> {
     invariant(items, 'Argument \'items\' is null');
     return this._writer.writeManyAsync(items, [ ]);
   }

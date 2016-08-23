@@ -10,3 +10,6 @@ esproposal.class_static_fields=enable
 esproposal.class_instance_fields=enable
 munge_underscores=true
 suppress_comment= \\(.\\|\n\\)*\\$FlowIgnore
+
+[version]
+0.31.0

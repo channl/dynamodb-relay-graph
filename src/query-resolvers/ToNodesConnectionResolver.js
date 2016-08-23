@@ -4,8 +4,9 @@ import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import Instrument from '../utils/Instrument';
 import { invariant } from '../Global';
-import type { Connection } from 'graphql-relay';
-import type { QueryExpression, DRGEdge } from '../flow/Types';
+import type { Connection, Edge } from 'graphql-relay';
+// eslint-disable-next-line no-unused-vars
+import type { QueryExpression, DRGEdge, Model } from '../flow/Types';
 
 export default class ToNodesConnectionResolver {
   _entityResolver: EntityResolver;
@@ -14,17 +15,21 @@ export default class ToNodesConnectionResolver {
     this._entityResolver = entityResolver;
   }
 
-  async resolveAsync<T: DRGEdge>(query: ToNodesConnectionQuery, innerResult: Connection<DRGEdge>)
+  async resolveAsync<T: Model>(query: ToNodesConnectionQuery, innerResult: Connection<DRGEdge>)
     : Promise<Connection<T>> {
     return await Instrument.funcAsync(this, async () => {
       invariant(query != null, 'Argument \'query\' is null');
       invariant(innerResult != null, 'Argument \'innerResult\' is null');
 
       let nodeIds = this.constructor._getNodeIds(query.expression, query.isOut, innerResult);
-      let nodes = await Promise.all(nodeIds.map(id => this._entityResolver.getAsync(id)));
-      let edges = nodes.map((node, i) => {
+      let nodes: T[] = await Promise.all(nodeIds.map(id => {
+        let prom: Promise<T> = this._entityResolver.getAsync(id);
+        return prom;
+      }));
+      let edges: Edge<T>[] = nodes.map((node: T, i) => {
         invariant(innerResult != null, 'Argument \'innerResult\' is null');
-        return { cursor: innerResult.edges[i].cursor, node};
+        let edge: Edge<T> = { cursor: innerResult.edges[i].cursor, node};
+        return edge;
       });
 
       let startCursor = edges[0] ? edges[0].cursor : null;
@@ -32,7 +37,7 @@ export default class ToNodesConnectionResolver {
         edges[edges.length - 1].cursor :
         null;
 
-      let result = {
+      let result: Connection<T> = {
         edges,
         pageInfo: {
           startCursor,

@@ -63,9 +63,9 @@ describe('ModelHelper', () => {
       type: 'User',
       bufferValue: new Buffer('ABC', 'base64'),
       stringValue: 'ABC',
-      stringArrayValue: [ 'ABC', 'DEF' ],
+      // stringArrayValue: [ 'ABC', 'DEF' ],
       numberValue: 2,
-      numberArrayValue: [ 1, 2, 3 ],
+      // numberArrayValue: [ 1, 2, 3 ],
       booleanValue: true,
 //      booleanArrayValue: [ true, false, true ],
 //      objectValue: { a: 'a', b: 'b', c: 'c' },
@@ -79,15 +79,15 @@ describe('ModelHelper', () => {
       stringValue: {
         S: 'ABC'
       },
-      stringArrayValue: {
-        SS: [ 'ABC', 'DEF' ],
-      },
+      // stringArrayValue: {
+      //  SS: [ 'ABC', 'DEF' ],
+      // },
       numberValue: {
         N: '2',
       },
-      numberArrayValue: {
-        NS: [ '1', '2', '3' ],
-      },
+      // numberArrayValue: {
+      //  NS: [ '1', '2', '3' ],
+      // },
       booleanValue: {
         BOOL: true,
       }

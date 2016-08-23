@@ -9,7 +9,7 @@ import CursorHelper from '../query-helpers/CursorHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
 import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import type { Connection } from 'graphql-relay';
-import type { ConnectionArgs, QueryExpression, ExpressionValue } from '../flow/Types';
+import type { ConnectionArgs, QueryExpression, ExpressionValue, Model } from '../flow/Types';
 import type { TableDefinition, KeyDefinition, KeySchema,
   DynamoDBSchema } from 'aws-sdk-promise';
 
@@ -99,6 +99,7 @@ export default class QueryHelper {
       .filter(value => value !== 'type' && typeof value !== 'undefined')
       .filter((value, index, self) => self.indexOf(value) === index)
       .forEach(name => {
+        invariant(name != null, 'Value \'name\' was null');
         result[this.getExpressionAttributeName(name)] = name;
       });
 
@@ -220,12 +221,14 @@ export default class QueryHelper {
 
     return Object
       .keys(expression)
-      // $FlowIgnore
       .concat(connectionArgs.order)
       .concat(include)
       .filter(name => name !== 'type' && typeof name !== 'undefined')
-      .filter((value, index, self) => self.indexOf(value) === index)
-      .map(this.getExpressionAttributeName)
+      .filter((name, index, self) => self.indexOf(name) === index)
+      .map(name => {
+        invariant(name != null, 'Value \'name\' was null');
+        return this.getExpressionAttributeName(name);
+      })
       .reduce((pre, cur) => pre === '' ? cur : pre + ', ' + cur, '');
   }
 
@@ -379,7 +382,8 @@ export default class QueryHelper {
     return expr;
   }
 
-  static getEdgeExpression(innerResult: Connection, query: EdgeConnectionQuery): QueryExpression {
+  static getEdgeExpression(innerResult: Connection<Model>, query: EdgeConnectionQuery)
+    : QueryExpression {
     invariant(innerResult, 'Argument \'innerResult\' is null');
     invariant(query, 'Argument \'query\' is null');
 

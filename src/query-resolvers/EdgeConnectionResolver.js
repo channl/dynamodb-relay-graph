@@ -9,9 +9,10 @@ import ModelHelper from '../query-helpers/ModelHelper';
 import DynamoDB from '../aws/DynamoDB';
 import Instrument from '../utils/Instrument';
 import { invariant } from '../Global';
-import type { ConnectionArgs, QueryExpression, DRGEdge } from '../flow/Types';
 import type { Connection, Edge } from 'graphql-relay';
 import type { DynamoDBSchema, ScanQueryResponse } from 'aws-sdk-promise';
+// eslint-disable-next-line no-unused-vars
+import type { ConnectionArgs, QueryExpression, DRGEdge, Model } from '../flow/Types';
 
 export default class EdgeConnectionResolver {
   _dynamoDB: DynamoDB;
@@ -25,20 +26,23 @@ export default class EdgeConnectionResolver {
   }
 
   async resolveAsync<T: DRGEdge>(query: EdgeConnectionQuery,
-    innerResult: Connection): Promise<Connection<T>> {
-    return await Instrument.funcAsync(this, async () => {
+    innerResult: Connection<Model>): Promise<Connection<T>> {
+    return await Instrument.funcAsync(this, async (): Promise<Connection<T>> => {
       invariant(query, 'Argument \'query\' is null');
       invariant(innerResult, 'Argument \'innerResult\' is null');
 
       let expression = QueryHelper.getEdgeExpression(innerResult, query);
       if (ExpressionHelper.isEdgeModelExpression(expression)) {
-        let item = await this._entityResolver.getAsync(ExpressionHelper.toGlobalId(expression));
-        return ModelHelper.toPartialEdgeConnection([ item ], false, false, null);
+        let item: T = await this._entityResolver.getAsync(ExpressionHelper.toGlobalId(expression));
+        let conn: Connection<T> = ModelHelper
+          .toPartialEdgeConnection([ item ], false, false, null);
+        return conn;
       }
 
       let request = this._getQueryRequest(expression, query.connectionArgs, query.isOut);
       let response = await this._dynamoDB.queryAsync(request);
-      return this._getResponseAsConnection(query, response);
+      let conn: Connection<T> = this._getResponseAsConnection(query, response);
+      return conn;
     });
   }
 
@@ -62,21 +66,16 @@ export default class EdgeConnectionResolver {
     };
   }
 
-  _getResponseAsConnection(query: EdgeConnectionQuery,
-    response: ScanQueryResponse): Connection<DRGEdge> {
+  _getResponseAsConnection<T: DRGEdge>(query: EdgeConnectionQuery,
+    response: ScanQueryResponse): Connection<T> {
     invariant(query, 'Argument \'query\' is null');
     invariant(response, 'Argument \'response\' is null');
 
     let edges = response.Items.map(item => {
-      let edge = AttributeMapHelper.toModel(query.expression.type, item);
-      let cursor = ModelHelper.toCursor(edge, query.connectionArgs.order);
-      let node: DRGEdge = {
-        type: query.expression.type,
-        inID: edge.inID,
-        outID: edge.outID,
-      };
-      let partialEdge: Edge<DRGEdge> = {
-        node,
+      let model: T = AttributeMapHelper.toModel(query.expression.type, item);
+      let cursor = ModelHelper.toCursor(model, query.connectionArgs.order);
+      let partialEdge: Edge<T> = {
+        node: model,
         cursor,
       };
       return partialEdge;

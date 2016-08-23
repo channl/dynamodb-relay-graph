@@ -54,9 +54,9 @@ export default class EdgeConnectionQuery extends BaseQuery {
     return await this.graph._edgeConnectionResolver.resolveAsync(this, innerResult);
   }
 
-  async getInnerResultAsync(): Promise<Connection> {
+  async getInnerResultAsync<T: DRGEdge>(): Promise<Connection<T>> {
     if (this.inner == null) {
-      let result: Connection = {
+      let result: Connection<T> = {
         edges: [],
         pageInfo: {
           startCursor: null,

@@ -9,7 +9,8 @@ import ModelHelper from '../query-helpers/ModelHelper';
 import DynamoDB from '../aws/DynamoDB';
 import Instrument from '../utils/Instrument';
 import { invariant } from '../Global';
-import type { ConnectionArgs, QueryExpression } from '../flow/Types';
+// eslint-disable-next-line no-unused-vars
+import type { ConnectionArgs, QueryExpression, Model } from '../flow/Types';
 import type { Connection } from 'graphql-relay';
 import type { DynamoDBSchema, ScanQueryResponse } from 'aws-sdk-promise';
 
@@ -24,7 +25,7 @@ export default class NodeConnectionResolver {
     this._entityResolver = entityResolver;
   }
 
-  async resolveAsync(query: NodeConnectionQuery): Promise<Connection> {
+  async resolveAsync<T: Model>(query: NodeConnectionQuery): Promise<Connection<T>> {
     return await Instrument.funcAsync(this, async () => {
       invariant(query != null, 'Argument \'query\' is null');
 
@@ -87,7 +88,8 @@ export default class NodeConnectionResolver {
   }
 
   // eslint-disable-next-line no-unused-vars
-  async _getResponseAsConnectionAsync(query: NodeConnectionQuery, response: ScanQueryResponse) {
+  async _getResponseAsConnectionAsync<T: Model>(query: NodeConnectionQuery,
+    response: ScanQueryResponse): Promise<Connection<T>> {
     let nodeIds = response.Items.map(item => {
       invariant(typeof query.expression.type === 'string', 'Type must be string');
       return ModelHelper.toGlobalId(AttributeMapHelper.toModel(query.expression.type, item));

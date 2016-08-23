@@ -1,8 +1,9 @@
 /* @flow */
 import { invariant } from '../Global';
 import AttributeValueHelper from '../query-helpers/AttributeValueHelper';
-import type { Model } from '../flow/Types';
 import type { AttributeMap } from 'aws-sdk-promise';
+// eslint-disable-next-line no-unused-vars
+import type { Model } from '../flow/Types';
 
 export default class AttributeMapHelper {
 
@@ -44,23 +45,24 @@ export default class AttributeMapHelper {
     return b.toString('base64');
   }
 
-  static toModel(type: string, item: AttributeMap): Model {
+  static toModel<T: Model>(type: string, item: AttributeMap): T {
     invariant(typeof type === 'string', 'Argument \'type\' is not a string');
     invariant(item, 'Argument \'item\' is null');
 
-    let model = { type };
+    // $FlowIgnore
+    let model: T = { type };
     for (let name in item) {
       if ({}.hasOwnProperty.call(item, name)) {
         let attr = item[name];
         // TODO Check the types of the values here
         if (typeof attr.S !== 'undefined') {
-          model[name] = item[name].S;
+          model[name] = attr.S;
         } else if (typeof attr.N !== 'undefined') {
-          model[name] = parseInt(item[name].N, 10);
+          model[name] = parseInt(attr.N, 10);
         } else if (typeof attr.B !== 'undefined') {
-          model[name] = item[name].B;
+          model[name] = attr.B;
         } else if (typeof attr.BOOL !== 'undefined') {
-          model[name] = item[name].BOOL;
+          model[name] = attr.BOOL;
         }
       }
     }

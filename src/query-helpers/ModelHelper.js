@@ -5,8 +5,9 @@ import TypeHelper from '../query-helpers/TypeHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import { toGlobalId } from 'graphql-relay';
 import type { BatchWriteItemRequest } from 'aws-sdk-promise';
-import type { Model, Value, DRGEdge } from '../flow/Types';
 import type { Connection, Edge } from 'graphql-relay';
+// eslint-disable-next-line no-unused-vars
+import type { Model, Value, DRGEdge } from '../flow/Types';
 
 export default class ModelHelper {
 
@@ -48,8 +49,8 @@ export default class ModelHelper {
     return request;
   }
 
-  static toConnection(items: Model[], hasPreviousPage: boolean, hasNextPage: boolean,
-    order: ?string): Connection {
+  static toConnection<T: Model>(items: T[], hasPreviousPage: boolean, hasNextPage: boolean,
+    order: ?string): Connection<T> {
     let edges = items.filter(n => n !== null).map(node => {
       return {
         cursor: ModelHelper.toCursor(node, order),
@@ -67,21 +68,18 @@ export default class ModelHelper {
     return { edges, pageInfo };
   }
 
-  static toPartialEdgeConnection(items: DRGEdge[], hasPreviousPage: boolean, hasNextPage: boolean,
-    order: ?string): Connection<DRGEdge> {
-    let edges = items.filter(n => n !== null).map(n => {
-      let node: DRGEdge = {
-        type: n.type,
-        outID: n.outID,
-        inID: n.inID,
-      };
-      let cursor = ModelHelper.toCursor(node, order);
-      let partialEdge: Edge<DRGEdge> = {
-        node,
-        cursor,
-      };
-      return partialEdge;
-    });
+  static toPartialEdgeConnection<T: DRGEdge>(items: T[], hasPreviousPage: boolean,
+    hasNextPage: boolean, order: ?string): Connection<T> {
+    let edges = items
+      .filter(item => item !== null)
+      .map(item => {
+        let cursor = ModelHelper.toCursor(item, order);
+        let partialEdge: Edge<T> = {
+          node: item,
+          cursor,
+        };
+        return partialEdge;
+      });
 
     let pageInfo = {
       startCursor: edges[0] ? edges[0].cursor : null,

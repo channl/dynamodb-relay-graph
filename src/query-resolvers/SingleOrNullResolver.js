@@ -8,7 +8,7 @@ import type { Model } from '../flow/Types';
 
 export default class SingleOrNullResolver {
 
-  async resolveAsync<T: Model>(query: SingleOrNullQuery, innerResult: Connection): Promise<?T> {
+  async resolveAsync<T: Model>(query: SingleOrNullQuery, innerResult: Connection<T>): Promise<?T> {
     return await Instrument.funcAsync(this, async () => {
       invariant(query, 'Argument \'query\' is null');
       invariant(innerResult, 'Argument \'innerResult\' is null');

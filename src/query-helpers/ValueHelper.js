@@ -54,14 +54,13 @@ export default class ValueHelper {
       return { BOOL: value };
     }
 
+/*
     if (Array.isArray(value) && value.every(i => i instanceof Buffer)) {
-      // $FlowIgnore
       let BS: Buffer[] = value;
       return { BS };
     }
 
     if (Array.isArray(value) && value.every(i => typeof i === 'string')) {
-      // $FlowIgnore
       let SS: string[] = value;
       return { SS };
     }
@@ -70,7 +69,7 @@ export default class ValueHelper {
       let NS = value.map(i => i.toString(10));
       return { NS };
     }
-
+*/
     invariant(false, 'Attribute of type \'' + typeof value +
       '\' could not be converted to an AttributeValue');
   }

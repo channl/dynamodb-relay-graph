@@ -7,6 +7,7 @@ export default class ExpressionHelper {
 
   static toGlobalId(expression: QueryExpression): string {
     invariant(ExpressionHelper.isModelExpression(expression), 'Expression is invalid');
+    // $FlowIgnore
     return ModelHelper.toGlobalId(expression);
   }
 

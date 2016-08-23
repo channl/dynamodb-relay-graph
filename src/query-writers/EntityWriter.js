@@ -29,7 +29,7 @@ export default class EntityWriter {
     */
   }
 
-  async writeManyAsync(itemsToPut: Model[], itemsToDelete: Model[]): Promise {
+  async writeManyAsync(itemsToPut: Model[], itemsToDelete: Model[]): Promise<void> {
     return await Instrument.funcAsync(this, async () => {
       invariant(itemsToPut != null, 'Argument \'itemsToPut\' is null');
       invariant(itemsToDelete != null, 'Argument \'itemsToDelete\' is null');

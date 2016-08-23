@@ -19,7 +19,7 @@ export default class EntityResolver {
     this._dynamoDB = new BatchingDynamoDB(dynamoDB);
   }
 
-  async getAsync(globalId: string): Promise<Model> {
+  async getAsync<T: Model>(globalId: string): Promise<T> {
     invariant(typeof globalId === 'string', 'Argument \'globalId\' is not a string');
     return this._dataLoader.load(globalId);
   }

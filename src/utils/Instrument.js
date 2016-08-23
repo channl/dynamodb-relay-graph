@@ -3,7 +3,7 @@ import { log, warning, stats } from '../Global';
 
 export default class Instrument {
 
-  static async funcAsync(instance: Object, func: () => Promise) {
+  static async funcAsync<T>(instance: Object, func: () => Promise<T>): Promise<T> {
     // eslint-disable-next-line no-caller
     let caller = arguments.callee.caller;
     let type = instance.constructor.name === 'Function' ? instance.name : instance.constructor.name;
@@ -25,7 +25,7 @@ export default class Instrument {
     }
   }
 
-  static func(instance: Object, func: () => any) {
+  static func<T>(instance: Object, func: () => T): T {
     // eslint-disable-next-line no-caller
     let caller = arguments.callee.caller;
     let type = instance.constructor.name === 'Function' ? instance.name : instance.constructor.name;
