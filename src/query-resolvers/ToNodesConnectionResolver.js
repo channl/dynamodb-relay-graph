@@ -6,7 +6,7 @@ import Instrument from '../utils/Instrument';
 import { invariant } from '../Global';
 import type { Connection, Edge } from 'graphql-relay';
 // eslint-disable-next-line no-unused-vars
-import type { QueryExpression, DRGEdge, Model } from '../flow/Types';
+import type { QueryExpression, EdgeModel, Model } from '../flow/Types';
 
 export default class ToNodesConnectionResolver {
   _entityResolver: EntityResolver;
@@ -15,20 +15,20 @@ export default class ToNodesConnectionResolver {
     this._entityResolver = entityResolver;
   }
 
-  async resolveAsync<T: Model>(query: ToNodesConnectionQuery, innerResult: Connection<DRGEdge>)
-    : Promise<Connection<T>> {
+  async resolveAsync(query: ToNodesConnectionQuery, innerResult: Connection<EdgeModel>)
+    : Promise<Connection<EdgeModel>> {
     return await Instrument.funcAsync(this, async () => {
       invariant(query != null, 'Argument \'query\' is null');
       invariant(innerResult != null, 'Argument \'innerResult\' is null');
 
       let nodeIds = this.constructor._getNodeIds(query.expression, query.isOut, innerResult);
-      let nodes: T[] = await Promise.all(nodeIds.map(id => {
-        let prom: Promise<T> = this._entityResolver.getAsync(id);
+      let nodes: EdgeModel[] = await Promise.all(nodeIds.map(id => {
+        let prom: Promise<EdgeModel> = this._entityResolver.getAsync(id);
         return prom;
       }));
-      let edges: Edge<T>[] = nodes.map((node: T, i) => {
+      let edges: Edge<EdgeModel>[] = nodes.map((node: EdgeModel, i) => {
         invariant(innerResult != null, 'Argument \'innerResult\' is null');
-        let edge: Edge<T> = { cursor: innerResult.edges[i].cursor, node};
+        let edge: Edge<EdgeModel> = { cursor: innerResult.edges[i].cursor, node};
         return edge;
       });
 
@@ -37,7 +37,7 @@ export default class ToNodesConnectionResolver {
         edges[edges.length - 1].cursor :
         null;
 
-      let result: Connection<T> = {
+      let result: Connection<EdgeModel> = {
         edges,
         pageInfo: {
           startCursor,
@@ -51,8 +51,8 @@ export default class ToNodesConnectionResolver {
     });
   }
 
-  static _getNodeIds(expression: QueryExpression, isOut: boolean, innerResult: Connection<DRGEdge>)
-    : string[] {
+  static _getNodeIds(expression: QueryExpression, isOut: boolean,
+    innerResult: Connection<EdgeModel>): string[] {
     return Instrument.func(this, () => {
       return innerResult
         .edges

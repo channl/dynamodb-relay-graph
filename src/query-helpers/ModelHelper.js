@@ -7,7 +7,7 @@ import { toGlobalId } from 'graphql-relay';
 import type { BatchWriteItemRequest } from 'aws-sdk-promise';
 import type { Connection, Edge } from 'graphql-relay';
 // eslint-disable-next-line no-unused-vars
-import type { Model, Value, DRGEdge } from '../flow/Types';
+import type { Model, Value, EdgeModel } from '../flow/Types';
 
 export default class ModelHelper {
 
@@ -68,7 +68,7 @@ export default class ModelHelper {
     return { edges, pageInfo };
   }
 
-  static toPartialEdgeConnection<T: DRGEdge>(items: T[], hasPreviousPage: boolean,
+  static toPartialEdgeConnection<T: EdgeModel>(items: T[], hasPreviousPage: boolean,
     hasNextPage: boolean, order: ?string): Connection<T> {
     let edges = items
       .filter(item => item !== null)

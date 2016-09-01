@@ -11,12 +11,12 @@ export default class SingleQuery extends BaseQuery {
     super(graph, inner);
   }
 
-  async getAsync<T: Model>(): Promise<T> {
+  async getAsync<T>(castFunc: (item: Model) => T = i => ((i: any): T)): Promise<T> {
     if (this.inner instanceof NodeConnectionQuery) {
       let innerResult = await this.inner.getAsync();
       let result = await this.graph._singleResolver.resolveAsync(this, innerResult);
       invariant(result != null, 'Result was null');
-      return result;
+      return castFunc(result);
     }
 
     invariant(false, 'Inner query type not supported');

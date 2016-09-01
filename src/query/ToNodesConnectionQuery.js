@@ -2,12 +2,10 @@
 import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
-import SingleQuery from '../query/SingleQuery';
-import SingleOrNullQuery from '../query/SingleOrNullQuery';
+import ConnectionHelper from '../query-helpers/ConnectionHelper';
 import Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
-// eslint-disable-next-line no-unused-vars
-import type { QueryExpression, ConnectionArgs, DRGEdge, Model } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs, EdgeModel, NodeModel } from '../flow/Types';
 
 export default class ToNodesConnectionQuery extends BaseQuery {
   isOut: boolean;
@@ -32,23 +30,20 @@ export default class ToNodesConnectionQuery extends BaseQuery {
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, false);
   }
-
-  single(): SingleQuery {
-    return new SingleQuery(this.graph, this);
+/*
+  cast<T>(castFunc: (item: EdgeModel) => T): CastConnectionQuery<T> {
+    return new CastConnectionQuery(this.graph, this, castFunc);
   }
-
-  singleOrNull(): SingleOrNullQuery {
-    return new SingleOrNullQuery(this.graph, this);
-  }
-
-  async getAsync<T: Model>(): Promise<Connection<T>> {
+*/
+  async getAsync<T>(castFunc: (item: NodeModel) => T = i => ((i: any): T)): Promise<Connection<T>> {
     let innerResult = await this.getInnerResultAsync();
-    return await this.graph._toNodesConnectionResolver.resolveAsync(this, innerResult);
+    let connection = await this.graph._toNodesConnectionResolver.resolveAsync(this, innerResult);
+    return ConnectionHelper.castTo(connection, castFunc);
   }
 
-  async getInnerResultAsync(): Promise<Connection<DRGEdge>> {
+  async getInnerResultAsync(): Promise<Connection<EdgeModel>> {
     if (this.inner == null) {
-      let result: Connection<DRGEdge> = {
+      let result: Connection<EdgeModel> = {
         edges: [],
         pageInfo: {
           startCursor: null,

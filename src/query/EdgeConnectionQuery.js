@@ -1,14 +1,12 @@
 /* @flow */
-import SingleQuery from '../query/SingleQuery';
-import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import BaseQuery from '../query/BaseQuery';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
-import { invariant } from '../Global';
+import ConnectionHelper from '../query-helpers/ConnectionHelper';
+import invariant from 'invariant';
 import Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
-// eslint-disable-next-line no-unused-vars
-import type { QueryExpression, ConnectionArgs, DRGEdge } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs, EdgeModel, NodeModel } from '../flow/Types';
 
 export default class EdgeConnectionQuery extends BaseQuery {
   expression: QueryExpression;
@@ -40,23 +38,20 @@ export default class EdgeConnectionQuery extends BaseQuery {
     invariant(expression, 'Argument \'expression\' is null or undefined');
     return new ToNodesConnectionQuery(this.graph, this, false, expression);
   }
-
-  single(): SingleQuery {
-    return new SingleQuery(this.graph, this);
+/*
+  cast<T>(castFunc: (item: EdgeModel) => T): CastConnectionQuery<T> {
+    return new CastConnectionQuery(this.graph, this, castFunc);
   }
-
-  singleOrNull(): SingleOrNullQuery {
-    return new SingleOrNullQuery(this.graph, this);
-  }
-
-  async getAsync<T: DRGEdge>(): Promise<Connection<T>> {
+*/
+  async getAsync<T>(castFunc: (item: EdgeModel) => T = i => ((i: any): T)): Promise<Connection<T>> {
     let innerResult = await this.getInnerResultAsync();
-    return await this.graph._edgeConnectionResolver.resolveAsync(this, innerResult);
+    let connection = await this.graph._edgeConnectionResolver.resolveAsync(this, innerResult);
+    return ConnectionHelper.castTo(connection, castFunc);
   }
 
-  async getInnerResultAsync<T: DRGEdge>(): Promise<Connection<T>> {
+  async getInnerResultAsync(): Promise<Connection<NodeModel>> {
     if (this.inner == null) {
-      let result: Connection<T> = {
+      let result: Connection<NodeModel> = {
         edges: [],
         pageInfo: {
           startCursor: null,

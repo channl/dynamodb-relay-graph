@@ -42,7 +42,7 @@ export default class Graph {
   v(expression: QueryExpression, connectionArgs: ConnectionArgs): NodeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-    return new NodeConnectionQuery(this, null, expression, connectionArgs);
+    return new NodeConnectionQuery(this, expression, connectionArgs);
   }
 
   e(expression: QueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {

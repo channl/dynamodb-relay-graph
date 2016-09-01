@@ -57,23 +57,15 @@ export type Model = {
   [propertyName: string]: Value,
 };
 
-export type DRGEdge = {
+export type NodeModel = {
+  type: string,
+  id: Value,
+  [propertyName: string]: Value,
+};
+
+export type EdgeModel = {
   type: string,
   outID: Value,
   inID: Value,
   [propertyName: string]: Value,
 };
-
-/*
-export type PartialEdgeConnection = {
-  edges: PartialEdge[],
-  pageInfo: PageInfo,
-};
-
-export type PartialEdge = {
-  type: string,
-  inID: Buffer,
-  outID: Buffer,
-  cursor: string,
-};
-*/

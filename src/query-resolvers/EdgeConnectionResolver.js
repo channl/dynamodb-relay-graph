@@ -12,7 +12,7 @@ import { invariant } from '../Global';
 import type { Connection, Edge } from 'graphql-relay';
 import type { DynamoDBSchema, ScanQueryResponse } from 'aws-sdk-promise';
 // eslint-disable-next-line no-unused-vars
-import type { ConnectionArgs, QueryExpression, DRGEdge, Model } from '../flow/Types';
+import type { ConnectionArgs, QueryExpression, EdgeModel, Model } from '../flow/Types';
 
 export default class EdgeConnectionResolver {
   _dynamoDB: DynamoDB;
@@ -25,7 +25,7 @@ export default class EdgeConnectionResolver {
     this._entityResolver = entityResolver;
   }
 
-  async resolveAsync<T: DRGEdge>(query: EdgeConnectionQuery,
+  async resolveAsync<T: EdgeModel>(query: EdgeConnectionQuery,
     innerResult: Connection<Model>): Promise<Connection<T>> {
     return await Instrument.funcAsync(this, async (): Promise<Connection<T>> => {
       invariant(query, 'Argument \'query\' is null');
@@ -66,7 +66,7 @@ export default class EdgeConnectionResolver {
     };
   }
 
-  _getResponseAsConnection<T: DRGEdge>(query: EdgeConnectionQuery,
+  _getResponseAsConnection<T: EdgeModel>(query: EdgeConnectionQuery,
     response: ScanQueryResponse): Connection<T> {
     invariant(query, 'Argument \'query\' is null');
     invariant(response, 'Argument \'response\' is null');

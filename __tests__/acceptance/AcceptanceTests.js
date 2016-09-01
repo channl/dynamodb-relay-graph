@@ -5,7 +5,7 @@ import Graph from '../../src/Graph';
 // import EntityWriter from '../../src/query-writers/EntityWriter';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-
+import To from '../acceptance/To';
 // import type { NodeQueryExpression } from '../src/flow/Types';
 
 describe('AcceptanceTests', () => {
@@ -122,7 +122,7 @@ describe('AcceptanceTests', () => {
 
       let result = await graph
         .v({type: 'User'}, {first: 2})
-        .getAsync();
+        .getAsync(To.User);
 
       let expected = {
         edges: [ null, null ],
@@ -178,7 +178,8 @@ describe('AcceptanceTests', () => {
 
       let result = await graph
         .v({type: 'User', id: new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64')}, {first: 1})
-        .getAsync();
+        .single()
+        .getAsync(To.User);
 
       expect(result);
       done();
@@ -221,7 +222,7 @@ describe('AcceptanceTests', () => {
 
       let result = await graph
         .v({type: 'User', id: new Buffer('ABCPsHX4SP2y3tJBdcZMOw==', 'base64')}, {first: 1})
-        .getAsync();
+        .getAsync(To.User);
 
       let expected = {
         edges: [],
@@ -342,11 +343,12 @@ describe('AcceptanceTests', () => {
       };
 
       let graph = new Graph(dbConfig, dbSchema);
+
       let result = await graph
         .v({type: 'User', id: new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64')}, {first: 1})
         .out({type: 'UserContactEdge'}, {first: 3})
         .in({type: 'Contact'})
-        .getAsync();
+        .getAsync(To.Contact);
 
       let expected = {
         edges: [ null, null, null ],

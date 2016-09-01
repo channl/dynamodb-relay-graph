@@ -3,7 +3,6 @@ import { invariant } from '../Global';
 import BaseQuery from '../query/BaseQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 import Graph from '../Graph';
-// eslint-disable-next-line no-unused-vars
 import type { Model } from '../flow/Types';
 
 export default class SingleOrNullQuery extends BaseQuery {
@@ -11,10 +10,15 @@ export default class SingleOrNullQuery extends BaseQuery {
     super(graph, inner);
   }
 
-  async getAsync<T: Model>(): Promise<?T> {
+  async getAsync<T>(castFunc: (item: Model) => T = i => ((i: any): T)): Promise<?T> {
     if (this.inner instanceof NodeConnectionQuery) {
       let innerResult = await this.inner.getAsync();
-      return await this.graph._singleOrNullResolver.resolveAsync(this, innerResult);
+      let result = await this.graph._singleOrNullResolver.resolveAsync(this, innerResult);
+      if (result == null) {
+        return null;
+      }
+
+      return castFunc(result);
     }
 
     invariant(false, 'Inner query type not supported');
