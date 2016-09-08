@@ -3,7 +3,7 @@ import { invariant } from '../Global';
 import AttributeValueHelper from '../query-helpers/AttributeValueHelper';
 import type { AttributeMap } from 'aws-sdk-promise';
 // eslint-disable-next-line no-unused-vars
-import type { Model } from '../flow/Types';
+import type { AttrMapValueConvertor, AttrMapConvertor, Model } from '../flow/Types';
 
 export default class AttributeMapHelper {
 
@@ -45,28 +45,59 @@ export default class AttributeMapHelper {
     return b.toString('base64');
   }
 
-  static toModel<T: Model>(type: string, item: AttributeMap): T {
+  static toModel(type: string, item: AttributeMap,
+    valueConvertors?: AttrMapValueConvertor[], mapConvertors?: AttrMapConvertor[]): Model {
     invariant(typeof type === 'string', 'Argument \'type\' is not a string');
     invariant(item, 'Argument \'item\' is null');
 
-    // $FlowIgnore
-    let model: T = { type };
+    let baseValueConvertor = (typeName, attrName, source, target) => {
+      if (typeof source[attrName].S !== 'undefined') {
+        target[attrName] = source[attrName].S;
+        return true;
+      }
+      if (typeof source[attrName].N !== 'undefined') {
+        target[attrName] = parseInt(source[attrName].N, 10);
+        return true;
+      }
+      if (typeof source[attrName].B !== 'undefined') {
+        target[attrName] = source[attrName].B;
+        return true;
+      }
+      if (typeof source[attrName].BOOL !== 'undefined') {
+        target[attrName] = source[attrName].BOOL;
+        return true;
+      }
+
+      return false;
+    };
+
+    let allValueConvertors: AttrMapValueConvertor[] = [];
+    if (valueConvertors != null) {
+      allValueConvertors.push(...valueConvertors);
+    }
+    allValueConvertors.push(baseValueConvertor);
+
+    let model: Model = { id: '' };
+
+    // Call the attribute map value convertors
     for (let name in item) {
       if ({}.hasOwnProperty.call(item, name)) {
-        let attr = item[name];
-        // TODO Check the types of the values here
-        if (typeof attr.S !== 'undefined') {
-          model[name] = attr.S;
-        } else if (typeof attr.N !== 'undefined') {
-          model[name] = parseInt(attr.N, 10);
-        } else if (typeof attr.B !== 'undefined') {
-          model[name] = attr.B;
-        } else if (typeof attr.BOOL !== 'undefined') {
-          model[name] = attr.BOOL;
+        for(let convertor of allValueConvertors) {
+          if (convertor(type, name, item, model)) {
+            break;
+          }
         }
       }
     }
 
+    // Call the final attribute map convertors
+    if (mapConvertors != null) {
+      for(let convertor of mapConvertors) {
+        convertor(type, item, model);
+      }
+    }
+
+    // This should be the final fully converted model
     return model;
   }
 }

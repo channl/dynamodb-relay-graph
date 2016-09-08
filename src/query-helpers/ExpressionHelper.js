@@ -1,10 +1,11 @@
 /* @flow */
-import { invariant } from '../Global';
-import ModelHelper from '../query-helpers/ModelHelper';
-import type { QueryExpression } from '../flow/Types';
+// import { invariant } from '../Global';
+// import ModelHelper from '../query-helpers/ModelHelper';
+// import type { QueryExpression } from '../flow/Types';
 
 export default class ExpressionHelper {
 
+  /*
   static toGlobalId(expression: QueryExpression): string {
     invariant(ExpressionHelper.isModelExpression(expression), 'Expression is invalid');
     // $FlowIgnore
@@ -26,4 +27,5 @@ export default class ExpressionHelper {
   static isTypeOnlyExpression(expression: QueryExpression): boolean {
     return Object.keys(expression).filter(name => name !== 'type').length === 0;
   }
+  */
 }

@@ -1,30 +1,12 @@
 /* @flow */
 import type { AttributeMap } from 'aws-sdk-promise';
 
-export type ConnectionArgs = FirstConnectionArgs | LastConnectionArgs;
-
-export type FirstConnectionArgs = {
-  first: number,
+export type ConnectionArgs = {
+  first?: number,
+  last?: number,
   after?: string,
   order?: string,
   orderDesc?: boolean,
-};
-
-export type LastConnectionArgs = {
-  last: number,
-  before?: string,
-  order?: string,
-  orderDesc?: boolean,
-};
-
-export type QueryExpression = {
-  type: string,
-  [name: string]: ExpressionValue,
-}
-
-export type TypeAndKey = {
-  type: string,
-  key: AttributeMap,
 };
 
 export type RequestMetadata = {
@@ -34,6 +16,16 @@ export type RequestMetadata = {
 export type TableMetadata = {
   typeAndKeys: TypeAndKey[],
 };
+
+export type QueryExpression = {
+  [name: string]: ExpressionValue,
+}
+
+export type TypeAndKey = {
+  type: string,
+  key: AttributeMap,
+};
+
 
 export type Value = Buffer | string | number | boolean;
 
@@ -52,20 +44,23 @@ export type ExpressionValueBeginsWith = {
   begins_with: Value
 };
 
-export type Model = {
-  type: string,
+export type Model = Node | Edge;
+
+export type Node = {
+  id: string,
   [propertyName: string]: Value,
 };
 
-export type NodeModel = {
-  type: string,
-  id: Value,
-  [propertyName: string]: Value,
+export type Edge = {
+  node: ?any,
+  cursor: string,
+  id: string,
+  outID: string,
+  inID: string,
 };
 
-export type EdgeModel = {
-  type: string,
-  outID: Value,
-  inID: Value,
-  [propertyName: string]: Value,
-};
+export type AttrMapValueConvertor =
+  (typeName: string, attrName: string, source: AttributeMap, target: Model) => boolean;
+
+export type AttrMapConvertor =
+  (typeName: string, source: AttributeMap, target: Model) => void;

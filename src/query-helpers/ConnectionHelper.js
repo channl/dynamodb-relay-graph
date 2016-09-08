@@ -1,10 +1,10 @@
 /* @flow */
 import type { Connection } from 'graphql-relay';
-import type { EdgeModel } from '../flow/Types';
+import type { Model } from '../flow/Types';
 
 export default class ConnectionHelper {
 
-  static castTo<T>(value: Connection<EdgeModel>, castFunc: (item: EdgeModel) => T): Connection<T> {
+  static castTo<T>(value: Connection<Model>, castFunc: (item: Model) => T): Connection<T> {
     let connection = {
       edges: value.edges.map(edge => {
         return {

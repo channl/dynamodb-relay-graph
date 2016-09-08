@@ -1,49 +1,63 @@
 /* @flow */
 import { invariant } from '../Global';
-import BaseQuery from '../query/BaseQuery';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
+import SingleQuery from '../query/SingleQuery';
+import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import ConnectionHelper from '../query-helpers/ConnectionHelper';
-import Graph from '../Graph';
+import type Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
-import type { QueryExpression, ConnectionArgs, EdgeModel, NodeModel } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs, Model } from '../flow/Types';
 
-export default class ToNodesConnectionQuery extends BaseQuery {
+export default class ToNodesConnectionQuery {
+  graph: Graph;
+  inner: EdgeConnectionQuery;
+  type: string;
   isOut: boolean;
   expression: QueryExpression;
 
-  constructor(graph: Graph, inner: ?BaseQuery, isOut: boolean, expression: QueryExpression) {
-    super(graph, inner);
+  // eslint-disable-next-line max-len
+  constructor(graph: Graph, inner: EdgeConnectionQuery, type: string, isOut: boolean, expression: QueryExpression) {
+    invariant(typeof graph !== 'undefined', 'Argument \'graph\' is undefined');
     invariant(typeof isOut === 'boolean', 'Argument \'isOut\' must be boolean');
     invariant(expression, 'Argument \'expression\' is null');
+    this.graph = graph;
+    this.inner = inner;
+    this.type = type;
     this.isOut = isOut;
     this.expression = expression;
   }
 
-  out(expression: QueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
-    invariant(expression, 'Argument \'expression\' is null');
-    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-    return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, true);
+  single(): SingleQuery {
+    return new SingleQuery(this.graph, this);
   }
 
-  in(expression: QueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
+  singleOrNull(): SingleOrNullQuery {
+    return new SingleOrNullQuery(this.graph, this);
+  }
+
+  // eslint-disable-next-line max-len
+  out(type: string, expression: QueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-    return new EdgeConnectionQuery(this.graph, this, expression, connectionArgs, false);
+    return new EdgeConnectionQuery(this.graph, this, type, expression, connectionArgs, true);
   }
-/*
-  cast<T>(castFunc: (item: EdgeModel) => T): CastConnectionQuery<T> {
-    return new CastConnectionQuery(this.graph, this, castFunc);
+
+  // eslint-disable-next-line max-len
+  in(type: string, expression: QueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
+    invariant(expression, 'Argument \'expression\' is null');
+    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
+    return new EdgeConnectionQuery(this.graph, this, type, expression, connectionArgs, false);
   }
-*/
-  async getAsync<T>(castFunc: (item: NodeModel) => T = i => ((i: any): T)): Promise<Connection<T>> {
+
+  async getAsync<T>(castFunc: (item: Model) => T = i => ((i: any): T)): Promise<Connection<T>> {
     let innerResult = await this.getInnerResultAsync();
     let connection = await this.graph._toNodesConnectionResolver.resolveAsync(this, innerResult);
     return ConnectionHelper.castTo(connection, castFunc);
   }
 
-  async getInnerResultAsync(): Promise<Connection<EdgeModel>> {
+  async getInnerResultAsync(): Promise<Connection<Model>> {
     if (this.inner == null) {
-      let result: Connection<EdgeModel> = {
+      let result: Connection<Model> = {
         edges: [],
         pageInfo: {
           startCursor: null,
@@ -55,10 +69,6 @@ export default class ToNodesConnectionQuery extends BaseQuery {
       return result;
     }
 
-    if (this.inner instanceof EdgeConnectionQuery) {
-      return await this.inner.getAsync();
-    }
-
-    invariant(false, 'Inner query type \'' + this.inner.constructor.name + '\' was not supported');
+    return await this.inner.getAsync();
   }
 }

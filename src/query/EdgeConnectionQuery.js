@@ -1,57 +1,69 @@
 /* @flow */
-import BaseQuery from '../query/BaseQuery';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
+import SingleQuery from '../query/SingleQuery';
+import SingleOrNullQuery from '../query/SingleOrNullQuery';
 import ConnectionHelper from '../query-helpers/ConnectionHelper';
 import invariant from 'invariant';
-import Graph from '../Graph';
+import type Graph from '../Graph';
 import type { Connection } from 'graphql-relay';
-import type { QueryExpression, ConnectionArgs, EdgeModel, NodeModel } from '../flow/Types';
+import type { QueryExpression, ConnectionArgs, Model } from '../flow/Types';
 
-export default class EdgeConnectionQuery extends BaseQuery {
+export default class EdgeConnectionQuery {
+  graph: Graph;
+  inner: ?NodeConnectionQuery | ?ToNodesConnectionQuery;
+  type: string;
   expression: QueryExpression;
   connectionArgs: ConnectionArgs;
   isOut: boolean;
 
   constructor(
     graph: Graph,
-    inner: ?BaseQuery,
+    inner: ?NodeConnectionQuery | ?ToNodesConnectionQuery,
+    type: string,
     expression: QueryExpression,
     connectionArgs: ConnectionArgs,
     isOut: boolean) {
 
-    super(graph, inner);
+    invariant(typeof graph !== 'undefined', 'Argument \'graph\' is undefined');
     invariant(expression, 'Argument \'expression\' is null or undefined');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null or undefined');
     invariant(typeof isOut === 'boolean', 'Argument \'isOut\' is not boolean');
+    this.graph = graph;
+    this.inner = inner;
+    this.type = type;
     this.expression = expression;
     this.connectionArgs = connectionArgs;
     this.isOut = isOut;
   }
 
-  out(expression: QueryExpression): ToNodesConnectionQuery {
-    invariant(expression, 'Argument \'expression\' is null or undefined');
-    return new ToNodesConnectionQuery(this.graph, this, true, expression);
+  single(): SingleQuery {
+    return new SingleQuery(this.graph, this);
   }
 
-  in(expression: QueryExpression): ToNodesConnectionQuery {
+  singleOrNull(): SingleOrNullQuery {
+    return new SingleOrNullQuery(this.graph, this);
+  }
+
+  out(type: string, expression: QueryExpression): ToNodesConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null or undefined');
-    return new ToNodesConnectionQuery(this.graph, this, false, expression);
+    return new ToNodesConnectionQuery(this.graph, this, type, true, expression);
   }
-/*
-  cast<T>(castFunc: (item: EdgeModel) => T): CastConnectionQuery<T> {
-    return new CastConnectionQuery(this.graph, this, castFunc);
+
+  in(type: string, expression: QueryExpression): ToNodesConnectionQuery {
+    invariant(expression, 'Argument \'expression\' is null or undefined');
+    return new ToNodesConnectionQuery(this.graph, this, type, false, expression);
   }
-*/
-  async getAsync<T>(castFunc: (item: EdgeModel) => T = i => ((i: any): T)): Promise<Connection<T>> {
+
+  async getAsync<T>(castFunc: (item: Model) => T = i => ((i: any): T)): Promise<Connection<T>> {
     let innerResult = await this.getInnerResultAsync();
     let connection = await this.graph._edgeConnectionResolver.resolveAsync(this, innerResult);
     return ConnectionHelper.castTo(connection, castFunc);
   }
 
-  async getInnerResultAsync(): Promise<Connection<NodeModel>> {
+  async getInnerResultAsync(): Promise<Connection<Model>> {
     if (this.inner == null) {
-      let result: Connection<NodeModel> = {
+      let result: Connection<Model> = {
         edges: [],
         pageInfo: {
           startCursor: null,

@@ -1,14 +1,23 @@
 /* @flow */
 import invariant from 'invariant';
-import BaseQuery from '../query/BaseQuery';
+import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
-import Graph from '../Graph';
+import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
+import type Graph from '../Graph';
 // eslint-disable-next-line no-unused-vars
 import type { Model } from '../flow/Types';
 
-export default class SingleQuery extends BaseQuery {
-  constructor(graph: Graph, inner: BaseQuery) {
-    super(graph, inner);
+export type Query = EdgeConnectionQuery | NodeConnectionQuery | ToNodesConnectionQuery;
+
+export default class SingleQuery {
+  graph: Graph;
+  inner: Query;
+
+  constructor(graph: Graph, inner: Query) {
+    invariant(typeof graph !== 'undefined', 'Argument \'graph\' is undefined');
+    invariant(typeof inner !== 'undefined', 'Argument \'inner\' is undefined');
+    this.graph = graph;
+    this.inner = inner;
   }
 
   async getAsync<T>(castFunc: (item: Model) => T = i => ((i: any): T)): Promise<T> {

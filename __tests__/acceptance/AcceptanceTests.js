@@ -6,10 +6,10 @@ import Graph from '../../src/Graph';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 import To from '../acceptance/To';
+import GID from '../acceptance/GID';
 // import type { NodeQueryExpression } from '../src/flow/Types';
 
 describe('AcceptanceTests', () => {
-
 /*
   it('Can do test upload', async function(done) {
     try {
@@ -75,8 +75,7 @@ describe('AcceptanceTests', () => {
       let graph = new Graph(dbConfig, dbSchema);
       for (let i = 0; i < 10; i++) {
         let item = {
-          type: 'Setting',
-          id: 'test',
+          id: GID.forSetting('test'),
           currentBlogId: Math.random().toString()
         };
 
@@ -121,7 +120,7 @@ describe('AcceptanceTests', () => {
       let graph = new Graph(dbConfig, dbSchema);
 
       let result = await graph
-        .v({type: 'User'}, {first: 2})
+        .v('User', {}, {first: 2})
         .getAsync(To.User);
 
       let expected = {
@@ -177,7 +176,8 @@ describe('AcceptanceTests', () => {
       let graph = new Graph(dbConfig, dbSchema);
 
       let result = await graph
-        .v({type: 'User', id: new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64')}, {first: 1})
+        // eslint-disable-next-line max-len
+        .v('User', { id: GID.forUser(new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64')) }, {first: 1})
         .single()
         .getAsync(To.User);
 
@@ -221,7 +221,7 @@ describe('AcceptanceTests', () => {
       let graph = new Graph(dbConfig, dbSchema);
 
       let result = await graph
-        .v({type: 'User', id: new Buffer('ABCPsHX4SP2y3tJBdcZMOw==', 'base64')}, {first: 1})
+        .v('User', {id: GID.forUser(new Buffer('ABCPsHX4SP2y3tJBdcZMOw==', 'base64'))}, {first: 1})
         .getAsync(To.User);
 
       let expected = {
@@ -345,9 +345,9 @@ describe('AcceptanceTests', () => {
       let graph = new Graph(dbConfig, dbSchema);
 
       let result = await graph
-        .v({type: 'User', id: new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64')}, {first: 1})
-        .out({type: 'UserContactEdge'}, {first: 3})
-        .in({type: 'Contact'})
+        .v('User', {id: GID.forUser(new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64'))}, {first: 1})
+        .out('UserContactEdge', {}, {first: 3})
+        .in('Contact', {})
         .getAsync(To.Contact);
 
       let expected = {

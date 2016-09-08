@@ -10,23 +10,25 @@
     "type": "git",
     "url": "http://github.com/tmitchel2/dynamodb-relay-graph.git"
   },
-  "main": "src/Graph.js",
+  "main": "dist/Graph.js",
   "options": {
-    "mocha": "--check-leaks --full-trace ./__tests__/**/*.js"
+    "mocha": "--check-leaks --full-trace ./__tests__/**/*.js",
+    "mochasingle": "--check-leaks --full-trace ./__tests__/query-resolvers/ModelHelperTests.js"
   },
   "scripts": {
     "test": "npm run lint && npm run check && npm run testonly",
     "testonly": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mocha",
+    "testonlysingle": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mochasingle",
     "testonlydebug": "mocha ./__tests__/**/*.js --compilers js:babel-register --require babel-polyfill --debug-brk",
     "lint": "eslint src",
     "check": "flow check",
     "check-cover": "for file in {src/*.js,src/**/*.js}; do echo $file; flow coverage $file; done",
-    "build": "babel src --ignore __tests__ --out-dir dist/",
+    "build": "babel src --ignore __tests__ --out-dir dist/ && flow-copy-source -v src dist",
     "cover": "babel-node ./node_modules/.bin/isparta cover --root src --report html _mocha -- $npm_package_options_mocha",
     "cover:lcov": "babel-node ./node_modules/.bin/isparta cover --root src --report lcovonly _mocha -- $npm_package_options_mocha"
   },
   "files": [
-    "src",
+    "dist",
     "README.md"
   ],
   "dependencies": {
@@ -51,6 +53,7 @@
     "eslint": "^2.9.0",
     "eslint-plugin-babel": "^3.2.0",
     "flow-bin": "^0.31.1",
+    "flow-copy-source": "^1.1.0",
     "isparta": "^4.0.0",
     "mocha": "^2.4.5",
     "sane": "^1.3.4"

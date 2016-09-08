@@ -7,7 +7,7 @@ import TableDefinitionHelper from '../query-helpers/TableDefinitionHelper';
 import ValueHelper from '../query-helpers/ValueHelper';
 import CursorHelper from '../query-helpers/CursorHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
-import ExpressionHelper from '../query-helpers/ExpressionHelper';
+// import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import type { Connection } from 'graphql-relay';
 import type { ConnectionArgs, QueryExpression, ExpressionValue, Model } from '../flow/Types';
 import type { TableDefinition, KeyDefinition, KeySchema,
@@ -96,7 +96,7 @@ export default class QueryHelper {
       .keys(expression)
       .concat(connectionArgs.order)
       .concat(include)
-      .filter(value => value !== 'type' && typeof value !== 'undefined')
+      .filter(value => typeof value !== 'undefined')
       .filter((value, index, self) => self.indexOf(value) === index)
       .forEach(name => {
         invariant(name != null, 'Value \'name\' was null');
@@ -114,7 +114,6 @@ export default class QueryHelper {
 
     let requiredKeySchema = Object
       .keys(expression)
-      .filter(name => name !== 'type')
       .map(name => {
         let value = expression[name];
         return {
@@ -237,16 +236,17 @@ export default class QueryHelper {
     return '#res' + name;
   }
 
-  static getExpressionAttributeValues(expression: QueryExpression, schema: DynamoDBSchema) {
+  static getExpressionAttributeValues(type: string, expression: QueryExpression,
+    schema: DynamoDBSchema) {
+    invariant(typeof type === 'string', 'Type must be string');
     invariant(expression != null, 'Argument \'expression\' is null');
     invariant(schema != null, 'Argument \'schema\' is null');
 
-    invariant(typeof expression.type === 'string', 'Type must be string');
-    let tableName = TypeHelper.getTableName(expression.type);
+    let tableName = TypeHelper.getTableName(type);
     let table = schema.tables.find(ts => ts.TableName === tableName);
     invariant(table != null, 'Table not found');
 
-    let names = Object.keys(expression).filter(name => name !== 'type');
+    let names = Object.keys(expression);
     if (names.length === 0) {
       return undefined;
     }
@@ -344,13 +344,13 @@ export default class QueryHelper {
     invariant(false, 'ExpressionValue type was invalid');
   }
 
-  static getIndexName(expression: QueryExpression, connectionArgs: ConnectionArgs,
+  static getIndexName(type: string, expression: QueryExpression, connectionArgs: ConnectionArgs,
     schema: DynamoDBSchema): any {
+    invariant(typeof type === 'string', 'Type must be string');
     invariant(expression != null, 'Argument \'expression\' is null');
     invariant(schema != null, 'Argument \'schema\' is null');
-    invariant(typeof expression.type === 'string', 'Type must be string');
 
-    let tableName = TypeHelper.getTableName(expression.type);
+    let tableName = TypeHelper.getTableName(type);
     let tableSchema = schema.tables.find(ts => ts.TableName === tableName);
     invariant(tableSchema, 'TableSchema ' + tableName + ' not found');
 
@@ -362,7 +362,7 @@ export default class QueryHelper {
   static getExpression(query: NodeConnectionQuery): QueryExpression {
     invariant(query, 'Argument \'query\' is null');
 
-    if (ExpressionHelper.isModelExpression(query.expression)) {
+    if (query.expression != null && typeof query.expression.id === 'string') {
       return query.expression;
     }
 
@@ -387,13 +387,13 @@ export default class QueryHelper {
     invariant(innerResult, 'Argument \'innerResult\' is null');
     invariant(query, 'Argument \'query\' is null');
 
-    if (ExpressionHelper.isEdgeModelExpression(query.expression)) {
+    if (query.expression != null && typeof query.expression.id === 'string') {
       // This expression has type+inID+outID so it already has
       // all it needs to find a particular edge
       return query.expression;
     }
 
-    if (typeof query.expression.type !== 'undefined' &&
+    if (typeof query.type !== 'undefined' &&
         typeof query.expression.inID !== 'undefined' &&
         typeof query.expression.outID === 'undefined') {
       // This expression has type+inID so it already has
@@ -405,7 +405,7 @@ export default class QueryHelper {
       return query.expression;
     }
 
-    if (typeof query.expression.type !== 'undefined' &&
+    if (typeof query.type !== 'undefined' &&
         typeof query.expression.inID === 'undefined' &&
         typeof query.expression.outID !== 'undefined') {
       // This expression has type+outID so it already has
@@ -427,13 +427,13 @@ export default class QueryHelper {
 
     if (query.isOut) {
       return {
-        type: query.expression.type,
+        type: query.type,
         outID: innerResult.edges[0].node.id
       };
     }
 
     return {
-      type: query.expression.type,
+      type: query.type,
       inID: innerResult.edges[0].node.id
     };
   }

@@ -3,11 +3,10 @@ import { invariant } from '../Global';
 import ValueHelper from '../query-helpers/ValueHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
-import { toGlobalId } from 'graphql-relay';
-import type { BatchWriteItemRequest } from 'aws-sdk-promise';
+import { fromGlobalId } from 'graphql-relay';
+import type { BatchWriteItemRequest, AttributeMap } from 'aws-sdk-promise';
 import type { Connection, Edge } from 'graphql-relay';
-// eslint-disable-next-line no-unused-vars
-import type { Model, Value, EdgeModel } from '../flow/Types';
+import type { Model, Value } from '../flow/Types';
 
 export default class ModelHelper {
 
@@ -17,7 +16,8 @@ export default class ModelHelper {
     let request = { RequestItems: {} };
 
     itemsToPut.forEach(item => {
-      let tableName = TypeHelper.getTableName(item.type);
+      let { type } = fromGlobalId(item.id);
+      let tableName = TypeHelper.getTableName(type);
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = [];
       }
@@ -32,7 +32,8 @@ export default class ModelHelper {
     });
 
     itemsToDelete.forEach(item => {
-      let tableName = TypeHelper.getTableName(item.type);
+      let { type } = fromGlobalId(item.id);
+      let tableName = TypeHelper.getTableName(type);
       if (!request.RequestItems[tableName]) {
         request.RequestItems[tableName] = [];
       }
@@ -68,7 +69,7 @@ export default class ModelHelper {
     return { edges, pageInfo };
   }
 
-  static toPartialEdgeConnection<T: EdgeModel>(items: T[], hasPreviousPage: boolean,
+  static toPartialEdgeConnection<T: Model>(items: T[], hasPreviousPage: boolean,
     hasNextPage: boolean, order: ?string): Connection<T> {
     let edges = items
       .filter(item => item !== null)
@@ -91,13 +92,16 @@ export default class ModelHelper {
     return { edges, pageInfo };
   }
 
-  static toAWSKey(item: Model, indexedByAttributeName: ?string) {
+  static toAWSKey(item: Model, indexedByAttributeName: ?string): AttributeMap {
     invariant(item, 'Argument \'item\' is null');
 
     let key = {};
-    if (item.type.endsWith('Edge')) {
-      key.outID = ValueHelper.toAttributeValue(item.outID);
-      key.inID = ValueHelper.toAttributeValue(item.inID);
+    let { type } = fromGlobalId(item.id);
+    if (type.endsWith('Edge')) {
+      invariant(typeof item.outID === 'string', 'outID must be a GlobalID string');
+      key.outID = ValueHelper.toAttributeValue(new Buffer(fromGlobalId(item.outID).id, 'base64'));
+      invariant(typeof item.inID === 'string', 'inID must be a GlobalID string');
+      key.inID = ValueHelper.toAttributeValue(new Buffer(fromGlobalId(item.inID).id, 'base64'));
     } else {
       key.id = ValueHelper.toAttributeValue(item.id);
     }
@@ -113,13 +117,17 @@ export default class ModelHelper {
     invariant(item, 'Argument \'item\' is null');
 
     let awsItem = {};
-    Object.keys(item)
-      .filter(key => key !== 'type')
-      .forEach(key => { awsItem[key] = ValueHelper.toAttributeValue(item[key]); } );
+    Object
+      .keys(item)
+      .forEach(key => {
+        let itemValue = item[key];
+        invariant(itemValue != null, 'ItemValue cannot be null');
+        awsItem[key] = ValueHelper.toAttributeValue(itemValue);
+      } );
 
     return awsItem;
   }
-
+/*
   static toGlobalId(model: Model): string {
     invariant(model, 'Argument \'model\' is null');
 
@@ -131,6 +139,7 @@ export default class ModelHelper {
 
     return toGlobalId(model.type, this._getGlobalIdParam(model.id));
   }
+*/
 
   static toCursor(item: Model, order: ?string): string {
     invariant(item, 'Argument \'item\' is null');

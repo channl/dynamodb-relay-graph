@@ -1,6 +1,6 @@
-/* @flow */
+/* @flow
 import { invariant } from '../Global';
-import Graph from '../Graph';
+import type Graph from '../Graph';
 import SingleQuery from '../query/SingleQuery';
 import SingleOrNullQuery from '../query/SingleOrNullQuery';
 
@@ -22,3 +22,4 @@ export default class BaseQuery {
     return new SingleOrNullQuery(this.graph, this);
   }
 }
+*/
