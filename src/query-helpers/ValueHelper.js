@@ -1,5 +1,5 @@
 /* @flow */
-import { invariant } from '../Global';
+import invariant from 'invariant';
 import type { AttributeValue } from 'aws-sdk-promise';
 import type { Value } from '../flow/Types';
 
@@ -38,6 +38,8 @@ export default class ValueHelper {
   }
 
   static toAttributeValue(value: Value): AttributeValue {
+    invariant(value != null, 'Argument \'value\' is null or undefined');
+
     if (value instanceof Buffer) {
       return { B: value };
     }

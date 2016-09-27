@@ -1,5 +1,5 @@
 /* @flow */
-import { invariant } from '../Global';
+import invariant from 'invariant';
 import EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import SingleQuery from '../query/SingleQuery';
 import SingleOrNullQuery from '../query/SingleOrNullQuery';

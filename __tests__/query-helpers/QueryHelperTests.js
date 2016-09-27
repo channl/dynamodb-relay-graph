@@ -1,5 +1,7 @@
 /* @flow */
 import QueryHelper from '../../src/query-helpers/QueryHelper';
+import TestDataMapper from '../acceptance/TestDataMapper';
+import GID from '../acceptance/GID';
 import { toGlobalId } from 'graphql-relay';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
@@ -534,12 +536,12 @@ describe('QueryHelperTests', () => {
   });
 
   it('getExpressionAttributeValues', () => {
-    let expression = { id: 'ABC' };
+    let expression = { id: GID.id('Test', 'ABC') };
     let schema = {
       tables: [ {
         TableName: 'Tests',
         AttributeDefinitions: [ {
-          AttributeName: 'id', AttributeType: 'S',
+          AttributeName: 'id', AttributeType: 'B',
         }, {
           AttributeName: 'name', AttributeType: 'S',
         } ],
@@ -567,9 +569,10 @@ describe('QueryHelperTests', () => {
         }
       } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema);
+    let dataMapper = new TestDataMapper();
+    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema, dataMapper);
     let expected = {
-      ':v_equals_id': { S: 'ABC' }
+      ':v_equals_id': { B: new Buffer('ABC', 'base64') }
     };
     expect(result).to.deep.equal(expected);
   });
@@ -608,13 +611,14 @@ describe('QueryHelperTests', () => {
         }
       } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema);
+    let dataMapper = new TestDataMapper();
+    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema, dataMapper);
     let expected;
     expect(result).to.deep.equal(expected);
   });
 
   it('getExpressionAttributeValuesOfString', () => {
-    let expression = { id: 'ABC' };
+    let expression = { name: 'ABC' };
     let schema = {
       tables: [ {
         TableName: 'Tests',
@@ -647,9 +651,10 @@ describe('QueryHelperTests', () => {
         }
       } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema);
+    let dataMapper = new TestDataMapper();
+    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema, dataMapper);
     let expected = {
-      ':v_equals_id': {
+      ':v_equals_name': {
         S: 'ABC'
       }
     };
@@ -690,7 +695,8 @@ describe('QueryHelperTests', () => {
         }
       } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema);
+    let dataMapper = new TestDataMapper();
+    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema, dataMapper);
     let expected = {
       ':v_after_id': {
         S: 'ABC'
@@ -863,7 +869,8 @@ describe('QueryHelperTests', () => {
         }
       } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema);
+    let dataMapper = new TestDataMapper();
+    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema, dataMapper);
     let expected = {
       ':v_before_id': {
         S: 'ABC'
@@ -1036,7 +1043,8 @@ describe('QueryHelperTests', () => {
         }
       } ]
     };
-    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema);
+    let dataMapper = new TestDataMapper();
+    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema, dataMapper);
     let expected = {
       ':v_begins_with_id': {
         S: 'ABC'
@@ -1080,7 +1088,9 @@ describe('QueryHelperTests', () => {
         }
       } ]
     };
-    let func = () => QueryHelper.getExpressionAttributeValues('Test', expression, schema);
+    let dataMapper = new TestDataMapper();
+    let func = () => QueryHelper.getExpressionAttributeValues('Test', expression, schema,
+      dataMapper);
     expect(func).to.throw('ExpressionValue type was invalid');
   });
 

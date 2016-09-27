@@ -14,6 +14,7 @@ export type Contact = {
 
 export type User = {
   id: ID,
+  createDate: number,
   countryCode: string,
   phoneNumber: string,
   firstName: string,

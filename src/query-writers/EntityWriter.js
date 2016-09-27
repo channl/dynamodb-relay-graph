@@ -1,13 +1,15 @@
 /* @flow */
-import { invariant } from '../Global';
+import invariant from 'invariant';
 import DynamoDB from '../aws/DynamoDB';
-import ModelHelper from '../query-helpers/ModelHelper';
+import DataModelHelper from '../query-helpers/DataModelHelper';
+import DataMapper from '../query-helpers/DataMapper';
 import BatchingDynamoDB from '../utils/BatchingDynamoDB';
 import Instrument from '../utils/Instrument';
 import type { Model } from '../flow/Types';
 
 export default class EntityWriter {
   _dynamoDB: BatchingDynamoDB;
+  _dataMapper: DataMapper;
   /*
   convertor: TypeHelper;
   batchSize: number;
@@ -16,10 +18,12 @@ export default class EntityWriter {
   getNextRetryDelay: (curr: number) => number;
   */
 
-  constructor(dynamoDB: DynamoDB) {
-    invariant(dynamoDB, 'Argument \'dynamoDB\' is null');
+  constructor(dynamoDB: DynamoDB, dataMapper: DataMapper) {
+    invariant(dynamoDB != null, 'Argument \'dynamoDB\' is null');
+    invariant(dataMapper != null, 'Argument \'dynamoDB\' is null');
 
     this._dynamoDB = new BatchingDynamoDB(dynamoDB);
+    this._dataMapper = dataMapper;
     /*
     this.convertor = new TypeHelper();
     this.batchSize = 25;
@@ -37,8 +41,12 @@ export default class EntityWriter {
         return;
       }
 
+      // Convert to data model format
+      let dataModelsToPut = itemsToPut.map(model => this._dataMapper.toDataModel(model));
+      let dataModelsToDelete = itemsToDelete.map(model => this._dataMapper.toDataModel(model));
+
       // Convert to a dynamo request
-      let request = ModelHelper.toBatchWriteItemRequest(itemsToPut, itemsToDelete);
+      let request = DataModelHelper.toBatchWriteItemRequest(dataModelsToPut, dataModelsToDelete);
 
       // Execute the batch request
       let response = await this._dynamoDB.batchWriteItemAsync(request);

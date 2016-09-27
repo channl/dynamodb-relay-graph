@@ -1,28 +1,32 @@
 /* @flow */
+import invariant from 'invariant';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import QueryHelper from '../query-helpers/QueryHelper';
 import NodeConnectionQuery from '../query/NodeConnectionQuery';
 // import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
-import ModelHelper from '../query-helpers/ModelHelper';
+import DataModelHelper from '../query-helpers/DataModelHelper';
+import DataMapper from '../query-helpers/DataMapper';
 import DynamoDB from '../aws/DynamoDB';
 import Instrument from '../utils/Instrument';
-import { invariant } from '../Global';
 // eslint-disable-next-line no-unused-vars
 import type { ConnectionArgs, QueryExpression, Model } from '../flow/Types';
 import type { Connection } from 'graphql-relay';
-import type { DynamoDBSchema, ScanQueryResponse } from 'aws-sdk-promise';
+import type { DynamoDBSchema, ScanQueryResponse, QueryRequest } from 'aws-sdk-promise';
 
 export default class NodeConnectionResolver {
   _dynamoDB: DynamoDB;
   _schema: DynamoDBSchema;
   _entityResolver: EntityResolver;
+  _dataMapper: DataMapper;
 
-  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema, entityResolver: EntityResolver) {
+  constructor(dynamoDB: DynamoDB, schema: DynamoDBSchema,
+    entityResolver: EntityResolver, dataMapper: DataMapper) {
     this._dynamoDB = dynamoDB;
     this._schema = schema;
     this._entityResolver = entityResolver;
+    this._dataMapper = dataMapper;
   }
 
   async resolveAsync(query: NodeConnectionQuery): Promise<Connection<Model>> {
@@ -34,12 +38,14 @@ export default class NodeConnectionResolver {
 
       // Specific GlobalId query
       if (typeof expression.id === 'string') {
-        let node = await this._entityResolver.getAsync(expression.id);
-        return ModelHelper.toConnection([ node ], false, false, null);
+        let dataModel = await this._entityResolver.getAsync(expression.id);
+        let dataModels = dataModel != null ? [ dataModel ] : [];
+        return DataModelHelper.toConnection(this._dataMapper, query.type,
+          dataModels, false, false, null);
       }
 
       // Type only query
-      if (expression == null || expression.length === 0) {
+      if (expression == null || Object.keys(expression).length === 0) {
         let request = this._getScanRequest(query.type, expression, query.connectionArgs);
         let response = await this._dynamoDB.scanAsync(request);
         invariant(typeof query.type === 'string', 'Type must be string');
@@ -74,9 +80,8 @@ export default class NodeConnectionResolver {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
 
-    return {
+    let request: QueryRequest = {
       TableName: TypeHelper.getTableName(type),
-      IndexName: QueryHelper.getIndexName(type, expression, connectionArgs, this._schema),
       ExclusiveStartKey: QueryHelper.getExclusiveStartKey(connectionArgs),
       Limit: QueryHelper.getLimit(connectionArgs),
       ScanIndexForward: QueryHelper.getScanIndexForward(connectionArgs),
@@ -84,10 +89,17 @@ export default class NodeConnectionResolver {
         [ 'id' ]),
       KeyConditionExpression: QueryHelper.getKeyConditionExpression(expression),
       ExpressionAttributeValues: QueryHelper.getExpressionAttributeValues(type, expression,
-        this._schema),
+        this._schema, this._dataMapper),
       ExpressionAttributeNames: QueryHelper.getExpressionAttributeNames(expression,
         connectionArgs, [ 'id' ])
     };
+
+    let indexName = QueryHelper.getIndexName(type, expression, connectionArgs, this._schema);
+    if (indexName != null) {
+      request.IndexName = indexName;
+    }
+
+    return request;
   }
 
   // eslint-disable-next-line no-unused-vars
@@ -95,7 +107,8 @@ export default class NodeConnectionResolver {
     response: ScanQueryResponse): Promise<Connection<Model>> {
     let nodeIds = response.Items.map(item => {
       invariant(typeof query.type === 'string', 'Type must be string');
-      let model = AttributeMapHelper.toModel(query.type, item);
+      let dataModel = AttributeMapHelper.toDataModel(query.type, item);
+      let model = this._dataMapper.fromDataModel(query.type, dataModel);
       return model.id;
     });
     let nodes = await Promise.all(nodeIds.map(id => this._entityResolver.getAsync(id)));
@@ -103,7 +116,7 @@ export default class NodeConnectionResolver {
       false : typeof response.LastEvaluatedKey !== 'undefined';
     let hasNextPage = QueryHelper.isForwardScan(query.connectionArgs) ?
       typeof response.LastEvaluatedKey !== 'undefined' : false;
-    return ModelHelper.toConnection(nodes, hasPreviousPage, hasNextPage,
-      query.connectionArgs.order);
+    return DataModelHelper.toConnection(this._dataMapper, query.type, nodes,
+      hasPreviousPage, hasNextPage, query.connectionArgs.order);
   }
 }

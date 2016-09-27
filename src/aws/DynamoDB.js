@@ -1,6 +1,8 @@
 /* @flow */
+import invariant from 'invariant';
+import warning from 'warning';
 import AWS from 'aws-sdk-promise';
-import { json, stats, warning, invariant } from '../Global';
+import { json, stats } from '../Global';
 import Instrument from '../utils/Instrument';
 import type {
   DynamoDBConfig,
@@ -54,7 +56,7 @@ export default class DynamoDB {
       let res = await this._db.listTables(params).promise();
       return res.data;
     } catch (ex) {
-      warning(JSON.stringify({
+      warning(false, JSON.stringify({
         class: 'DynamoDB',
         function: 'listTablesAsync'
       }, null, json.padding));
@@ -105,7 +107,7 @@ export default class DynamoDB {
       let res = await this._db.describeTable(params).promise();
       return res.data;
     } catch (ex) {
-      warning(JSON.stringify({
+      warning(false, JSON.stringify({
         class: 'DynamoDB',
         function: 'describeTableAsync',
         params
@@ -123,7 +125,7 @@ export default class DynamoDB {
       let res = await this._db.updateTable(params).promise();
       return res.data;
     } catch (ex) {
-      warning(JSON.stringify({
+      warning(false, JSON.stringify({
         class: 'DynamoDB',
         function: 'updateTableAsync',
         params

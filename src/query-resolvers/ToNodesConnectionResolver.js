@@ -1,18 +1,19 @@
 /* @flow */
+import invariant from 'invariant';
 import EntityResolver from '../query-resolvers/EntityResolver';
-// import ExpressionHelper from '../query-helpers/ExpressionHelper';
+import DataMapper from '../query-helpers/DataMapper';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import Instrument from '../utils/Instrument';
-import { invariant } from '../Global';
-import { toGlobalId } from 'graphql-relay';
 import type { Connection, Edge } from 'graphql-relay';
-import type { QueryExpression, Model } from '../flow/Types';
+import type { QueryExpression, Model, DataModel } from '../flow/Types';
 
 export default class ToNodesConnectionResolver {
   _entityResolver: EntityResolver;
+  _dataMapper: DataMapper;
 
-  constructor(entityResolver: EntityResolver) {
+  constructor(entityResolver: EntityResolver, dataMapper: DataMapper) {
     this._entityResolver = entityResolver;
+    this._dataMapper = dataMapper;
   }
 
   async resolveAsync(query: ToNodesConnectionQuery, innerResult: Connection<Model>)
@@ -23,12 +24,14 @@ export default class ToNodesConnectionResolver {
 
       let nodeIds = this.constructor._getNodeIds(query.type, query.expression,
         query.isOut, innerResult);
-      let nodes: Model[] = await Promise.all(nodeIds.map(id => {
-        let prom: Promise<Model> = this._entityResolver.getAsync(id);
-        return prom;
-      }));
-      let edges: Edge<Model>[] = nodes.map((node: Model, i) => {
+
+      let dataModels: DataModel[] = await Promise.all(
+        nodeIds.map(id => this._entityResolver.getAsync(id)));
+
+      let edges: Edge<Model>[] = dataModels.map((dataModel, i) => {
         invariant(innerResult != null, 'Argument \'innerResult\' is null');
+        invariant(dataModel != null, 'DataModel should not be null or undefined');
+        let node = this._dataMapper.fromDataModel(query.type, dataModel);
         let edge: Edge<Model> = { cursor: innerResult.edges[i].cursor, node};
         return edge;
       });
@@ -59,9 +62,9 @@ export default class ToNodesConnectionResolver {
         .edges
         .map(edge => {
           invariant(typeof type === 'string', 'Type must be string');
-          let id = isOut ? edge.node.outID : edge.node.inID;
-          invariant(typeof id === 'string', 'outID or inID must be a global id string');
-          return toGlobalId(type, id);
+          let gid = isOut ? edge.node.outID : edge.node.inID;
+          invariant(typeof gid === 'string', 'outID or inID must be a global id string');
+          return gid;
         });
     });
   }

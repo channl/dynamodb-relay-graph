@@ -13,13 +13,15 @@
   "main": "dist/Graph.js",
   "options": {
     "mocha": "--check-leaks --full-trace ./__tests__/**/*.js",
-    "mochasingle": "--check-leaks --full-trace ./__tests__/query-resolvers/ModelHelperTests.js"
+    "mochasingle": "--check-leaks --full-trace ./__tests__/acceptance/AcceptanceTests.js",
+    "mochasingle1": "--check-leaks --full-trace ./__tests__/query-resolvers/DataModelHelperTests.js"
   },
   "scripts": {
     "test": "npm run lint && npm run check && npm run testonly",
     "testonly": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mocha",
-    "testonlysingle": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mochasingle",
     "testonlydebug": "mocha ./__tests__/**/*.js --compilers js:babel-register --require babel-polyfill --debug-brk",
+    "testonlysingle": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mochasingle",
+    "testonlysingledebug": "mocha ./__tests__/acceptance/AcceptanceTests.js --compilers js:babel-register --require babel-polyfill --debug-brk",
     "lint": "eslint src",
     "check": "flow check",
     "check-cover": "for file in {src/*.js,src/**/*.js}; do echo $file; flow coverage $file; done",

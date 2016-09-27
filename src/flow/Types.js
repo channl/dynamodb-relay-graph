@@ -48,19 +48,28 @@ export type Model = Node | Edge;
 
 export type Node = {
   id: string,
-  [propertyName: string]: Value,
+  [propertyName: string]: ?Value,
 };
 
 export type Edge = {
-  node: ?any,
+  node: ?Object,
   cursor: string,
   id: string,
   outID: string,
   inID: string,
 };
 
+export type DataModel = Object;
+
 export type AttrMapValueConvertor =
   (typeName: string, attrName: string, source: AttributeMap, target: Model) => boolean;
 
 export type AttrMapConvertor =
   (typeName: string, source: AttributeMap, target: Model) => void;
+
+export type ToDataModelFunc = (typeName: string, source: Model) => Model;
+
+export type DataModelAndType = {
+  type: string,
+  dataModel: DataModel,
+};

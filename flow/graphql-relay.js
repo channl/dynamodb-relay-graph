@@ -14,8 +14,8 @@ declare module 'graphql-relay' {
   declare type PageInfo = {
     startCursor: ?ConnectionCursor,
     endCursor: ?ConnectionCursor,
-    hasPreviousPage: ?boolean,
-    hasNextPage: ?boolean
+    hasPreviousPage: boolean,
+    hasNextPage: boolean,
   }
 
   declare type Connection<T> = {

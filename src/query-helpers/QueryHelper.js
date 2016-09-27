@@ -1,11 +1,13 @@
 /* @flow */
-import { invariant } from '../Global';
+import invariant from 'invariant';
 import type NodeConnectionQuery from '../query/NodeConnectionQuery';
 import type EdgeConnectionQuery from '../query/EdgeConnectionQuery';
+import DataMapper from '../query-helpers/DataMapper';
 import ExpressionValueHelper from '../query-helpers/ExpressionValueHelper';
 import TableDefinitionHelper from '../query-helpers/TableDefinitionHelper';
 import ValueHelper from '../query-helpers/ValueHelper';
 import CursorHelper from '../query-helpers/CursorHelper';
+import Instrument from '../utils/Instrument';
 import TypeHelper from '../query-helpers/TypeHelper';
 // import ExpressionHelper from '../query-helpers/ExpressionHelper';
 import type { Connection } from 'graphql-relay';
@@ -108,55 +110,57 @@ export default class QueryHelper {
 
   static getIndexSchema(expression: QueryExpression,
     connectionArgs: ConnectionArgs, tableSchema: TableDefinition) {
-    invariant(expression, 'Argument \'expression\' is null');
-    invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
-    invariant(tableSchema, 'Argument \'tableSchema\' is null');
+    return Instrument.func(this, () => {
+      invariant(expression, 'Argument \'expression\' is null');
+      invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
+      invariant(tableSchema, 'Argument \'tableSchema\' is null');
 
-    let requiredKeySchema = Object
-      .keys(expression)
-      .map(name => {
-        let value = expression[name];
-        return {
-          AttributeName: name,
-          KeyType: this.getExpressionKeyType(value),
-        };
-      });
+      let requiredKeySchema = Object
+        .keys(expression)
+        .map(name => {
+          let value = expression[name];
+          return {
+            AttributeName: name,
+            KeyType: this.getExpressionKeyType(value),
+          };
+        });
 
-    if (typeof connectionArgs.order !== 'undefined') {
-      requiredKeySchema.push({
-        AttributeName: connectionArgs.order,
-        KeyType: 'RANGE'
-      });
-    }
-
-    // If the primary key is a match then we dont need an index at all
-    if (this.isKeySchemaSatisfied(tableSchema.KeySchema, requiredKeySchema)) {
-      return undefined;
-    }
-
-    // Search the local secondary indexes for a match
-    if (tableSchema.LocalSecondaryIndexes) {
-      let lsi = tableSchema
-        .LocalSecondaryIndexes
-        .find(index =>
-          this.isKeySchemaSatisfied(index.KeySchema, requiredKeySchema));
-      if (lsi) {
-        return lsi;
+      if (typeof connectionArgs.order !== 'undefined') {
+        requiredKeySchema.push({
+          AttributeName: connectionArgs.order,
+          KeyType: 'RANGE'
+        });
       }
-    }
 
-    // Search the global secondary indexes for a match
-    if (tableSchema.GlobalSecondaryIndexes) {
-      let gsi = tableSchema
-        .GlobalSecondaryIndexes
-        .find(index =>
-          this.isKeySchemaSatisfied(index.KeySchema, requiredKeySchema));
-      if (gsi) {
-        return gsi;
+      // If the primary key is a match then we dont need an index at all
+      if (this.isKeySchemaSatisfied(tableSchema.KeySchema, requiredKeySchema)) {
+        return undefined;
       }
-    }
 
-    throw new Error('Corresponding LocalSecondaryIndex Or GlobalSecondaryIndex not found');
+      // Search the local secondary indexes for a match
+      if (tableSchema.LocalSecondaryIndexes) {
+        let lsi = tableSchema
+          .LocalSecondaryIndexes
+          .find(index =>
+            this.isKeySchemaSatisfied(index.KeySchema, requiredKeySchema));
+        if (lsi) {
+          return lsi;
+        }
+      }
+
+      // Search the global secondary indexes for a match
+      if (tableSchema.GlobalSecondaryIndexes) {
+        let gsi = tableSchema
+          .GlobalSecondaryIndexes
+          .find(index =>
+            this.isKeySchemaSatisfied(index.KeySchema, requiredKeySchema));
+        if (gsi) {
+          return gsi;
+        }
+      }
+
+      invariant(false, 'Corresponding LocalSecondaryIndex Or GlobalSecondaryIndex not found');
+    });
   }
 
   static isKeySchemaSatisfied(proposed: KeySchema, required: ?KeySchema) {
@@ -222,7 +226,7 @@ export default class QueryHelper {
       .keys(expression)
       .concat(connectionArgs.order)
       .concat(include)
-      .filter(name => name !== 'type' && typeof name !== 'undefined')
+      .filter(name => typeof name !== 'undefined')
       .filter((name, index, self) => self.indexOf(name) === index)
       .map(name => {
         invariant(name != null, 'Value \'name\' was null');
@@ -237,10 +241,11 @@ export default class QueryHelper {
   }
 
   static getExpressionAttributeValues(type: string, expression: QueryExpression,
-    schema: DynamoDBSchema) {
+    schema: DynamoDBSchema, dataMapper: DataMapper) {
     invariant(typeof type === 'string', 'Type must be string');
     invariant(expression != null, 'Argument \'expression\' is null');
     invariant(schema != null, 'Argument \'schema\' is null');
+    invariant(dataMapper != null, 'Argument \'dataMapper\' is null');
 
     let tableName = TypeHelper.getTableName(type);
     let table = schema.tables.find(ts => ts.TableName === tableName);
@@ -288,7 +293,9 @@ export default class QueryHelper {
 
       if (ExpressionValueHelper.isValueExpression(expr)) {
         // $FlowIgnore
-        result[':v_equals_' + name] = ValueHelper.toAttributeValue(expr);
+        let dataExpr = dataMapper.toDataModelAttribute(type, name, expr);
+        invariant(dataExpr != null, 'dataExpr ca not be null');
+        result[':v_equals_' + name] = ValueHelper.toAttributeValue(dataExpr);
         return;
       }
 
@@ -301,7 +308,7 @@ export default class QueryHelper {
   static getKeyConditionExpression(expression: QueryExpression) {
     invariant(expression, 'Argument \'expression\' is null');
 
-    let names = Object.keys(expression).filter(name => name !== 'type');
+    let names = Object.keys(expression);
     if (names.length === 0) {
       return undefined;
     }
@@ -345,7 +352,7 @@ export default class QueryHelper {
   }
 
   static getIndexName(type: string, expression: QueryExpression, connectionArgs: ConnectionArgs,
-    schema: DynamoDBSchema): any {
+    schema: DynamoDBSchema): ?string {
     invariant(typeof type === 'string', 'Type must be string');
     invariant(expression != null, 'Argument \'expression\' is null');
     invariant(schema != null, 'Argument \'schema\' is null');
@@ -427,13 +434,13 @@ export default class QueryHelper {
 
     if (query.isOut) {
       return {
-        type: query.type,
+        // type: query.type,
         outID: innerResult.edges[0].node.id
       };
     }
 
     return {
-      type: query.type,
+      // type: query.type,
       inID: innerResult.edges[0].node.id
     };
   }

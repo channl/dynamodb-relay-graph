@@ -1,5 +1,5 @@
 /* @flow */
-import { invariant } from './Global';
+import invariant from 'invariant';
 import DynamoDB from './aws/DynamoDB';
 import EdgeConnectionQuery from './query/EdgeConnectionQuery';
 import NodeConnectionQuery from './query/NodeConnectionQuery';
@@ -12,8 +12,9 @@ import SingleResolver from './query-resolvers/SingleResolver';
 import SingleOrNullResolver from './query-resolvers/SingleOrNullResolver';
 import EntityWriter from './query-writers/EntityWriter';
 import ToNodesConnectionResolver from './query-resolvers/ToNodesConnectionResolver';
+import DataMapper from './query-helpers/DataMapper';
 import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
-import type { QueryExpression, ConnectionArgs, /* Model */ } from './flow/Types';
+import type { QueryExpression, ConnectionArgs } from './flow/Types';
 
 export default class Graph {
   _writer: EntityWriter;
@@ -23,20 +24,25 @@ export default class Graph {
   _singleResolver: SingleResolver;
   _singleOrNullResolver: SingleOrNullResolver;
   _toNodesConnectionResolver: ToNodesConnectionResolver;
+  _dataMapper: DataMapper;
 
-  constructor(dynamoDBConfig: DynamoDBConfig, schema: DynamoDBSchema) {
-    invariant(dynamoDBConfig, 'Argument \'dynamoDBConfig\' is null');
+  constructor(dynamoDBConfig: DynamoDBConfig, schema: DynamoDBSchema, dataMapper: DataMapper) {
+    invariant(dynamoDBConfig != null, 'Argument \'dynamoDBConfig\' is null');
+    invariant(schema != null, 'Argument \'schema\' is null');
+    invariant(dataMapper != null, 'Argument \'dataMapper\' is null');
 
     let dynamoDB = new DynamoDB(dynamoDBConfig);
-    this._entityResolver = new EntityResolver(dynamoDB);
-    this._writer = new EntityWriter(dynamoDB);
-    this._edgeConnectionResolver = new EdgeConnectionResolver(
-      dynamoDB, schema, this._entityResolver);
-    this._nodeConnectionResolver = new NodeConnectionResolver(
-      dynamoDB, schema, this._entityResolver);
+    this._dataMapper = dataMapper;
+    this._entityResolver = new EntityResolver(dynamoDB, this._dataMapper);
+    this._writer = new EntityWriter(dynamoDB, this._dataMapper);
     this._singleResolver = new SingleResolver();
     this._singleOrNullResolver = new SingleOrNullResolver();
-    this._toNodesConnectionResolver = new ToNodesConnectionResolver(this._entityResolver);
+    // eslint-disable-next-line max-len
+    this._edgeConnectionResolver = new EdgeConnectionResolver(dynamoDB, schema, this._entityResolver, this._dataMapper);
+    // eslint-disable-next-line max-len
+    this._nodeConnectionResolver = new NodeConnectionResolver(dynamoDB, schema, this._entityResolver, this._dataMapper);
+    // eslint-disable-next-line max-len
+    this._toNodesConnectionResolver = new ToNodesConnectionResolver(this._entityResolver, this._dataMapper);
   }
 
   // eslint-disable-next-line max-len

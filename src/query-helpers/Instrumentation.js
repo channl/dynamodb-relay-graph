@@ -1,5 +1,5 @@
 /* @flow */
-import { warning } from '../Global';
+import warning from 'warning';
 
 export default class Instrumentation {
 

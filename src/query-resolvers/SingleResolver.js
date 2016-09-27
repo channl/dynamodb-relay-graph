@@ -1,7 +1,7 @@
 /* @flow */
+import invariant from 'invariant';
 import Instrument from '../utils/Instrument';
 import SingleQuery from '../query/SingleQuery';
-import { invariant } from '../Global';
 import type { Connection } from 'graphql-relay';
 // eslint-disable-next-line no-unused-vars
 import type { Model } from '../flow/Types';

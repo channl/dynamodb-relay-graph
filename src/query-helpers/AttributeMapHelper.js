@@ -1,5 +1,5 @@
 /* @flow */
-import { invariant } from '../Global';
+import invariant from 'invariant';
 import AttributeValueHelper from '../query-helpers/AttributeValueHelper';
 import type { AttributeMap } from 'aws-sdk-promise';
 // eslint-disable-next-line no-unused-vars
@@ -45,6 +45,29 @@ export default class AttributeMapHelper {
     return b.toString('base64');
   }
 
+  static toDataModel(type: string, source: AttributeMap): any {
+    invariant(typeof type === 'string', 'Argument \'type\' is not a string');
+    invariant(source, 'Argument \'source\' is null');
+
+    // Call the attribute map value convertors
+    let target = {};
+    for (let attrName in source) {
+      if ({}.hasOwnProperty.call(source, attrName)) {
+        if (typeof source[attrName].S !== 'undefined') {
+          target[attrName] = source[attrName].S;
+        } else if (typeof source[attrName].N !== 'undefined') {
+          target[attrName] = parseInt(source[attrName].N, 10);
+        } else if (typeof source[attrName].B !== 'undefined') {
+          target[attrName] = source[attrName].B;
+        } else if (typeof source[attrName].BOOL !== 'undefined') {
+          target[attrName] = source[attrName].BOOL;
+        }
+      }
+    }
+
+    return target;
+  }
+/*
   static toModel(type: string, item: AttributeMap,
     valueConvertors?: AttrMapValueConvertor[], mapConvertors?: AttrMapConvertor[]): Model {
     invariant(typeof type === 'string', 'Argument \'type\' is not a string');
@@ -100,4 +123,5 @@ export default class AttributeMapHelper {
     // This should be the final fully converted model
     return model;
   }
+*/
 }

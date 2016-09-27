@@ -38,7 +38,7 @@ export default class Instrument {
     } catch (error) {
       if (typeof error._instrumented === 'undefined') {
         error._instrumented = true;
-        let args = null; // caller.arguments;
+        let args = caller.arguments;
         warning(false, JSON.stringify({ type, method, args, error }, null, 2));
       }
       throw error;

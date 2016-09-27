@@ -7,15 +7,15 @@ import type { Contact, User, UserContactEdge } from './GraphQLTypes';
 export default class To {
 
   static Contact(value: Model): Contact {
-    invariant(value != null, 'Error');
+    invariant(value != null, 'Argument \'value\' is null or undefined');
     let { type } = fromGlobalId(value.id);
-    invariant(type === 'Contact', 'Error');
+    invariant(type === 'Contact', 'Type was \'' + type + '\' but should be \'Contact\'');
     let model = ((value: any): Contact);
     return model;
   }
 
   static User(value: Model): User {
-    invariant(value != null, 'Error');
+    invariant(value != null, 'Argument \'value\' is null or undefined');
     let { type } = fromGlobalId(value.id);
     invariant(type === 'User', 'Error');
     let model = ((value: any): User);
@@ -23,7 +23,7 @@ export default class To {
   }
 
   static UserContactEdge(value: Model): UserContactEdge {
-    invariant(value != null, 'Error');
+    invariant(value != null, 'Argument \'value\' is null or undefined');
     let { type } = fromGlobalId(value.id);
     invariant(type === 'UserContactEdge', 'Error');
     let model = ((value: any): UserContactEdge);

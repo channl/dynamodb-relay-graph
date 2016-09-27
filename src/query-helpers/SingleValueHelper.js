@@ -1,5 +1,5 @@
 /* @flow */
-import { invariant } from '../Global';
+import invariant from 'invariant';
 import type { SingleValue } from 'aws-sdk-promise';
 
 export default class SingleValueHelper {

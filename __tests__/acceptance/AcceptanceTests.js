@@ -3,6 +3,7 @@
 import Graph from '../../src/Graph';
 // import DynamoDB from '../../src/aws/DynamoDB';
 // import EntityWriter from '../../src/query-writers/EntityWriter';
+import TestDataMapper from '../acceptance/TestDataMapper';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 import To from '../acceptance/To';
@@ -48,7 +49,7 @@ describe('AcceptanceTests', () => {
     }
   });
 */
-
+/*
   it('Can update node', async function(done) {
     try {
       this.timeout(20000);
@@ -72,7 +73,8 @@ describe('AcceptanceTests', () => {
         } ]
       };
 
-      let graph = new Graph(dbConfig, dbSchema);
+      let dbMapper = new DataMapper();
+      let graph = new Graph(dbConfig, dbSchema, dbMapper);
       for (let i = 0; i < 10; i++) {
         let item = {
           id: GID.forSetting('test'),
@@ -86,7 +88,7 @@ describe('AcceptanceTests', () => {
       done(e);
     }
   });
-
+*/
   it('Can query for nodes', async function(done) {
     try {
       this.timeout(10000);
@@ -117,8 +119,8 @@ describe('AcceptanceTests', () => {
         } ]
       };
 
-      let graph = new Graph(dbConfig, dbSchema);
-
+      let dataMapper = new TestDataMapper();
+      let graph = new Graph(dbConfig, dbSchema, dataMapper);
       let result = await graph
         .v('User', {}, {first: 2})
         .getAsync(To.User);
@@ -127,9 +129,11 @@ describe('AcceptanceTests', () => {
         edges: [ null, null ],
         pageInfo: {
           // eslint-disable-next-line max-len
-          startCursor: 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbNDgsMTgxLDc5LDE3NiwxMTcsMjQ4LDcyLDI1MywxNzgsMjIyLDIxMCw2NSwxMTcsMTk4LDc2LDU5XX19fQ==',
+          startCursor: 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbNDgsMTgxLDc5LDE3NiwxMTc' +
+          'sMjQ4LDcyLDI1MywxNzgsMjIyLDIxMCw2NSwxMTcsMTk4LDc2LDU5XX19fQ==',
           // eslint-disable-next-line max-len
-          endCursor: 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbNTksMTA5LDg0LDcwLDIxNSw2NSw3Myw1OCwxNDEsNDYsODcsNzMsNTcsMTY3LDEyMCw5M119fX0=',
+          endCursor: 'eyJpZCI6eyJCIjp7InR5cGUiOiJCdWZmZXIiLCJkYXRhIjpbNTksMTA5LDg0LDcwLDIxNSw2N' +
+          'Sw3Myw1OCwxNDEsNDYsODcsNzMsNTcsMTY3LDEyMCw5M119fX0=',
           hasPreviousPage: false,
           hasNextPage: true
         }
@@ -173,11 +177,10 @@ describe('AcceptanceTests', () => {
         } ]
       };
 
-      let graph = new Graph(dbConfig, dbSchema);
-
+      let dbMapper = new TestDataMapper();
+      let graph = new Graph(dbConfig, dbSchema, dbMapper);
       let result = await graph
-        // eslint-disable-next-line max-len
-        .v('User', { id: GID.forUser(new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64')) }, {first: 1})
+        .v('User', { id: GID.id('User', 'MLVPsHX4SP2y3tJBdcZMOw==') }, {first: 1})
         .single()
         .getAsync(To.User);
 
@@ -218,8 +221,8 @@ describe('AcceptanceTests', () => {
         } ]
       };
 
-      let graph = new Graph(dbConfig, dbSchema);
-
+      let dbMapper = new TestDataMapper();
+      let graph = new Graph(dbConfig, dbSchema, dbMapper);
       let result = await graph
         .v('User', {id: GID.forUser(new Buffer('ABCPsHX4SP2y3tJBdcZMOw==', 'base64'))}, {first: 1})
         .getAsync(To.User);
@@ -342,10 +345,10 @@ describe('AcceptanceTests', () => {
         ]
       };
 
-      let graph = new Graph(dbConfig, dbSchema);
-
+      let dbMapper = new TestDataMapper();
+      let graph = new Graph(dbConfig, dbSchema, dbMapper);
       let result = await graph
-        .v('User', {id: GID.forUser(new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64'))}, {first: 1})
+        .v('User', { id: GID.id('User', 'MLVPsHX4SP2y3tJBdcZMOw==') }, {first: 1})
         .out('UserContactEdge', {}, {first: 3})
         .in('Contact', {})
         .getAsync(To.Contact);
@@ -369,5 +372,4 @@ describe('AcceptanceTests', () => {
       done(e);
     }
   });
-
 });

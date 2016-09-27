@@ -1,5 +1,5 @@
 /* @flow */
-import { invariant } from '../Global';
+import invariant from 'invariant';
 import SingleValueHelper from '../query-helpers/SingleValueHelper';
 import type { AttributeValue } from 'aws-sdk-promise';
 
