@@ -17,20 +17,7 @@ export default class SingleResolver {
         return innerResult.edges[0].node;
       }
 
-      if (innerResult &&
-        innerResult.edges &&
-        innerResult.edges.length === 0 &&
-        !query.isNullValid) {
-        throw new Error('SingleItemNotFound');
-      }
-
-      if (innerResult &&
-        innerResult.edges &&
-        innerResult.edges.length > 1) {
-        throw new Error('SingleItemNotFound');
-      }
-
-      throw new Error('NotSupportedError (getSingleAsync)');
+      throw new Error('SingleItemNotFound');
     });
   }
 }

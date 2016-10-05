@@ -20,16 +20,8 @@ export default class SingleOrNullResolver {
 
       if (innerResult &&
         innerResult.edges &&
-        innerResult.edges.length === 0 &&
-        query.isNullValid) {
+        innerResult.edges.length === 0) {
         return null;
-      }
-
-      if (innerResult &&
-        innerResult.edges &&
-        innerResult.edges.length === 0 &&
-        !query.isNullValid) {
-        throw new Error('SingleItemNotFound');
       }
 
       if (innerResult &&

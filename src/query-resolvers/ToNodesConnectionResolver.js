@@ -5,7 +5,8 @@ import DataMapper from '../query-helpers/DataMapper';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
 import Instrument from '../utils/Instrument';
 import type { Connection, Edge } from 'graphql-relay';
-import type { QueryExpression, Model, DataModel } from '../flow/Types';
+import type { QueryExpression, Model, TypedDataModel,
+  TypedMaybeDataModel } from '../flow/Types';
 
 export default class ToNodesConnectionResolver {
   _entityResolver: EntityResolver;
@@ -25,13 +26,14 @@ export default class ToNodesConnectionResolver {
       let nodeIds = this.constructor._getNodeIds(query.type, query.expression,
         query.isOut, innerResult);
 
-      let dataModels: DataModel[] = await Promise.all(
+      let items: TypedMaybeDataModel[] = await Promise.all(
         nodeIds.map(id => this._entityResolver.getAsync(id)));
 
-      let edges: Edge<Model>[] = dataModels.map((dataModel, i) => {
+      let typedDataModels = ToNodesConnectionResolver._toTypedDataModels(items);
+      let edges: Edge<Model>[] = typedDataModels.map((item, i) => {
         invariant(innerResult != null, 'Argument \'innerResult\' is null');
-        invariant(dataModel != null, 'DataModel should not be null or undefined');
-        let node = this._dataMapper.fromDataModel(query.type, dataModel);
+        invariant(item.dataModel != null, 'DataModel should not be null or undefined');
+        let node = this._dataMapper.fromDataModel(item.type, item.dataModel);
         let edge: Edge<Model> = { cursor: innerResult.edges[i].cursor, node};
         return edge;
       });
@@ -67,5 +69,16 @@ export default class ToNodesConnectionResolver {
           return gid;
         });
     });
+  }
+
+  static _toTypedDataModels(typedMaybeDataModels: TypedMaybeDataModel[]): TypedDataModel[] {
+    let items: TypedDataModel[] = typedMaybeDataModels
+      .filter(item => item.dataModel != null)
+      .map(item => {
+        invariant(item.dataModel != null, 'Item was invalid');
+        let result = (item: TypedDataModel);
+        return result;
+      });
+    return items;
   }
 }

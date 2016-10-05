@@ -25,8 +25,8 @@ describe('DataModelHelper', () => {
     };
 
     let dataMapper = new TestDataMapper();
-    let dataModelAndType = dataMapper.toDataModel(model);
-    let result = DataModelHelper.toAWSKey('UserContactEdge', dataModelAndType.dataModel);
+    let dataModel = dataMapper.toDataModel('UserContactEdge', model);
+    let result = DataModelHelper.toAWSKey({type: 'UserContactEdge', dataModel});
 
     let expected = {
       outID: { B: new Buffer('MLVPsHX4SP2y3tJBdcZMOw', 'base64') },
@@ -49,9 +49,8 @@ describe('DataModelHelper', () => {
     };
 
     let dataMapper = new TestDataMapper();
-    let dataModelAndType = dataMapper.toDataModel(model);
-    let result = DataModelHelper.toAWSKey('UserContactEdge',
-      dataModelAndType.dataModel, 'userOrder');
+    let dataModel = dataMapper.toDataModel('UserContactEdge', model);
+    let result = DataModelHelper.toAWSKey({type: 'UserContactEdge', dataModel}, 'userOrder');
 
     let expected = {
       outID: { B: new Buffer('ABC', 'base64') },
@@ -74,9 +73,8 @@ describe('DataModelHelper', () => {
     };
 
     let dataMapper = new TestDataMapper();
-    let dataModelAndType = dataMapper.toDataModel(model);
-    let result = DataModelHelper.toAWSKey('UserContactEdge',
-      dataModelAndType.dataModel, 'createDate');
+    let dataModel = dataMapper.toDataModel('UserContactEdge', model);
+    let result = DataModelHelper.toAWSKey({type: 'UserContactEdge', dataModel}, 'createDate');
 
     let expected = {
       outID: { B: new Buffer('ABC', 'base64') },

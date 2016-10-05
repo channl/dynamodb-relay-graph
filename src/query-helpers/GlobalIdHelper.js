@@ -1,8 +1,8 @@
 /* @flow */
 import invariant from 'invariant';
-import { fromGlobalId } from 'graphql-relay';
-import DataModelHelper from '../query-helpers/DataModelHelper';
-import type { TypeAndKey, ToDataModelFunc } from '../flow/Types';
+// import { fromGlobalId } from 'graphql-relay';
+// import DataModelHelper from '../query-helpers/DataModelHelper';
+// import type { TypeAndKey } from '../flow/Types';
 
 export default class GlobalIdHelper {
 
@@ -29,7 +29,6 @@ export default class GlobalIdHelper {
       id: this._getValueFromGlobalIdParam(id),
     };
   }
-*/
 
   static toTypeAndAWSKey(id: string, convertor: ToDataModelFunc): TypeAndKey {
     invariant(typeof id === 'string', 'Argument \'id\' is not a string');
@@ -39,6 +38,7 @@ export default class GlobalIdHelper {
     let key = DataModelHelper.toAWSKey(type, dataModel, null);
     return { type, key };
   }
+  */
 
   static _getValueFromGlobalIdParam(param: string) {
     invariant(typeof param === 'string', 'Argument \'param\' is not a string');

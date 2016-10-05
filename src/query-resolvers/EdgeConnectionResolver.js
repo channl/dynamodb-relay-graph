@@ -13,7 +13,8 @@ import Instrument from '../utils/Instrument';
 import type { Connection, Edge } from 'graphql-relay';
 import type { DynamoDBSchema, ScanQueryResponse, QueryRequest } from 'aws-sdk-promise';
 // eslint-disable-next-line no-unused-vars
-import type { ConnectionArgs, QueryExpression, Model } from '../flow/Types';
+import type { ConnectionArgs, QueryExpression, Model, TypedMaybeDataModel,
+  TypedDataModel } from '../flow/Types';
 
 export default class EdgeConnectionResolver {
   _dynamoDB: DynamoDB;
@@ -37,9 +38,10 @@ export default class EdgeConnectionResolver {
 
       let expression = QueryHelper.getEdgeExpression(innerResult, query);
       if (typeof expression.id === 'string') {
-        let dataModel = await this._entityResolver.getAsync(expression.id);
+        let item = await this._entityResolver.getAsync(expression.id);
+        let dataModels = EdgeConnectionResolver._toTypedDataModels([ item ]);
         let conn: Connection<Model> = DataModelHelper
-          .toPartialEdgeConnection(this._dataMapper, [ dataModel ], false, false, null);
+          .toPartialEdgeConnection(this._dataMapper, dataModels, false, false, null);
         return conn;
       }
 
@@ -51,11 +53,13 @@ export default class EdgeConnectionResolver {
     });
   }
 
-  _getQueryRequest(type: string, expression: QueryExpression,
+  _getQueryRequest(type: string, modelExpression: QueryExpression,
     connectionArgs: ConnectionArgs): QueryRequest {
     invariant(typeof type === 'string', 'Type must be string');
-    invariant(expression, 'Argument \'expression\' is null');
+    invariant(modelExpression, 'Argument \'modelExpression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
+
+    let expression = this._dataMapper.toDataModel(type, modelExpression);
 
     let request: QueryRequest = {
       TableName: TypeHelper.getTableName(type),
@@ -88,7 +92,8 @@ export default class EdgeConnectionResolver {
       let dataModel = AttributeMapHelper.toDataModel(query.type, item);
       // $FlowIgnore
       let model: Edge = this._dataMapper.fromDataModel(query.type, dataModel);
-      let cursor = DataModelHelper.toCursor(query.type, dataModel, query.connectionArgs.order);
+      let cursor = DataModelHelper.toCursor({type: query.type, dataModel},
+        query.connectionArgs.order);
       let partialEdge: Edge<T> = {
         node: model,
         cursor,
@@ -117,5 +122,18 @@ export default class EdgeConnectionResolver {
       edges: edges.reverse(),
       pageInfo
     };
+  }
+
+  static _toTypedDataModels(typedMaybeDataModels: TypedMaybeDataModel[]): TypedDataModel[] {
+    // $FlowIgnore
+    let items:TypedDataModel[] = typedMaybeDataModels
+      .filter(item => item.dataModel != null)
+      .map(item => {
+        invariant(item.dataModel != null, 'Item was invalid');
+        let result = (item:TypedDataModel);
+        return result;
+      });
+
+    return items;
   }
 }

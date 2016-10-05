@@ -37,27 +37,27 @@
     "aws-sdk": "^2.3.3",
     "aws-sdk-promise": "0.0.2",
     "dataloader": "^1.0.0",
-    "graphql": "^0.5.0",
+    "graphql": "^0.7.1",
     "graphql-relay": "^0.4.1",
     "invariant": "^2.2.1",
     "measured": "1.1.0",
-    "warning": "^2.1.0"
+    "warning": "^3.0.0"
   },
   "devDependencies": {
     "babel": "^6.5.2",
     "babel-cli": "^6.7.7",
-    "babel-eslint": "^6.0.4",
+    "babel-eslint": "^7.0.0",
     "babel-polyfill": "^6.9.0",
     "babel-preset-react-native": "^1.6.0",
     "babel-register": "^6.9.0",
     "chai": "^3.5.0",
     "coveralls": "^2.11.9",
-    "eslint": "^2.9.0",
+    "eslint": "^3.7.1",
     "eslint-plugin-babel": "^3.2.0",
-    "flow-bin": "^0.31.1",
+    "flow-bin": "^0.33.0",
     "flow-copy-source": "^1.1.0",
     "isparta": "^4.0.0",
-    "mocha": "^2.4.5",
-    "sane": "^1.3.4"
+    "mocha": "^3.1.0",
+    "sane": "^1.4.1"
   }
 }

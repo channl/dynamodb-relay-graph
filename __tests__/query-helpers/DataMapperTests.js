@@ -24,25 +24,22 @@ describe('DataMapperTests', () => {
     };
 
     let dataModel = {
-      type: 'User',
-      dataModel: {
-        id: new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64'),
-        phoneNumber: '12345',
-        lastName: 'Surname',
-        createDate: 1449176057285,
-        privateTagId: new Buffer('Oo+faInGR9uIRrPnt0ugvQ==', 'base64'),
-        password: '',
-        isVerified: true,
-        tagId: new Buffer('Mbkhm+2QSJy4YYZ++Avqvg==', 'base64'),
-        firstName: 'Name',
-        countryCode: 'GB',
-        verificationCode: '938834',
-        imageUrl: null,
-      }
+      id: new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64'),
+      phoneNumber: '12345',
+      lastName: 'Surname',
+      createDate: 1449176057285,
+      privateTagId: new Buffer('Oo+faInGR9uIRrPnt0ugvQ==', 'base64'),
+      password: '',
+      isVerified: true,
+      tagId: new Buffer('Mbkhm+2QSJy4YYZ++Avqvg==', 'base64'),
+      firstName: 'Name',
+      countryCode: 'GB',
+      verificationCode: '938834',
+      imageUrl: null,
     };
 
     let mapper = new TestDataMapper();
-    let result = mapper.toDataModel(model);
+    let result = mapper.toDataModel('User', model);
     expect(result).to.deep.equal(dataModel);
   });
 

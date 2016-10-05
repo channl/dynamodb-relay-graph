@@ -1,5 +1,6 @@
 /* @flow */
-import { log, warning, stats } from '../Global';
+import { log, stats } from '../Global';
+import warning from 'warning';
 
 export default class Instrument {
 

@@ -1,4 +1,5 @@
 [ignore]
+./dist
 
 [include]
 
@@ -12,4 +13,4 @@ munge_underscores=true
 suppress_comment= \\(.\\|\n\\)*\\$FlowIgnore
 
 [version]
-0.31.0
+0.33.0

@@ -49,8 +49,7 @@ export default class NodeConnectionQuery {
 
   async getAsync<T>(castFunc: (item: Model) => T = i => ((i: any): T)): Promise<Connection<T>> {
     if(this.inner != null) {
-      invariant(false, 'Inner query type \'' +
-        this.inner.constructor.name + '\' was not supported');
+      invariant(false, 'Inner query type was not supported');
     }
     let connection = await this.graph._nodeConnectionResolver.resolveAsync(this);
     return ConnectionHelper.castTo(connection, castFunc);

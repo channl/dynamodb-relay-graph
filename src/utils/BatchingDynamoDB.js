@@ -1,7 +1,8 @@
 /* @flow */
 import DynamoDB from '../aws/DynamoDB';
 import Delay from '../utils/Delay';
-import { invariant, warning } from '../Global';
+import invariant from 'invariant';
+import warning from 'warning';
 import type { BatchGetItemRequest, BatchGetItemResponse,
   BatchWriteItemRequest, BatchWriteItemResponse } from 'aws-sdk-promise';
 

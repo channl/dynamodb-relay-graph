@@ -570,7 +570,8 @@ describe('QueryHelperTests', () => {
       } ]
     };
     let dataMapper = new TestDataMapper();
-    let result = QueryHelper.getExpressionAttributeValues('Test', expression, schema, dataMapper);
+    let dataExpr = dataMapper.toDataModel('Test', expression);
+    let result = QueryHelper.getExpressionAttributeValues('Test', dataExpr, schema);
     let expected = {
       ':v_equals_id': { B: new Buffer('ABC', 'base64') }
     };

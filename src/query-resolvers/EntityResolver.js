@@ -8,8 +8,9 @@ import DynamoDB from '../aws/DynamoDB';
 import Instrument from '../utils/Instrument';
 import DataModelHelper from '../query-helpers/DataModelHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
+import { fromGlobalId } from 'graphql-relay';
 import type { BatchGetItemRequest, BatchGetItemResponse } from 'aws-sdk-promise';
-import type { DataModel, TypeAndKey } from '../flow/Types';
+import type { TypedMaybeDataModel, TypeAndKey } from '../flow/Types';
 
 export default class EntityResolver {
   _dataLoader: any;
@@ -24,19 +25,20 @@ export default class EntityResolver {
     this._dataMapper = dataMapper;
   }
 
-  async getAsync(globalId: string): Promise<DataModel> {
+  async getAsync(globalId: string): Promise<TypedMaybeDataModel> {
     invariant(typeof globalId === 'string', 'Argument \'globalId\' is not a string');
     return this._dataLoader.load(globalId);
   }
 
-  async _loadAsync(globalIds: string[]): Promise<DataModel[]> {
+  async _loadAsync(globalIds: string[]): Promise<TypedMaybeDataModel[]> {
     return await Instrument.funcAsync(this, async () => {
       invariant(globalIds, 'Argument \'globalIds\' is null');
 
       // Convert to type and attribute map
       let typeAndKeys = globalIds.map(gid => {
-        let { type, dataModel } = this._dataMapper.toDataModel({ id: gid });
-        let key = DataModelHelper.toAWSKey(type, dataModel, null);
+        let { type } = fromGlobalId(gid);
+        let dataModel = this._dataMapper.toDataModel(type, { id: gid });
+        let key = DataModelHelper.toAWSKey({type, dataModel}, null);
         return { type, key };
       });
 
@@ -69,26 +71,32 @@ export default class EntityResolver {
   }
 
   _fromBatchGetItemResponse(response: BatchGetItemResponse,
-    typeAndKeys: TypeAndKey[]): DataModel[] {
+    typeAndKeys: TypeAndKey[]): TypedMaybeDataModel[] {
     invariant(response != null, 'Argument \'response\' is null');
     invariant(typeAndKeys != null, 'Argument \'typeAndKeys\' is null');
-    let result: DataModel[] = typeAndKeys.map(typeAndKey => {
-      let model: ?DataModel = this._getModelFromResponse(typeAndKey, response);
-      // $FlowIgnore
+    let result: TypedMaybeDataModel[] = typeAndKeys.map(typeAndKey => {
+      let model: TypedMaybeDataModel = this._getModelFromResponse(typeAndKey, response);
       return model;
     });
     return result;
   }
 
-  _getModelFromResponse(typeAndKey: TypeAndKey, response: BatchGetItemResponse): ?DataModel {
+  _getModelFromResponse(typeAndKey: TypeAndKey,
+    response: BatchGetItemResponse): TypedMaybeDataModel {
     let tableName = TypeHelper.getTableName(typeAndKey.type);
     let responseItems = response.Responses[tableName];
     let responseItem = responseItems
       .find(item => AttributeMapHelper.isSupersetOf(item, typeAndKey.key));
     if (responseItem == null) {
-      return null;
+      return {
+        type: typeAndKey.type,
+        dataModel: null,
+      };
     }
 
-    return AttributeMapHelper.toDataModel(typeAndKey.type, responseItem);
+    return {
+      type: typeAndKey.type,
+      dataModel: AttributeMapHelper.toDataModel(typeAndKey.type, responseItem)
+    };
   }
 }

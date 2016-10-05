@@ -3,8 +3,7 @@ import invariant from 'invariant';
 import DynamoDB from './aws/DynamoDB';
 import EdgeConnectionQuery from './query/EdgeConnectionQuery';
 import NodeConnectionQuery from './query/NodeConnectionQuery';
-// import GlobalIdHelper from './query-helpers/GlobalIdHelper';
-// import ModelHelper from './query-helpers/ModelHelper';
+import DataModelHelper from './query-helpers/DataModelHelper';
 import EntityResolver from './query-resolvers/EntityResolver';
 import EdgeConnectionResolver from './query-resolvers/EdgeConnectionResolver';
 import NodeConnectionResolver from './query-resolvers/NodeConnectionResolver';
@@ -13,8 +12,9 @@ import SingleOrNullResolver from './query-resolvers/SingleOrNullResolver';
 import EntityWriter from './query-writers/EntityWriter';
 import ToNodesConnectionResolver from './query-resolvers/ToNodesConnectionResolver';
 import DataMapper from './query-helpers/DataMapper';
+import { fromGlobalId } from 'graphql-relay';
 import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
-import type { QueryExpression, ConnectionArgs } from './flow/Types';
+import type { ExprModel, QueryExpression, ConnectionArgs } from './flow/Types';
 
 export default class Graph {
   _writer: EntityWriter;
@@ -88,20 +88,11 @@ export default class Graph {
     invariant(items, 'Argument \'items\' is null');
     return this._writer.writeManyAsync(items, [ ]);
   }
-/*
-  static getCursor(model: Model, order: ?string): string {
-    invariant(model, 'Argument \'model\' is null');
-    return ModelHelper.toCursor(model, order);
-  }
 
-  static getGlobalId(model: Model): string {
-    invariant(model, 'Argument \'model\' is null');
-    return ModelHelper.toGlobalId(model);
+  getCursor(item: ExprModel, order: ?string): string {
+    invariant(item, 'Argument \'item\' is null');
+    let { type } = fromGlobalId(item.id);
+    let dataModel = this._dataMapper.toDataModel(type, item);
+    return DataModelHelper.toCursor({type, dataModel}, order);
   }
-
-  static fromGlobalId(globalId: string): Model {
-    invariant(typeof globalId !== 'string', 'Argument \'globalId\' is not of type string');
-    return GlobalIdHelper.toModel(globalId);
-  }
-*/
 }

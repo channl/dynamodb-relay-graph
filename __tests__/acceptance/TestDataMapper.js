@@ -3,114 +3,110 @@ import invariant from 'invariant';
 import Instrument from '../../src/utils/Instrument';
 import DataMapper from '../../src/query-helpers/DataMapper';
 import { fromGlobalId, toGlobalId } from 'graphql-relay';
-import type { DataModel, Model, Value, DataModelAndType } from '../../src/flow/Types';
+import type { DataModel, ExprModel } from '../../src/flow/Types';
 
 export default class TestDataMapper extends DataMapper {
 
-  toDataModel(model: Model): DataModelAndType {
+  toDataModel(type: string, model: ExprModel): DataModel {
     return Instrument.func(this, () => {
-      let { type, id } = fromGlobalId(model.id);
       let dataModel = { };
       for (let attrName in model) {
         if ({}.hasOwnProperty.call(model, attrName)) {
-          dataModel[attrName] = this.toDataModelAttribute(type, attrName, model[attrName]);
+          this._toDataModelAttribute(type, attrName, model, dataModel);
         }
       }
 
       if (type.endsWith('Edge')) {
-        let ids = id.split('---');
-        if (dataModel.outID == null) {
-          dataModel.outID = ids[0];
-        }
-
-        if (dataModel.inID == null) {
-          dataModel.outID = ids[1];
-        }
-
         delete dataModel.id;
         delete dataModel.node;
         delete dataModel.cursor;
       }
-/*
-      if (type === 'Contact') {
-        dataModel.id = new Buffer(id, 'base64');
-      }
-*/
-      return {
-        type,
-        dataModel,
-      };
+
+      return dataModel;
     });
   }
 
-  toDataModelAttribute(type: string, attrName: string, attrValue: ?Value): ?Value {
+  _toDataModelAttribute(type: string, attrName: string, model: ExprModel,
+    dataModel: DataModel): void {
+
+    if (attrName === 'id' && type.endsWith('Edge')) {
+      let { id } = fromGlobalId(model[attrName]);
+      let ids = id.split('---');
+      if (dataModel.outID == null) {
+        dataModel.outID = ids[0];
+      }
+      if (dataModel.inID == null) {
+        dataModel.outID = ids[1];
+      }
+      return;
+    }
+
     // All id's treated the same
     if (attrName === 'id' || attrName === 'outID' || attrName === 'inID') {
-      invariant(typeof attrValue === 'string', 'Error');
-      let { id } = fromGlobalId(attrValue);
-      return new Buffer(id, 'base64');
+      invariant(typeof model[attrName] === 'string', 'Error');
+      let { id } = fromGlobalId(model[attrName]);
+      dataModel[attrName] = new Buffer(id, 'base64');
+      return;
     }
 
     // User specific conversions
     if (type === 'User' && (attrName === 'privateTagId' || attrName === 'tagId')) {
-      invariant(typeof attrValue === 'string', 'Error');
-      let { id } = fromGlobalId(attrValue);
-      return new Buffer(id, 'base64');
+      invariant(typeof model[attrName] === 'string', 'Error');
+      let { id } = fromGlobalId(model[attrName]);
+      dataModel[attrName] = new Buffer(id, 'base64');
+      return;
     }
 
-    return attrValue;
+    dataModel[attrName] = model[attrName];
   }
 
-  fromDataModel(type: string, dataModel: DataModel): Model {
+  fromDataModel(type: string, dataModel: DataModel): ExprModel {
     return Instrument.func(this, () => {
-      let model = { id: '' };
+      let model = { };
       for (let attrName in dataModel) {
         if ({}.hasOwnProperty.call(dataModel, attrName)) {
-          model[attrName] = this.fromDataModelAttribute(type, attrName, dataModel[attrName]);
+          this._fromDataModelAttribute(type, attrName, dataModel, model);
         }
       }
 
       // If this is an edge where we have outID and inID then set the id
-      if (model.id === '' && model.outID != null && model.inID != null) {
+      if (model.id == null && model.outID != null && model.inID != null) {
         model.id = toGlobalId(type, model.outID + '---' + model.inID);
       }
-/*
-      if (type === 'Contact') {
-        debugger;
-        invariant(typeof model.viewerId === 'string', '\'viewerId\' must be a string');
-        invariant(typeof model.contactPhoneNumber === 'string',
-          '\'contactPhoneNumber\' must be a string');
-        model.id = toGlobalId(type, model.viewerId + '^' + model.contactPhoneNumber);
-      }
-*/
-      invariant(typeof model.id === 'string' && model.id !== '', 'Error');
+
+      invariant(typeof model.id === 'string' && model.id !== '', 'Model.id type was not a string');
       return model;
     });
   }
 
-  fromDataModelAttribute(type: string, attrName: string, attrValue: ?Value): ?Value {
+  _fromDataModelAttribute(type: string, attrName: string, dataModel: DataModel,
+    model: ExprModel): void {
+
     // All id's treated the same
     if (attrName === 'id') {
-      invariant(attrValue instanceof Buffer, 'Error');
-      return toGlobalId(type, attrValue.toString('base64'));
+      invariant(dataModel[attrName] instanceof Buffer, 'Error');
+      model[attrName] = toGlobalId(type, dataModel[attrName].toString('base64'));
+      return;
     }
 
     if (attrName === 'outID') {
-      invariant(attrValue instanceof Buffer, 'Error');
+      invariant(dataModel[attrName] instanceof Buffer, 'Error');
       switch (type) {
         case 'UserContactEdge':
-          return toGlobalId('User', attrValue.toString('base64'));
+          model[attrName] = toGlobalId('User', dataModel[attrName].toString('base64'));
+          return;
         default:
           invariant(false, 'Unsupported edge type');
       }
     }
 
     if (attrName === 'inID') {
-      invariant(attrValue instanceof Buffer, 'Error');
+      invariant(dataModel[attrName] instanceof Buffer, 'Error');
       switch (type) {
         case 'UserContactEdge':
           // UserContactEdge.inID is ascii ??
-          return toGlobalId('Contact', attrValue.toString('base64'));
+          model[attrName] = toGlobalId('Contact', dataModel[attrName].toString('base64'));
+          return;
         default:
           invariant(false, 'Unsupported edge type');
       }
@@ -118,10 +114,11 @@ export default class TestDataMapper extends DataMapper {
 
     // User specific conversions
     if (type === 'User' && (attrName === 'privateTagId' || attrName === 'tagId')) {
-      invariant(attrValue instanceof Buffer, 'Error');
-      return toGlobalId('Tag', attrValue.toString('base64'));
+      invariant(dataModel[attrName] instanceof Buffer, 'Error');
+      model[attrName] = toGlobalId('Tag', dataModel[attrName].toString('base64'));
+      return;
     }
 
-    return attrValue;
+    model[attrName] = dataModel[attrName];
   }
 }

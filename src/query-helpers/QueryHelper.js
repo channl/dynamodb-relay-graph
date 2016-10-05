@@ -1,15 +1,13 @@
 /* @flow */
 import invariant from 'invariant';
-import type NodeConnectionQuery from '../query/NodeConnectionQuery';
-import type EdgeConnectionQuery from '../query/EdgeConnectionQuery';
-import DataMapper from '../query-helpers/DataMapper';
 import ExpressionValueHelper from '../query-helpers/ExpressionValueHelper';
 import TableDefinitionHelper from '../query-helpers/TableDefinitionHelper';
 import ValueHelper from '../query-helpers/ValueHelper';
 import CursorHelper from '../query-helpers/CursorHelper';
 import Instrument from '../utils/Instrument';
 import TypeHelper from '../query-helpers/TypeHelper';
-// import ExpressionHelper from '../query-helpers/ExpressionHelper';
+import type NodeConnectionQuery from '../query/NodeConnectionQuery';
+import type EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import type { Connection } from 'graphql-relay';
 import type { ConnectionArgs, QueryExpression, ExpressionValue, Model } from '../flow/Types';
 import type { TableDefinition, KeyDefinition, KeySchema,
@@ -241,15 +239,13 @@ export default class QueryHelper {
   }
 
   static getExpressionAttributeValues(type: string, expression: QueryExpression,
-    schema: DynamoDBSchema, dataMapper: DataMapper) {
+    schema: DynamoDBSchema) {
     invariant(typeof type === 'string', 'Type must be string');
     invariant(expression != null, 'Argument \'expression\' is null');
     invariant(schema != null, 'Argument \'schema\' is null');
-    invariant(dataMapper != null, 'Argument \'dataMapper\' is null');
 
     let tableName = TypeHelper.getTableName(type);
-    let table = schema.tables.find(ts => ts.TableName === tableName);
-    invariant(table != null, 'Table not found');
+    let table: ?TableDefinition = schema.tables.find(ts => ts.TableName === tableName);
 
     let names = Object.keys(expression);
     if (names.length === 0) {
@@ -260,6 +256,7 @@ export default class QueryHelper {
     names.forEach(name => {
       let expr = expression[name];
       if (ExpressionValueHelper.isAfterExpression(expr) && expr.after == null) {
+        invariant(table != null, 'Table not found');
         let attributeType = TableDefinitionHelper.getAttributeType(table, name);
         result[':v_after_' + name] = ValueHelper
           .toAttributeValue(TypeHelper.getTypeMinValue(attributeType));
@@ -273,6 +270,7 @@ export default class QueryHelper {
       }
 
       if (ExpressionValueHelper.isBeforeExpression(expr) && expr.before == null) {
+        invariant(table != null, 'Table not found');
         let attributeType = TableDefinitionHelper.getAttributeType(table, name);
         result[':v_before_' + name] = ValueHelper
           .toAttributeValue(TypeHelper.getTypeMaxValue(attributeType));
@@ -292,10 +290,10 @@ export default class QueryHelper {
       }
 
       if (ExpressionValueHelper.isValueExpression(expr)) {
+        // let dataExpr = dataMapper.toDataModelAttribute(type, name, expr);
+        // invariant(dataExpr != null, 'dataExpr ca not be null');
         // $FlowIgnore
-        let dataExpr = dataMapper.toDataModelAttribute(type, name, expr);
-        invariant(dataExpr != null, 'dataExpr ca not be null');
-        result[':v_equals_' + name] = ValueHelper.toAttributeValue(dataExpr);
+        result[':v_equals_' + name] = ValueHelper.toAttributeValue(expr);
         return;
       }
 
@@ -374,6 +372,7 @@ export default class QueryHelper {
     }
 
     let expr = query.expression;
+    /*
     if (typeof query.connectionArgs.query !== 'undefined') {
       // Transfer over the connection query expression parameters
       let connectionQueryExpression = JSON.parse(query.connectionArgs.query);
@@ -385,7 +384,7 @@ export default class QueryHelper {
         expr[key] = connectionQueryExpression[key];
       });
     }
-
+    */
     return expr;
   }
 

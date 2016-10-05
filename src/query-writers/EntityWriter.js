@@ -5,7 +5,8 @@ import DataModelHelper from '../query-helpers/DataModelHelper';
 import DataMapper from '../query-helpers/DataMapper';
 import BatchingDynamoDB from '../utils/BatchingDynamoDB';
 import Instrument from '../utils/Instrument';
-import type { Model } from '../flow/Types';
+import { fromGlobalId } from 'graphql-relay';
+import type { TypedDataModel, Model } from '../flow/Types';
 
 export default class EntityWriter {
   _dynamoDB: BatchingDynamoDB;
@@ -42,8 +43,19 @@ export default class EntityWriter {
       }
 
       // Convert to data model format
-      let dataModelsToPut = itemsToPut.map(model => this._dataMapper.toDataModel(model));
-      let dataModelsToDelete = itemsToDelete.map(model => this._dataMapper.toDataModel(model));
+      let dataModelsToPut = itemsToPut.map(model => {
+        let { type } = fromGlobalId(model.id);
+        let dataModel = this._dataMapper.toDataModel(type, model);
+        let typedDataModel: TypedDataModel = { type, dataModel };
+        return typedDataModel;
+      });
+
+      let dataModelsToDelete = itemsToDelete.map(model => {
+        let { type } = fromGlobalId(model.id);
+        let dataModel = this._dataMapper.toDataModel(type, model);
+        let typedDataModel: TypedDataModel = { type, dataModel };
+        return typedDataModel;
+      });
 
       // Convert to a dynamo request
       let request = DataModelHelper.toBatchWriteItemRequest(dataModelsToPut, dataModelsToDelete);

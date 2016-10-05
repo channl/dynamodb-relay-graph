@@ -4,6 +4,7 @@ import type { AttributeMap } from 'aws-sdk-promise';
 export type ConnectionArgs = {
   first?: number,
   last?: number,
+  before?: string,
   after?: string,
   order?: string,
   orderDesc?: boolean,
@@ -27,7 +28,7 @@ export type TypeAndKey = {
 };
 
 
-export type Value = Buffer | string | number | boolean;
+export type Value = Buffer | string | number | boolean | Array<Buffer|string|number|boolean>;
 
 export type ExpressionValue = Value | ExpressionValueBefore |
   ExpressionValueAfter | ExpressionValueBeginsWith;
@@ -52,24 +53,21 @@ export type Node = {
 };
 
 export type Edge = {
-  node: ?Object,
-  cursor: string,
   id: string,
   outID: string,
   inID: string,
 };
 
+export type ExprModel = Object;
+
 export type DataModel = Object;
 
-export type AttrMapValueConvertor =
-  (typeName: string, attrName: string, source: AttributeMap, target: Model) => boolean;
-
-export type AttrMapConvertor =
-  (typeName: string, source: AttributeMap, target: Model) => void;
-
-export type ToDataModelFunc = (typeName: string, source: Model) => Model;
-
-export type DataModelAndType = {
+export type TypedDataModel = {
   type: string,
   dataModel: DataModel,
+};
+
+export type TypedMaybeDataModel = {
+  type: string,
+  dataModel: ?DataModel,
 };

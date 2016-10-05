@@ -1,21 +1,13 @@
 /* @flow */
-import type { DataModel, Model, Value, DataModelAndType } from '../flow/Types';
+import type { DataModel, ExprModel } from '../flow/Types';
 
 export default class DataMapper {
 
-  toDataModel(model: Model): DataModelAndType {
-    return { type: '', dataModel: model };
+  toDataModel(type: string, model: ExprModel): DataModel {
+    return model;
   }
 
-  toDataModelAttribute(type: string, attrName: string, attrValue: ?Value): ?Value {
-    return attrValue;
-  }
-
-  fromDataModel(type: string, dataModel: DataModel): Model {
+  fromDataModel(type: string, dataModel: DataModel): ExprModel {
     return dataModel;
-  }
-
-  fromDataModelAttribute(type: string, attrName: string, attrValue: ?Value): ?Value {
-    return attrValue;
   }
 }
