@@ -401,6 +401,14 @@ export default class QueryHelper {
 
     if (typeof query.type !== 'undefined' &&
         typeof query.expression.inID !== 'undefined' &&
+        typeof query.expression.outID !== 'undefined') {
+      // This expression has type+inID+outID so it already has
+      // all it needs to find a particular edge
+      return query.expression;
+    }
+
+    if (typeof query.type !== 'undefined' &&
+        typeof query.expression.inID !== 'undefined' &&
         typeof query.expression.outID === 'undefined') {
       // This expression has type+inID so it already has
       // all it needs to find a particular set of edges

@@ -1,30 +1,29 @@
 /* @flow */
+/* eslint-disable max-len */
 import DataModelHelper from '../../src/query-helpers/DataModelHelper';
-import GID from '../acceptance/GID';
 import TestDataMapper from '../acceptance/TestDataMapper';
 import type { UserContactEdge } from '../acceptance/GraphQLTypes';
-// import type { AttributeMap } from 'aws-sdk-promise';
-// import type { Model } from '../../src/flow/Types';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
 describe('DataModelHelper', () => {
 
   it('toAWSKey', () => {
+    let dataMapper = new TestDataMapper();
+    let outID = dataMapper.id('User', new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64'));
+    let inID = dataMapper.id('Contact', new Buffer('MzBiNTRmYjAtNzVmOC00OGZkLWIyZGUtZDI0MTc1YzY0YzNiXig1NTUpIDU2NC04NTgz', 'base64'));
+    let id = dataMapper.id('UserContactEdge', { outID, inID });
     let model: UserContactEdge = {
       node: null,
       cursor: 'cursor',
-      // eslint-disable-next-line max-len
-      id: GID.forUserContactEdge(new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64'), new Buffer('MzBiNTRmYjAtNzVmOC00OGZkLWIyZGUtZDI0MTc1YzY0YzNiXig1NTUpIDU2NC04NTgz', 'base64')),
-      outID: GID.forUser(new Buffer('MLVPsHX4SP2y3tJBdcZMOw==', 'base64')),
-      // eslint-disable-next-line max-len
-      inID: GID.forContact(new Buffer('MzBiNTRmYjAtNzVmOC00OGZkLWIyZGUtZDI0MTc1YzY0YzNiXig1NTUpIDU2NC04NTgz', 'base64')),
+      id,
+      outID,
+      inID,
       createDate: 1449176162355,
       userOrder: '1 Kate Bell',
       inPhoneNumber: '(555) 564-8583',
     };
 
-    let dataMapper = new TestDataMapper();
     let dataModel = dataMapper.toDataModel('UserContactEdge', model);
     let result = DataModelHelper.toAWSKey({type: 'UserContactEdge', dataModel});
 
@@ -37,21 +36,22 @@ describe('DataModelHelper', () => {
   });
 
   it('toAWSKeyWithStringIndex', () => {
+    let dataMapper = new TestDataMapper();
+    let outID = dataMapper.id('User', new Buffer('ABC', 'base64'));
+    let inID = dataMapper.id('Contact', new Buffer('DEF', 'base64'));
+    let id = dataMapper.id('UserContactEdge', new Buffer('ABC', 'base64'), new Buffer('DEF', 'base64'));
     let model: UserContactEdge = {
       node: null,
       cursor: 'cursor',
-      id: GID.forUserContactEdge(new Buffer('ABC', 'base64'), new Buffer('DEF', 'base64')),
-      outID: GID.forUser(new Buffer('ABC', 'base64')),
-      inID: GID.forContact(new Buffer('DEF', 'base64')),
+      id,
+      outID,
+      inID,
       createDate: 123456,
       userOrder: 'UserName',
       inPhoneNumber: '123456',
     };
-
-    let dataMapper = new TestDataMapper();
     let dataModel = dataMapper.toDataModel('UserContactEdge', model);
     let result = DataModelHelper.toAWSKey({type: 'UserContactEdge', dataModel}, 'userOrder');
-
     let expected = {
       outID: { B: new Buffer('ABC', 'base64') },
       inID: { B: new Buffer('DEF', 'base64') },
@@ -61,21 +61,22 @@ describe('DataModelHelper', () => {
   });
 
   it('toAWSKeyWithNumberIndex', () => {
+    let dataMapper = new TestDataMapper();
+    let outID = dataMapper.id('User', new Buffer('ABC', 'base64'));
+    let inID = dataMapper.id('Contact', new Buffer('DEF', 'base64'));
+    let id = dataMapper.id('UserContactEdge', new Buffer('ABC', 'base64'), new Buffer('DEF', 'base64'));
     let model: UserContactEdge = {
       node: null,
       cursor: 'cursor',
-      id: GID.forUserContactEdge(new Buffer('ABC', 'base64'), new Buffer('DEF', 'base64')),
-      outID: GID.forUser(new Buffer('ABC', 'base64')),
-      inID: GID.forContact(new Buffer('DEF', 'base64')),
+      id,
+      outID,
+      inID,
       createDate: 123456,
       userOrder: 'UserName',
       inPhoneNumber: '123456',
     };
-
-    let dataMapper = new TestDataMapper();
     let dataModel = dataMapper.toDataModel('UserContactEdge', model);
     let result = DataModelHelper.toAWSKey({type: 'UserContactEdge', dataModel}, 'createDate');
-
     let expected = {
       outID: { B: new Buffer('ABC', 'base64') },
       inID: { B: new Buffer('DEF', 'base64') },

@@ -4,7 +4,6 @@ import TestDataMapper from '../acceptance/TestDataMapper';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 import To from '../acceptance/To';
-import GID from '../acceptance/GID';
 
 describe('AcceptanceTests', function () {
   this.timeout(10000);
@@ -133,8 +132,9 @@ describe('AcceptanceTests', function () {
   });
 
   it('Can query for node', async () => {
+    let id = graph.id('User', 'MLVPsHX4SP2y3tJBdcZMOw==');
     let result = await graph
-      .v('User', { id: GID.id('User', 'MLVPsHX4SP2y3tJBdcZMOw==') }, {first: 1})
+      .v('User', {id}, {first: 1})
       .single()
       .getAsync(To.User);
 
@@ -142,8 +142,9 @@ describe('AcceptanceTests', function () {
   });
 
   it('Can query for node that does not exist', async () => {
+    let id = graph.id('User', new Buffer('ABCPsHX4SP2y3tJBdcZMOw==', 'base64'));
     let result = await graph
-      .v('User', {id: GID.forUser(new Buffer('ABCPsHX4SP2y3tJBdcZMOw==', 'base64'))}, {first: 1})
+      .v('User', {id}, {first: 1})
       .getAsync(To.User);
 
     let expected = {
@@ -161,7 +162,7 @@ describe('AcceptanceTests', function () {
 
   it('Can query for node and traverse edge', async () => {
     let result = await graph
-      .v('User', { id: GID.id('User', 'MLVPsHX4SP2y3tJBdcZMOw==') }, {first: 1})
+      .v('User', { id: graph.id('User', 'MLVPsHX4SP2y3tJBdcZMOw==') }, {first: 1})
       .out('UserContactEdge', {}, {first: 3})
       .in('Contact', {})
       .getAsync(To.Contact);

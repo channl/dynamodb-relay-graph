@@ -1,7 +1,6 @@
 /* @flow */
 import QueryHelper from '../../src/query-helpers/QueryHelper';
 import TestDataMapper from '../acceptance/TestDataMapper';
-import GID from '../acceptance/GID';
 import { toGlobalId } from 'graphql-relay';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
@@ -536,7 +535,8 @@ describe('QueryHelperTests', () => {
   });
 
   it('getExpressionAttributeValues', () => {
-    let expression = { id: GID.id('Test', 'ABC') };
+    let dataMapper = new TestDataMapper();
+    let expression = { id: dataMapper.id('Test', 'ABC') };
     let schema = {
       tables: [ {
         TableName: 'Tests',
@@ -569,7 +569,6 @@ describe('QueryHelperTests', () => {
         }
       } ]
     };
-    let dataMapper = new TestDataMapper();
     let dataExpr = dataMapper.toDataModel('Test', expression);
     let result = QueryHelper.getExpressionAttributeValues('Test', dataExpr, schema);
     let expected = {

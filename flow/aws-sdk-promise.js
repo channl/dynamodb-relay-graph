@@ -47,7 +47,7 @@ declare module 'aws-sdk-promise' {
 
   declare type DynamoDBConfig = {
     apiVersion?: string,
-    region?: string,
+    region: string,
     dynamoDbCrc32?: boolean,
     httpOptions?: HTTPOptions,
   };

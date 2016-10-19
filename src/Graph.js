@@ -37,23 +37,27 @@ export default class Graph {
     this._writer = new EntityWriter(dynamoDB, this._dataMapper);
     this._singleResolver = new SingleResolver();
     this._singleOrNullResolver = new SingleOrNullResolver();
-    // eslint-disable-next-line max-len
-    this._edgeConnectionResolver = new EdgeConnectionResolver(dynamoDB, schema, this._entityResolver, this._dataMapper);
-    // eslint-disable-next-line max-len
-    this._nodeConnectionResolver = new NodeConnectionResolver(dynamoDB, schema, this._entityResolver, this._dataMapper);
-    // eslint-disable-next-line max-len
-    this._toNodesConnectionResolver = new ToNodesConnectionResolver(this._entityResolver, this._dataMapper);
+    this._edgeConnectionResolver = new EdgeConnectionResolver(dynamoDB, schema,
+      this._entityResolver, this._dataMapper);
+    this._nodeConnectionResolver = new NodeConnectionResolver(dynamoDB, schema,
+      this._entityResolver, this._dataMapper);
+    this._toNodesConnectionResolver = new ToNodesConnectionResolver(this._entityResolver,
+      this._dataMapper);
   }
 
-  // eslint-disable-next-line max-len
-  v(type: string, expression: QueryExpression, connectionArgs: ConnectionArgs): NodeConnectionQuery {
+  id(type: string, base64Buffer?: string | Buffer | Object): string {
+    return this._dataMapper.id(type, base64Buffer);
+  }
+
+  v(type: string, expression: QueryExpression,
+    connectionArgs: ConnectionArgs): NodeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     return new NodeConnectionQuery(this, type, expression, connectionArgs);
   }
 
-  // eslint-disable-next-line max-len
-  e(type: string, expression: QueryExpression, connectionArgs: ConnectionArgs): EdgeConnectionQuery {
+  e(type: string, expression: QueryExpression,
+    connectionArgs: ConnectionArgs): EdgeConnectionQuery {
     invariant(expression, 'Argument \'expression\' is null');
     invariant(connectionArgs, 'Argument \'connectionArgs\' is null');
     return new EdgeConnectionQuery(this, null, type, expression, connectionArgs, true);

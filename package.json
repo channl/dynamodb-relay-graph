@@ -25,7 +25,7 @@
     "lint": "eslint src",
     "check": "flow check",
     "check-cover": "for file in {src/*.js,src/**/*.js}; do echo $file; flow coverage $file; done",
-    "build": "babel src --ignore __tests__ --out-dir dist/ && flow-copy-source -v src dist",
+    "build": "babel src --ignore __tests__ --out-dir dist/ --source-maps && flow-copy-source -v src dist",
     "cover": "babel-node ./node_modules/.bin/isparta cover --root src --report html _mocha -- $npm_package_options_mocha",
     "cover:lcov": "babel-node ./node_modules/.bin/isparta cover --root src --report lcovonly _mocha -- $npm_package_options_mocha"
   },

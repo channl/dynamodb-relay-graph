@@ -125,7 +125,6 @@ export default class EdgeConnectionResolver {
   }
 
   static _toTypedDataModels(typedMaybeDataModels: TypedMaybeDataModel[]): TypedDataModel[] {
-    // $FlowIgnore
     let items:TypedDataModel[] = typedMaybeDataModels
       .filter(item => item.dataModel != null)
       .map(item => {
