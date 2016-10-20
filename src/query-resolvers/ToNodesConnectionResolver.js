@@ -72,13 +72,7 @@ export default class ToNodesConnectionResolver {
   }
 
   static _toTypedDataModels(typedMaybeDataModels: TypedMaybeDataModel[]): TypedDataModel[] {
-    let items: TypedDataModel[] = typedMaybeDataModels
-      .filter(item => item.dataModel != null)
-      .map(item => {
-        invariant(item.dataModel != null, 'Item was invalid');
-        let result = (item: TypedDataModel);
-        return result;
-      });
-    return items;
+    // $FlowIgnore
+    return typedMaybeDataModels.filter(item => item.dataModel != null);
   }
 }

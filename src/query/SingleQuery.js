@@ -21,7 +21,9 @@ export default class SingleQuery {
   }
 
   async getAsync<T>(castFunc: (item: Model) => T = i => ((i: any): T)): Promise<T> {
-    if (this.inner instanceof NodeConnectionQuery || this.inner instanceof EdgeConnectionQuery) {
+    if (this.inner instanceof NodeConnectionQuery ||
+      this.inner instanceof EdgeConnectionQuery ||
+      this.inner instanceof ToNodesConnectionQuery) {
       let innerResult = await this.inner.getAsync();
       let result = await this.graph._singleResolver.resolveAsync(this, innerResult);
       invariant(result != null, 'Result was null');
