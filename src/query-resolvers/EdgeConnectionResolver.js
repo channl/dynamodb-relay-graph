@@ -9,7 +9,7 @@ import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import DataMapper from '../query-helpers/DataMapper';
 import DataModelHelper from '../query-helpers/DataModelHelper';
 import DynamoDB from '../aws/DynamoDB';
-import Instrument from '../utils/Instrument';
+import Instrument from '../logging/Instrument';
 import type { Connection, Edge } from 'graphql-relay';
 import type { DynamoDBSchema, ScanQueryResponse, QueryRequest } from 'aws-sdk-promise';
 // eslint-disable-next-line no-unused-vars

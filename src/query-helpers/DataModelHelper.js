@@ -3,7 +3,7 @@ import invariant from 'invariant';
 import TypeHelper from '../query-helpers/TypeHelper';
 import ValueHelper from '../query-helpers/ValueHelper';
 import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
-import Instrument from '../utils/Instrument';
+import Instrument from '../logging/Instrument';
 import DataMapper from '../query-helpers/DataMapper';
 import type { Connection, Edge } from 'graphql-relay';
 import type { AttributeMap, BatchWriteItemRequest } from 'aws-sdk-promise';

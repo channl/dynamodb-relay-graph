@@ -3,7 +3,7 @@ import invariant from 'invariant';
 import EntityResolver from '../query-resolvers/EntityResolver';
 import DataMapper from '../query-helpers/DataMapper';
 import ToNodesConnectionQuery from '../query/ToNodesConnectionQuery';
-import Instrument from '../utils/Instrument';
+import Instrument from '../logging/Instrument';
 import type { Connection, Edge } from 'graphql-relay';
 import type { QueryExpression, Model, TypedDataModel,
   TypedMaybeDataModel } from '../flow/Types';

@@ -4,7 +4,7 @@ import DynamoDB from '../aws/DynamoDB';
 import DataModelHelper from '../query-helpers/DataModelHelper';
 import DataMapper from '../query-helpers/DataMapper';
 import BatchingDynamoDB from '../utils/BatchingDynamoDB';
-import Instrument from '../utils/Instrument';
+import Instrument from '../logging/Instrument';
 import { fromGlobalId } from 'graphql-relay';
 import type { TypedDataModel, Model } from '../flow/Types';
 

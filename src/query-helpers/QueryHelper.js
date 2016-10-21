@@ -4,7 +4,7 @@ import ExpressionValueHelper from '../query-helpers/ExpressionValueHelper';
 import TableDefinitionHelper from '../query-helpers/TableDefinitionHelper';
 import ValueHelper from '../query-helpers/ValueHelper';
 import CursorHelper from '../query-helpers/CursorHelper';
-import Instrument from '../utils/Instrument';
+import Instrument from '../logging/Instrument';
 import TypeHelper from '../query-helpers/TypeHelper';
 import type NodeConnectionQuery from '../query/NodeConnectionQuery';
 import type EdgeConnectionQuery from '../query/EdgeConnectionQuery';

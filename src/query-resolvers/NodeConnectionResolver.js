@@ -9,7 +9,7 @@ import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import DataModelHelper from '../query-helpers/DataModelHelper';
 import DataMapper from '../query-helpers/DataMapper';
 import DynamoDB from '../aws/DynamoDB';
-import Instrument from '../utils/Instrument';
+import Instrument from '../logging/Instrument';
 // eslint-disable-next-line no-unused-vars
 import type { ConnectionArgs, QueryExpression, TypedDataModel, TypedMaybeDataModel, Model } from '../flow/Types';
 import type { Connection } from 'graphql-relay';

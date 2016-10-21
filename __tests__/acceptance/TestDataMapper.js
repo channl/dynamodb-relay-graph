@@ -1,6 +1,6 @@
 /* @flow */
 import invariant from 'invariant';
-import Instrument from '../../src/utils/Instrument';
+import Instrument from '../../src/logging/Instrument';
 import DataMapper from '../../src/query-helpers/DataMapper';
 import { fromGlobalId, toGlobalId } from 'graphql-relay';
 import type { DataModel, ExprModel } from '../../src/flow/Types';

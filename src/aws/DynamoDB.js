@@ -18,14 +18,12 @@ export default class DynamoDB {
   }
 
   static create(region: string): DynamoDB {
-    var dynamoDBConfig = {
+    return new DynamoDB({
       region,
       apiVersion: '2012-08-10',
       dynamoDbCrc32: false,
       httpOptions: { timeout: 5000 }
-    };
-
-    return new DynamoDB(dynamoDBConfig);
+    });
   }
 
   async listTablesAsync(params: ?ListTablesRequest): Promise<ListTablesResponse> {

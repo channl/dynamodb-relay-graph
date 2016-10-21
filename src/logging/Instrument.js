@@ -1,6 +1,5 @@
 /* @flow */
-import { stats } from '../Global';
-// import warning from 'warning';
+import Metrics from '../metrics/Metrics';
 
 export default class Instrument {
 
@@ -12,13 +11,13 @@ export default class Instrument {
     let sw;
     try {
       // log(type + '.' + method);
-      sw = stats.timer(type + '.' + method).start();
+      sw = Metrics.stats.timer(type + '.' + method).start();
       return await func();
     } catch (error) {
       if (typeof error._instrumented === 'undefined') {
         error._instrumented = true;
         // let args = null; // caller.arguments;
-        // warning(false, JSON.stringify({ type, method, args, error }, null, 2));
+        // log('Error - ' + JSON.stringify({ type, method, args, error }, null, 2));
       }
       throw error;
     } finally {
@@ -34,13 +33,13 @@ export default class Instrument {
     let sw;
     try {
       // log(type + '.' + method);
-      sw = stats.timer(type + '.' + method).start();
+      sw = Metrics.stats.timer(type + '.' + method).start();
       return func();
     } catch (error) {
       if (typeof error._instrumented === 'undefined') {
         error._instrumented = true;
-        // let args = caller.arguments;
-        // warning(false, JSON.stringify({ type, method, args, error }, null, 2));
+        // let args = null; // caller.arguments;
+        // log('Error - ' + JSON.stringify({ type, method, args, error }, null, 2));
       }
       throw error;
     } finally {

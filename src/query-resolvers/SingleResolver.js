@@ -1,6 +1,6 @@
 /* @flow */
 import invariant from 'invariant';
-import Instrument from '../utils/Instrument';
+import Instrument from '../logging/Instrument';
 import SingleQuery from '../query/SingleQuery';
 import type { Connection } from 'graphql-relay';
 // eslint-disable-next-line no-unused-vars
