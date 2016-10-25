@@ -26,7 +26,7 @@ export default {
     {
       TableName: 'PostedItems',
       AttributeDefinitions: [
-        { AttributeName: 'id', AttributeType: 'B' },
+        { AttributeName: 'id', AttributeType: 'S' },
       ],
       KeySchema: [
         { AttributeName: 'id', KeyType: 'HASH' },

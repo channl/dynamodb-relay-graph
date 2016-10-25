@@ -122,7 +122,7 @@ export default class DataModelHelper {
       .keys(item)
       .forEach(key => {
         let itemValue = item[key];
-        invariant(itemValue != null, 'ItemValue cannot be null');
+        if (itemValue == null) { return; }
         awsItem[key] = ValueHelper.toAttributeValue(itemValue);
       } );
 

@@ -15,7 +15,7 @@ export default class Instrument {
       return await func();
     } catch (error) {
       if (typeof error._instrumented === 'undefined') {
-        error._instrumented = true;
+        // error._instrumented = true;
         // let args = null; // caller.arguments;
         // log('Error - ' + JSON.stringify({ type, method, args, error }, null, 2));
       }
@@ -37,7 +37,7 @@ export default class Instrument {
       return func();
     } catch (error) {
       if (typeof error._instrumented === 'undefined') {
-        error._instrumented = true;
+        // error._instrumented = true;
         // let args = null; // caller.arguments;
         // log('Error - ' + JSON.stringify({ type, method, args, error }, null, 2));
       }

@@ -434,9 +434,8 @@ export default class QueryHelper {
     // Ok so the expression is currently missing enough information to make a
     // query.  Most likely this is an node to edge traversal and we need to set
     // the ids at run time.
-    // NOTE : Only traversal from a single node is supported currently
     if (innerResult.edges.length !== 1) {
-      throw new Error('NotSupportedError(getExpression)');
+      throw new Error('Traversal across edges from more than one node is not supported');
     }
 
     if (query.isOut) {

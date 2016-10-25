@@ -44,6 +44,7 @@ export default class EntityWriter {
 
       // Convert to data model format
       let dataModelsToPut = itemsToPut.map(model => {
+        debugger;
         let { type } = fromGlobalId(model.id);
         let dataModel = this._dataMapper.toDataModel(type, model);
         let typedDataModel: TypedDataModel = { type, dataModel };
