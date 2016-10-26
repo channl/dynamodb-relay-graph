@@ -11,31 +11,17 @@ import type { TypedDataModel, Model } from '../flow/Types';
 export default class EntityWriter {
   _dynamoDB: BatchingDynamoDB;
   _dataMapper: DataMapper;
-  /*
-  convertor: TypeHelper;
-  batchSize: number;
-  timeout: number;
-  initialRetryDelay: number;
-  getNextRetryDelay: (curr: number) => number;
-  */
 
   constructor(dynamoDB: DynamoDB, dataMapper: DataMapper) {
     invariant(dynamoDB != null, 'Argument \'dynamoDB\' is null');
     invariant(dataMapper != null, 'Argument \'dynamoDB\' is null');
-
     this._dynamoDB = new BatchingDynamoDB(dynamoDB);
     this._dataMapper = dataMapper;
-    /*
-    this.convertor = new TypeHelper();
-    this.batchSize = 25;
-    this.timeout = 120000;
-    this.initialRetryDelay = 50;
-    this.getNextRetryDelay = curr => curr * 2;
-    */
   }
 
   async writeManyAsync(itemsToPut: Model[], itemsToDelete: Model[]): Promise<void> {
-    return await Instrument.funcAsync(this, async () => {
+    // eslint-disable-next-line max-len, no-caller
+    return await Instrument.funcAsync(this, arguments, async () => {
       invariant(itemsToPut != null, 'Argument \'itemsToPut\' is null');
       invariant(itemsToDelete != null, 'Argument \'itemsToDelete\' is null');
       if (itemsToPut.length === 0 && itemsToDelete.length === 0) {
@@ -44,7 +30,6 @@ export default class EntityWriter {
 
       // Convert to data model format
       let dataModelsToPut = itemsToPut.map(model => {
-        debugger;
         let { type } = fromGlobalId(model.id);
         let dataModel = this._dataMapper.toDataModel(type, model);
         let typedDataModel: TypedDataModel = { type, dataModel };

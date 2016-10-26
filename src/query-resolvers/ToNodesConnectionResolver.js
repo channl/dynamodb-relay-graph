@@ -19,7 +19,8 @@ export default class ToNodesConnectionResolver {
 
   async resolveAsync(query: ToNodesConnectionQuery, innerResult: Connection<Model>)
     : Promise<Connection<Model>> {
-    return await Instrument.funcAsync(this, async () => {
+    // eslint-disable-next-line max-len, no-caller
+    return await Instrument.funcAsync(this, arguments, async () => {
       invariant(query != null, 'Argument \'query\' is null');
       invariant(innerResult != null, 'Argument \'innerResult\' is null');
 

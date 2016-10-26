@@ -31,7 +31,8 @@ export default class EntityResolver {
   }
 
   async _loadAsync(globalIds: string[]): Promise<TypedMaybeDataModel[]> {
-    return await Instrument.funcAsync(this, async () => {
+    // eslint-disable-next-line max-len, no-caller
+    return await Instrument.funcAsync(this, arguments, async () => {
       invariant(globalIds, 'Argument \'globalIds\' is null');
 
       // Convert to type and attribute map

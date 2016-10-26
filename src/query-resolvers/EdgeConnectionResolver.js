@@ -32,7 +32,8 @@ export default class EdgeConnectionResolver {
 
   async resolveAsync(query: EdgeConnectionQuery,
     innerResult: Connection<Model>): Promise<Connection<Model>> {
-    return await Instrument.funcAsync(this, async (): Promise<Connection<Model>> => {
+    // eslint-disable-next-line max-len, no-caller
+    return await Instrument.funcAsync(this, arguments, async (): Promise<Connection<Model>> => {
       invariant(query, 'Argument \'query\' is null');
       invariant(innerResult, 'Argument \'innerResult\' is null');
 

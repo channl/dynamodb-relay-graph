@@ -9,7 +9,8 @@ import type { Model } from '../flow/Types';
 export default class SingleResolver {
 
   async resolveAsync<T: Model>(query: SingleQuery, innerResult: Connection<T>): Promise<T> {
-    return await Instrument.funcAsync(this, async () => {
+    // eslint-disable-next-line max-len, no-caller
+    return await Instrument.funcAsync(this, arguments, async () => {
       invariant(query, 'Argument \'query\' is null');
       invariant(innerResult, 'Argument \'innerResult\' is null');
 

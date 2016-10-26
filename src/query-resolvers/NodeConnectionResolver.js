@@ -30,7 +30,8 @@ export default class NodeConnectionResolver {
   }
 
   async resolveAsync(query: NodeConnectionQuery): Promise<Connection<Model>> {
-    return await Instrument.funcAsync(this, async () => {
+    // eslint-disable-next-line max-len, no-caller
+    return await Instrument.funcAsync(this, arguments, async () => {
       invariant(query != null, 'Argument \'query\' is null');
 
       // Generate the full expression using the query and any previous result
