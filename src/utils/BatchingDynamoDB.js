@@ -3,6 +3,7 @@ import DynamoDB from '../aws/DynamoDB';
 import Delay from '../utils/Delay';
 import invariant from 'invariant';
 import warning from 'warning';
+import Instrument from '../logging/Instrument';
 import type { BatchGetItemRequest, BatchGetItemResponse,
   BatchWriteItemRequest, BatchWriteItemResponse } from 'aws-sdk-promise';
 
@@ -20,31 +21,35 @@ export default class BatchingDynamoDB {
   }
 
   async batchGetItemAsync(request: BatchGetItemRequest): Promise<BatchGetItemResponse> {
+    return Instrument.funcAsync(this, arguments, async (): Promise<BatchGetItemResponse> => {
 
-    // BatchGetItem is limited by AWS to 100 items per request
-    // so chunk into many requests
-    let requests = this.constructor._getSplitBatchGetItemRequests(request, 100);
-    let responses = await Promise.all(requests.map(r => this._batchGetItemWithRetryAsync(r)));
-    let response = this.constructor._getCombinedBatchGetItemResponse(responses);
-    let orderedResponse = this.constructor._getOrderedBatchGetItemResponse(request, response);
-    return orderedResponse;
+      // BatchGetItem is limited by AWS to 100 items per request
+      // so chunk into many requests
+      let requests = this.constructor._getSplitBatchGetItemRequests(request, 100);
+      let responses = await Promise.all(requests.map(r => this._batchGetItemWithRetryAsync(r)));
+      let response = this.constructor._getCombinedBatchGetItemResponse(responses);
+      let orderedResponse = this.constructor._getOrderedBatchGetItemResponse(request, response);
+      return orderedResponse;
+    });
   }
 
   async batchWriteItemAsync(request: BatchWriteItemRequest): Promise<BatchWriteItemResponse> {
+    return Instrument.funcAsync(this, arguments, async (): Promise<BatchWriteItemResponse> => {
 
-    // BatchWriteItem is limited by AWS to 25 items per request
-    // so chunk into many requests
-    let requests = this.constructor._getSplitBatchWriteItemRequests(request, 25);
+      // BatchWriteItem is limited by AWS to 25 items per request
+      // so chunk into many requests
+      let requests = this.constructor._getSplitBatchWriteItemRequests(request, 25);
 
-    // HACK MOVED THIS TO SEQUENTIAL AS IT WAS TIMINGOUT
-    let responses = [];
-    for(let i = 0; i < requests.length; i++) {
-      let response = await this._batchWriteItemsWithRetryAsync(requests[i]);
-      responses.push(response);
-    }
+      // HACK MOVED THIS TO SEQUENTIAL AS IT WAS TIMINGOUT
+      let responses = [];
+      for(let i = 0; i < requests.length; i++) {
+        let response = await this._batchWriteItemsWithRetryAsync(requests[i]);
+        responses.push(response);
+      }
 
-    let response = this.constructor._getCombinedBatchWriteItemResponse(responses);
-    return response;
+      let response = this.constructor._getCombinedBatchWriteItemResponse(responses);
+      return response;
+    });
   }
 
   async _batchGetItemWithRetryAsync(request: BatchGetItemRequest): Promise<BatchGetItemResponse> {
