@@ -2,7 +2,7 @@
 import invariant from 'invariant';
 import { fromGlobalId } from 'graphql-relay';
 import type { Model } from '../../src/flow/Types';
-import type { Contact, User, UserContactEdge } from './GraphQLTypes';
+import type { Contact, User, UserContactEdge, Tag } from './GraphQLTypes';
 
 export default class To {
 
@@ -27,6 +27,14 @@ export default class To {
     let { type } = fromGlobalId(value.id);
     invariant(type === 'UserContactEdge', 'Error');
     let model = ((value: any): UserContactEdge);
+    return model;
+  }
+
+  static Tag(value: Model): Tag {
+    invariant(value != null, 'Argument \'value\' is null or undefined');
+    let { type } = fromGlobalId(value.id);
+    invariant(type === 'Tag', 'Error');
+    let model = ((value: any): Tag);
     return model;
   }
 }

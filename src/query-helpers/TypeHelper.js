@@ -7,11 +7,13 @@ export default class TypeHelper {
 
   static getTypeName(tableName: string) {
     invariant(typeof tableName === 'string', 'Argument \'tableName\' is not a string');
+    invariant(tableName !== '', 'Argument \'tableName\' is empty string');
     return tableName.substr(0, tableName.length - 1);
   }
 
   static getTableName(type: string) {
     invariant(typeof type === 'string', 'Argument \'type\' is not a string');
+    invariant(type !== '', 'Argument \'type\' is empty string');
     return type + 's';
   }
 

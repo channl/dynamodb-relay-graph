@@ -6,7 +6,6 @@ export default class CursorHelper {
 
   static toAWSKey(cursor: string): AttributeMap {
     invariant(typeof cursor === 'string', 'Argument \'cursor\' is not a string');
-
     let b = new Buffer(cursor, 'base64');
     let json = b.toString('ascii');
     let item: Object = JSON.parse(json);

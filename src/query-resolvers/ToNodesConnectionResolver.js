@@ -73,7 +73,7 @@ export default class ToNodesConnectionResolver {
   }
 
   static _toTypedDataModels(typedMaybeDataModels: TypedMaybeDataModel[]): TypedDataModel[] {
-    // $FlowIgnore
-    return typedMaybeDataModels.filter(item => item.dataModel != null);
+    let result: any = typedMaybeDataModels.filter(item => item.dataModel != null);
+    return result;
   }
 }

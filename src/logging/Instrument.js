@@ -47,7 +47,7 @@ export default class Instrument {
 
   static filterArgs(args: any): Object[] {
     var argArray = Array.prototype.slice.call(args);
-    return argArray.filter(a => {
+    let newArgs = argArray.filter(a => {
       switch(a.constructor.name) {
         case 'ChannlDataMapper':
         case 'DataMapper':
@@ -59,10 +59,17 @@ export default class Instrument {
         case 'MessageFactory':
         case 'TagFactory':
         case 'UserFactory':
+        case 'NodeConnectionQuery':
+        case 'EdgeConnectionQuery':
+        case 'SingleOrNullQuery':
+        case 'SingleQuery':
+        case 'ToNodeConnectionQuery':
           return false;
         default:
+          log('Not filtering arg type \'' + a.constructor.name + '\'');
           return true;
       }
     });
+    return newArgs;
   }
 }

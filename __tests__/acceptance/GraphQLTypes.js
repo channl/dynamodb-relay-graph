@@ -43,3 +43,8 @@ export type UserContactEdge = {
   userOrder: string,
   inPhoneNumber: string,
 };
+
+export type Tag = {
+  id: ID,
+  createDate: number,
+};

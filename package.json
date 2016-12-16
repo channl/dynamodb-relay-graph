@@ -13,15 +13,14 @@
   "main": "dist/Graph.js",
   "options": {
     "mocha": "--check-leaks --full-trace ./__tests__/**/*.js",
-    "mochasingle": "--check-leaks --full-trace ./__tests__/acceptance/AcceptanceTests.js",
-    "mochasingle1": "--check-leaks --full-trace ./__tests__/query-resolvers/DataModelHelperTests.js"
+    "mochasingle": "--check-leaks --full-trace ./__tests__/acceptance/AcceptanceTests.js"
   },
   "scripts": {
     "test": "npm run lint && npm run check && npm run testonly",
     "testonly": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mocha",
     "testonlydebug": "mocha ./__tests__/**/*.js --compilers js:babel-register --require babel-polyfill --debug-brk",
     "testonlysingle": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mochasingle",
-    "testonlysingledebug": "mocha ./__tests__/acceptance/AcceptanceTests.js --compilers js:babel-register --require babel-polyfill --debug-brk",
+    "testonlysingledebug": "mocha ./__tests__/acceptance/AcceptanceTests.js --compilers js:babel-register --require babel-polyfill --inspect --debug-brk",
     "lint": "eslint src",
     "check": "flow check",
     "check-cover": "for file in {src/*.js,src/**/*.js}; do echo $file; flow coverage $file; done",
@@ -34,30 +33,29 @@
     "README.md"
   ],
   "dependencies": {
-    "aws-sdk": "^2.3.3",
-    "aws-sdk-promise": "0.0.2",
+    "aws-sdk": "^2.7.15",
     "dataloader": "^1.0.0",
-    "graphql": "^0.7.1",
-    "graphql-relay": "^0.4.1",
-    "invariant": "^2.2.1",
+    "graphql": "^0.8.2",
+    "graphql-relay": "^0.4.4",
+    "invariant": "^2.2.2",
     "measured": "1.1.0",
     "warning": "^3.0.0"
   },
   "devDependencies": {
     "babel": "^6.5.2",
-    "babel-cli": "^6.7.7",
-    "babel-eslint": "^7.0.0",
-    "babel-polyfill": "^6.9.0",
-    "babel-preset-react-native": "^1.6.0",
-    "babel-register": "^6.9.0",
+    "babel-cli": "^6.18.0",
+    "babel-eslint": "^7.1.1",
+    "babel-polyfill": "^6.20.0",
+    "babel-preset-react-native": "^1.9.1",
+    "babel-register": "^6.18.0",
     "chai": "^3.5.0",
-    "coveralls": "^2.11.9",
-    "eslint": "^3.7.1",
-    "eslint-plugin-babel": "^3.2.0",
-    "flow-bin": "^0.33.0",
+    "coveralls": "^2.11.15",
+    "eslint": "^3.12.2",
+    "eslint-plugin-babel": "^4.0.0",
+    "flow-bin": "^0.37.0",
     "flow-copy-source": "^1.1.0",
     "isparta": "^4.0.0",
-    "mocha": "^3.1.0",
+    "mocha": "^3.2.0",
     "sane": "^1.4.1"
   }
 }

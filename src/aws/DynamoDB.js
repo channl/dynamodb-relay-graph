@@ -1,5 +1,5 @@
 /* @flow */
-import AWS from 'aws-sdk-promise';
+import AWS from 'aws-sdk';
 import invariant from 'invariant';
 import type { DynamoDBConfig, DescribeTableRequest, DescribeTableResponse, UpdateTableRequest,
   UpdateTableResponse, ListTablesRequest, ListTablesResponse, DeleteTableRequest,
@@ -7,7 +7,7 @@ import type { DynamoDBConfig, DescribeTableRequest, DescribeTableResponse, Updat
   PutItemResponse, GetItemRequest, GetItemResponse, BatchGetItemRequest, BatchGetItemResponse,
   UpdateItemRequest, UpdateItemResponse, DeleteItemRequest, DeleteItemResponse,
   BatchWriteItemRequest, BatchWriteItemResponse,
-} from 'aws-sdk-promise';
+} from 'aws-sdk';
 
 export default class DynamoDB {
   _db: AWS.DynamoDB;
@@ -27,69 +27,56 @@ export default class DynamoDB {
   }
 
   async listTablesAsync(params: ?ListTablesRequest): Promise<ListTablesResponse> {
-    let res = await this._db.listTables(params).promise();
-    return res.data;
+    return await this._db.listTables(params).promise();
   }
 
   async deleteTableAsync(params:DeleteTableRequest): Promise<DeleteTableResponse> {
-    let res = await this._db.deleteTable(params).promise();
-    return res.data;
+    return await this._db.deleteTable(params).promise();
   }
 
   async createTableAsync(params:any): Promise<any> {
-    let res = await this._db.createTable(params).promise();
-    return res.data;
+    return await this._db.createTable(params).promise();
   }
 
   async describeTableAsync(params: DescribeTableRequest): Promise<DescribeTableResponse> {
     invariant(params != null, 'Parameter \'params\' is not set');
-    let res = await this._db.describeTable(params).promise();
-    return res.data;
+    return await this._db.describeTable(params).promise();
   }
 
   async updateTableAsync(params: UpdateTableRequest): Promise<UpdateTableResponse> {
     invariant(params != null, 'Parameter \'params\' is not set');
-    let res = await this._db.updateTable(params).promise();
-    return res.data;
+    return await this._db.updateTable(params).promise();
   }
 
   async scanAsync(params: ScanRequest): Promise<ScanQueryResponse> {
-    let res = await this._db.scan(params).promise();
-    return res.data;
+    return await this._db.scan(params).promise();
   }
 
   async queryAsync(params: QueryRequest): Promise<ScanQueryResponse> {
-    let res = await this._db.query(params).promise();
-    return res.data;
+    return await this._db.query(params).promise();
   }
 
   async putItemAsync(params: PutItemRequest): Promise<PutItemResponse> {
-    let res = await this._db.putItem(params).promise();
-    return res.data;
+    return await this._db.putItem(params).promise();
   }
 
   async getItemAsync(params: GetItemRequest): Promise<GetItemResponse> {
-    let res = await this._db.getItem(params).promise();
-    return res.data;
+    return await this._db.getItem(params).promise();
   }
 
   async batchGetItemAsync(params: BatchGetItemRequest): Promise<BatchGetItemResponse> {
-    let res = await this._db.batchGetItem(params).promise();
-    return res.data;
+    return await this._db.batchGetItem(params).promise();
   }
 
   async batchWriteItemAsync(params: BatchWriteItemRequest): Promise<BatchWriteItemResponse> {
-    let res = await this._db.batchWriteItem(params).promise();
-    return res.data;
+    return await this._db.batchWriteItem(params).promise();
   }
 
   async deleteItemAsync(params: DeleteItemRequest): Promise<DeleteItemResponse> {
-    let res = await this._db.deleteItem(params).promise();
-    return res.data;
+    return await this._db.deleteItem(params).promise();
   }
 
   async updateItemAsync(params: UpdateItemRequest): Promise<UpdateItemResponse> {
-    let res = await this._db.updateItem(params).promise();
-    return res.data;
+    return await this._db.updateItem(params).promise();
   }
 }

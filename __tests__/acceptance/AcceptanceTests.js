@@ -1,4 +1,5 @@
 /* @flow */
+/* eslint-disable max-len */
 import Graph from '../../src/Graph';
 import TestDataMapper from '../acceptance/TestDataMapper';
 import { expect } from 'chai';
@@ -16,6 +17,16 @@ describe('AcceptanceTests', function () {
 
   let dbSchema = {
     tables: [
+      {
+        TableName: 'Blogs',
+        AttributeDefinitions: [
+          { AttributeName: 'id', AttributeType: 'S' },
+        ],
+        KeySchema: [
+          { AttributeName: 'id', KeyType: 'HASH' },
+        ],
+        ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
+      },
       {
         TableName: 'Users',
         AttributeDefinitions: [
@@ -45,6 +56,69 @@ describe('AcceptanceTests', function () {
           ReadCapacityUnits: 1,
           WriteCapacityUnits: 1
         },
+      },
+      {
+        TableName: 'Tags',
+        AttributeDefinitions: [
+          { AttributeName: 'id', AttributeType: 'B' },
+          { AttributeName: 'name', AttributeType: 'S' },
+          { AttributeName: 'synsetOffset', AttributeType: 'N' },
+          { AttributeName: 'bucket', AttributeType: 'S' },
+        ],
+        KeySchema: [
+          { AttributeName: 'id', KeyType: 'HASH' }
+        ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1
+        },
+        GlobalSecondaryIndexes: [
+          {
+            IndexName: 'SynsetOffset',
+            KeySchema: [ { AttributeName: 'synsetOffset', KeyType: 'HASH' } ],
+            Projection: { ProjectionType: 'KEYS_ONLY' },
+            ProvisionedThroughput: {
+              ReadCapacityUnits: 1,
+              WriteCapacityUnits: 1
+            },
+          },
+          {
+            IndexName: 'Name',
+            KeySchema: [
+              { AttributeName: 'name', KeyType: 'HASH' },
+              { AttributeName: 'id', KeyType: 'RANGE' }
+            ],
+            Projection: { ProjectionType: 'KEYS_ONLY' },
+            ProvisionedThroughput: {
+              ReadCapacityUnits: 1,
+              WriteCapacityUnits: 1
+            },
+          },
+          {
+            IndexName: 'NameSorted',
+            KeySchema: [
+              { AttributeName: 'bucket', KeyType: 'HASH' },
+              { AttributeName: 'name', KeyType: 'RANGE' }
+            ],
+            Projection: { ProjectionType: 'ALL' },
+            ProvisionedThroughput: {
+              ReadCapacityUnits: 1,
+              WriteCapacityUnits: 1
+            },
+          },
+          {
+            IndexName: 'SynsetOffsetOrder',
+            KeySchema: [
+              { AttributeName: 'bucket', KeyType: 'HASH' },
+              { AttributeName: 'synsetOffset', KeyType: 'RANGE' }
+            ],
+            Projection: { ProjectionType: 'KEYS_ONLY' },
+            ProvisionedThroughput: {
+              ReadCapacityUnits: 1,
+              WriteCapacityUnits: 1
+            },
+          }
+        ],
       },
       {
         TableName: 'UserContactEdges',
@@ -181,6 +255,18 @@ describe('AcceptanceTests', function () {
 
     expect(result.edges.length).to.deep.equal(expected.edges.length);
     expect(result.pageInfo).to.deep.equal(expected.pageInfo);
+  });
+
+  it('Can query for node after cursor', async () => {
+    let firstTwo = await graph
+      .v('Contact', {}, {first: 2})
+      .getAsync(To.Contact);
+
+    let second = await graph
+      .v('Contact', {}, {first: 1, after: firstTwo.edges[0].cursor})
+      .getAsync(To.Contact);
+
+    expect(second.edges[0]).to.deep.equal(firstTwo.edges[1]);
   });
 
   /*

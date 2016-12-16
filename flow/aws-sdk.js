@@ -1,7 +1,5 @@
 /* @flow */
-declare module 'aws-sdk-promise' {
-
-  // DynamoDB
+declare module 'aws-sdk' {
   declare class DynamoDB {
     constructor(dynamoDBConfig: DynamoDBConfig): void;
 
@@ -45,12 +43,14 @@ declare module 'aws-sdk-promise' {
       data: UpdateItemResponse) => void): PromiseRequest<UpdateItemResponse>;
   }
 
-  declare type DynamoDBConfig = {
-    apiVersion?: string,
-    region: string,
-    dynamoDbCrc32?: boolean,
-    httpOptions?: HTTPOptions,
-  };
+  declare class CloudWatch {
+    getMetricStatistics(params: ?GetMetricStatisticsRequest, callback: ?(err: ?Error,
+      data: GetMetricStatisticsResponse) => void): PromiseRequest<GetMetricStatisticsResponse>;
+  }
+
+  declare class PromiseRequest<T> {
+    promise(): Promise<T>;
+  }
 
   declare type ListTablesRequest = {
      ExclusiveStartTableName?: string,
@@ -70,7 +70,15 @@ declare module 'aws-sdk-promise' {
     TableDescription: TableDescription,
   };
 
-  declare type CreateTableRequest = TableDefinition;
+  declare type CreateTableRequest = {
+    AttributeDefinitions: AttributeDefinition[],
+    KeySchema: KeyDefinition[],
+    ProvisionedThroughput: ProvisionedThroughput,
+    TableName: string,
+    GlobalSecondaryIndexes: GlobalSecondaryIndex[],
+    LocalSecondaryIndexes: LocalSecondaryIndex[],
+    StreamSpecification: StreamSpecification,
+  };
 
   declare type CreateTableResponse = {
     TableDescription: TableDescription,
@@ -80,9 +88,9 @@ declare module 'aws-sdk-promise' {
     AttributesToGet?: string[],
     ConditionalOperator?: string,
     ConsistentRead?: boolean,
-    ExclusiveStartKey?: AttributeMap,
-    ExpressionAttributeNames?: Map<string, string>,
-    ExpressionAttributeValues?: AttributeMap,
+    ExclusiveStartKey?: any,
+    ExpressionAttributeNames?: any,
+    ExpressionAttributeValues?: any,
     FilterExpression?: string,
     IndexName?: string,
     Limit?: number,
@@ -95,58 +103,70 @@ declare module 'aws-sdk-promise' {
     TotalSegments?: number
   };
 
+  declare type TableConsumedCapacity = {
+     CapacityUnits: number,
+  };
+
+  declare type ConsumedCapacity = {
+    CapacityUnits: number,
+    GlobalSecondaryIndexes: any,
+    LocalSecondaryIndexes: any,
+    Table: TableConsumedCapacity,
+    TableName: string
+  };
+
   declare type ScanQueryResponse = {
     ConsumedCapacity: ConsumedCapacity,
     Count: number,
-    Items: AttributeMap[],
-    LastEvaluatedKey: AttributeMap,
+    Items: any[],
+    LastEvaluatedKey: any,
     ScannedCount: number,
   };
 
   declare type QueryRequest = {
-    AttributesToGet?: string[],
-    ConditionalOperator?: string,
-    ConsistentRead?: boolean,
-    ExclusiveStartKey?: AttributeMap,
-    ExpressionAttributeNames?: Map<string, string>,
-    ExpressionAttributeValues?: AttributeMap,
-    FilterExpression?: string,
-    IndexName?: string,
-    KeyConditionExpression?: string,
-    KeyConditions?: any,
-    Limit?: number,
-    ProjectionExpression?: string,
-    QueryFilter?: any,
-    ReturnConsumedCapacity?: string,
-    ScanIndexForward?: boolean,
-    Select?: string,
+    AttributesToGet: string[],
+    ConditionalOperator: string,
+    ConsistentRead: boolean,
+    ExclusiveStartKey: any,
+    ExpressionAttributeNames: any,
+    ExpressionAttributeValues: any,
+    FilterExpression: string,
+    IndexName: string,
+    KeyConditionExpression: string,
+    KeyConditions: any,
+    Limit: number,
+    ProjectionExpression: string,
+    QueryFilter: any,
+    ReturnConsumedCapacity: string,
+    ScanIndexForward: boolean,
+    Select: string,
     TableName: string,
   };
 
   declare type PutItemRequest = {
-    ConditionalOperator?: string,
-    ConditionExpression?: string,
-    Expected?: any,
-    ExpressionAttributeNames?: Map<string, string>,
-    ExpressionAttributeValues?: AttributeMap,
-    Item: AttributeMap,
-    ReturnConsumedCapacity?: string,
-    ReturnItemCollectionMetrics?: string,
-    ReturnValues?: string,
+    ConditionalOperator: string,
+    ConditionExpression: string,
+    Expected: any,
+    ExpressionAttributeNames: string,
+    ExpressionAttributeValues: any,
+    Item: any,
+    ReturnConsumedCapacity: string,
+    ReturnItemCollectionMetrics: string,
+    ReturnValues: string,
     TableName: string,
   };
 
   declare type PutItemResponse = {
-    Attributes: AttributeMap,
+    Attributes: any,
     ConsumedCapacity: ConsumedCapacity,
-    ItemCollectionMetrics: Map<string, ItemCollectionMetric>,
+    ItemCollectionMetrics: any,
   };
 
   declare type GetItemRequest = {
     AttributesToGet: string[],
     ConsistentRead: boolean,
-    ExpressionAttributeNames: Map<string, string>,
-    Key: AttributeMap,
+    ExpressionAttributeNames: any,
+    Key: any,
     ProjectionExpression: string,
     ReturnConsumedCapacity: string,
     TableName: string,
@@ -154,208 +174,149 @@ declare module 'aws-sdk-promise' {
 
   declare type GetItemResponse = {
     ConsumedCapacity: ConsumedCapacity,
-    Item: AttributeMap,
+    Item: any,
   };
 
   declare type BatchGetItemRequest = {
-    RequestItems: BatchGetRequestItems,
+    RequestItems: any,
     ReturnConsumedCapacity?: 'INDEXES' | 'TOTAL' | 'NONE',
   };
 
   declare type BatchGetItemResponse = {
     ConsumedCapacity: ConsumedCapacity[],
-    Responses: ResponseItems,
-    UnprocessedKeys: BatchGetRequestItems,
+    Responses: any,
+    UnprocessedKeys: any,
   };
 
-  declare type BatchDeleteRequest = {
-    Key: AttributeMap,
-  }
-
-  declare type BatchPutRequest = {
-    Item: AttributeMap,
-  }
-
   declare type BatchWriteItemRequest = {
-    RequestItems: BatchWriteRequestItems,
+    RequestItems: any,
     ReturnConsumedCapacity?: string,
     ReturnItemCollectionMetrics?: string,
   };
 
   declare type BatchWriteItemResponse = {
     ConsumedCapacity: ConsumedCapacity[],
-    ItemCollectionMetrics: Map<string, ItemCollectionMetric>,
-    UnprocessedItems: BatchWriteRequestItems,
+    ItemCollectionMetrics: ItemCollectionMetrics,
+    UnprocessedItems: any,
   };
 
   declare type DeleteItemRequest = {
-    ConditionalOperator?: string,
-    ConditionExpression?: string,
-    Expected?: any,
-    ExpressionAttributeNames?: Map<string, string>,
-    ExpressionAttributeValues?: AttributeMap,
-    Key: AttributeMap,
-    ReturnConsumedCapacity?: string,
-    ReturnItemCollectionMetrics?: string,
-    ReturnValues?: string,
-    TableName?: string,
+    ConditionalOperator: string,
+    ConditionExpression: string,
+    Expected: any,
+    ExpressionAttributeNames: any,
+    ExpressionAttributeValues: any,
+    Key: any,
+    ReturnConsumedCapacity: string,
+    ReturnItemCollectionMetrics: string,
+    ReturnValues: string,
+    TableName: string,
   };
 
   declare type DeleteItemResponse = {
-    Attributes: AttributeMap,
+    Attributes: any,
     ConsumedCapacity: ConsumedCapacity,
-    ItemCollectionMetrics: Map<string, ItemCollectionMetric>,
+    ItemCollectionMetrics: ItemCollectionMetrics,
   };
 
   declare type UpdateItemRequest = {
-    AttributeUpdates?: any,
-    ConditionalOperator?: string,
-    ConditionExpression?: string,
-    Expected?: any,
-    ExpressionAttributeNames?: Map<string, string>,
-    ExpressionAttributeValues?: AttributeMap,
-    ReturnConsumedCapacity?: string,
-    ReturnItemCollectionMetrics?: string,
-    ReturnValues?: string,
+    AttributeUpdates: any,
+    ConditionalOperator: string,
+    ConditionExpression: string,
+    Expected: any,
+    ExpressionAttributeNames: any,
+    ExpressionAttributeValues: any,
+    ReturnConsumedCapacity: string,
+    ReturnItemCollectionMetrics: string,
+    ReturnValues: string,
     TableName: string,
-    UpdateExpression?: string,
+    UpdateExpression: string
   };
 
   declare type UpdateItemResponse = {
-    Attributes: AttributeMap,
+    Attributes: any,
     ConsumedCapacity: ConsumedCapacity,
-    ItemCollectionMetrics: Map<string, ItemCollectionMetric>,
+    ItemCollectionMetrics: ItemCollectionMetrics,
   };
 
-  declare type DescribeTableRequest = {
-     TableName: string,
-  };
-
-  declare type DescribeTableResponse = {
-    Table: TableDescription,
-  };
-
-  declare type UpdateTableRequest = {
-     AttributeDefinitions?: AttributeDefinition[],
-     GlobalSecondaryIndexUpdates? : GlobalSecondaryIndexUpdate[],
-     ProvisionedThroughput?: Throughput,
-     StreamSpecification?: StreamSpecification,
-     TableName: string
-  };
-
-  declare type UpdateTableResponse = {
-    TableDescription: TableDescription,
-  };
-
-  declare type TableDefinition = {
-    TableName: string,
-    AttributeDefinitions: AttributeDefinition[],
-    KeySchema: KeySchema,
-    GlobalSecondaryIndexes?: GlobalSecondaryIndexDefinition[],
-    LocalSecondaryIndexes?: LocalSecondaryIndexDefinition[],
-    ProvisionedThroughput: Throughput,
-    StreamSpecification?: StreamSpecification
-  };
-
-  declare type ConsumedCapacityValue = {
-     CapacityUnits: number,
-  };
-
-  declare type ConsumedCapacity = {
-    CapacityUnits: number,
-    GlobalSecondaryIndexes: ConsumedCapacityMap,
-    LocalSecondaryIndexes: ConsumedCapacityMap,
-    Table: ConsumedCapacityValue,
-    TableName: string
-  };
-
-  declare type ConsumedCapacityMap = {
-    [name: string]: ConsumedCapacityValue,
-  };
-
-  declare type ItemCollectionMetric = {
-    ItemCollectionKey: AttributeMap,
+  declare type ItemCollectionMetrics = {
+    ItemCollectionKey: any,
     SizeEstimateRangeGB: number[],
-  }
-
-  declare type AttributeMap = {
-    [keyName: string]: AttributeValue,
   };
 
-  declare type AttributeValue = {
-    B?: Buffer, // | string,
-    BOOL?: boolean,
-    BS?: Buffer[], // | string[],
-    L?: SingleValue[],
-    M?: SingleValueMap,
-    N?: string,
-    NS?: string[],
-    NULL?: boolean,
-    S?: string,
-    SS?: string[],
+  declare type DynamoDBConfig = {
+    apiVersion: string,
+    region: string,
+    dynamoDbCrc32: boolean
   };
 
-  declare type SingleValueMap = {
-    [keyName: string]: SingleValue,
-  };
-
-  declare type SingleValue = Buffer | string | number | boolean;
-
-  declare type ResponseItems = {
-    [tableName: string]: AttributeMap[],
-  };
-
-  declare type BatchGetRequestItems = {
-    [keyName: string]: BatchGetRequestItem;
-  };
-
-  declare type BatchGetRequestItem = {
-    AttributesToGet?: string[],
-    ConsistentRead?: boolean,
-    ExpressionAttributeNames?: ExpressionAttributeNames,
-    Keys: AttributeMap[],
-    ProjectionExpression?: string,
-  };
-
-  declare type ExpressionAttributeNames = {
-    [name: string]: string,
-  };
-
-  declare type BatchWriteRequestItems = {
-    [tableName: string]: BatchWriteRequestItem[],
-  };
-
-  declare type BatchWriteRequestItem = {
-    DeleteRequest?: BatchDeleteRequest,
-    PutRequest?: BatchPutRequest,
-  };
-
-  declare type AttributeDefinition = {
+  declare type DynamoDBAttributeDefinition = {
     AttributeName: string,
-    AttributeType: 'B' | 'BOOL' | 'BS' | 'L' | 'M' | 'N' | 'NS' | 'NULL' | 'S' | 'SS',
+    AttributeType: string
   };
 
-  declare type KeySchema = KeyDefinition[];
-
-  declare type GlobalSecondaryIndexDefinition = {
-    IndexName: string,
-    KeySchema: KeySchema,
-    Projection: Projection,
-    ProvisionedThroughput: Throughput,
+  declare type DynamoDBKeySchema = {
+    AttributeName: string,
+    KeyType: string
   };
 
-  declare type LocalSecondaryIndexDefinition = {
+  declare type DynamoDBTable = {
+    TableName: string,
+    AttributeDefinitions: DynamoDBAttributeDefinition[],
+    KeySchema: DynamoDBKeySchema[],
+    GlobalSecondaryIndexes?: DynamoDBGlobalSecondaryIndex[],
+    LocalSecondaryIndexes?: DynamoDBLocalSecondaryIndex[],
+    ProvisionedThroughput: DynamoDBProvisionedThroughput,
+    StreamSpecification?: DynamoDBStreamSpecification
+  };
+
+  declare type DynamoDBGlobalSecondaryIndex = {
     IndexName: string,
-    KeySchema: KeySchema,
-    Projection: Projection,
+    KeySchema: DynamoDBKeySchema [],
+    Projection: DynamoDBProjection,
+    ProvisionedThroughput: DynamoDBProvisionedThroughput
+  };
+
+  declare type DynamoDBLocalSecondaryIndex = {
+    IndexName: string,
+    KeySchema: DynamoDBKeySchema [],
+    Projection: DynamoDBProjection,
+  };
+
+  declare type DynamoDBProjection = {
+     NonKeyAttributes?: string[],
+     ProjectionType: string
+  };
+
+  declare type DynamoDBProvisionedThroughput = {
+    ReadCapacityUnits: number,
+    WriteCapacityUnits: number
+  };
+
+  declare type DynamoDBStreamSpecification = {
+    StreamEnabled: boolean,
+    StreamViewType: string
   };
 
   declare type DynamoDBSchema = {
-    tables: TableDefinition[],
+    tables: DynamoDBTable[]
+  };
+
+  // DynamoDB
+  declare type DynamoDBOptions = {
+    apiVersion: string,
+    region: string,
+    dynamoDbCrc32: boolean,
+    httpOptions: HTTPOptions,
   };
 
   declare type HTTPOptions = {
     timeout: number,
+  };
+
+  declare type AttributeDefinition = {
+    AttributeName: string,
+    AttributeType: string,
   };
 
   declare type KeyDefinition = {
@@ -364,7 +325,7 @@ declare module 'aws-sdk-promise' {
   };
 
   declare type Projection = {
-    NonKeyAttributes?: string[],
+    NonKeyAttributes: string[],
     ProjectionType: string,
   };
 
@@ -388,7 +349,7 @@ declare module 'aws-sdk-promise' {
     IndexSizeBytes: number,
     IndexStatus: string,
     ItemCount: number,
-    KeySchema: KeySchema,
+    KeySchema: KeyDefinition[],
     Projection: Projection,
     ProvisionedThroughput: ProvisionedThroughput,
   };
@@ -398,7 +359,7 @@ declare module 'aws-sdk-promise' {
      IndexName: string,
      IndexSizeBytes: number,
      ItemCount: number,
-     KeySchema: KeySchema,
+     KeySchema: KeyDefinition[],
      Projection: Projection,
   };
 
@@ -412,7 +373,7 @@ declare module 'aws-sdk-promise' {
     CreationDateTime: number,
     GlobalSecondaryIndexes: GlobalSecondaryIndex[],
     ItemCount: number,
-    KeySchema: KeySchema,
+    KeySchema: KeyDefinition[],
     LatestStreamArn: string,
     LatestStreamLabel: string,
     LocalSecondaryIndexes: LocalSecondaryIndex[],
@@ -424,9 +385,17 @@ declare module 'aws-sdk-promise' {
     TableStatus: string
   };
 
+  declare type DescribeTableRequest = {
+     TableName: string,
+  };
+
+  declare type DescribeTableResponse = {
+    Table: TableDescription,
+  };
+
   declare type GlobalSecondaryIndexUpdateCreate = {
     IndexName: string,
-    KeySchema: KeySchema,
+    KeySchema: KeyDefinition[],
     Projection: Projection,
     ProvisionedThroughput: Throughput,
   };
@@ -446,12 +415,19 @@ declare module 'aws-sdk-promise' {
      Update?: GlobalSecondaryIndexUpdateUpdate,
   };
 
-  // CloudWatch
-  declare class CloudWatch {
-    getMetricStatistics(params: ?GetMetricStatisticsRequest, callback: ?(err: ?Error,
-      data: GetMetricStatisticsResponse) => void): PromiseRequest<GetMetricStatisticsResponse>;
-  }
+  declare type UpdateTableRequest = {
+     AttributeDefinitions?: AttributeDefinition[],
+     GlobalSecondaryIndexUpdates? : GlobalSecondaryIndexUpdate[],
+     ProvisionedThroughput?: Throughput,
+     StreamSpecification?: StreamSpecification,
+     TableName: string
+  };
 
+  declare type UpdateTableResponse = {
+    TableDescription: TableDescription,
+  };
+
+  // CloudWatch
   declare type CloudWatchOptions = {
     apiVersion: string,
     region: string,
@@ -489,18 +465,5 @@ declare module 'aws-sdk-promise' {
     Average: number,
     Sum: number,
     Unit: string,
-  };
-
-  // General
-  declare class PromiseRequest<T> {
-    promise(): Promise<DataResponse<T>>;
-  }
-
-  declare type DataResponse<T> = {
-    data: T,
-  };
-
-  declare type Map<TKey, TValue> = {
-    [key: TKey]: TValue,
   };
 }
