@@ -11,7 +11,7 @@ import DataModelHelper from '../query-helpers/DataModelHelper';
 import DynamoDB from '../aws/DynamoDB';
 import Instrument from '../logging/Instrument';
 import type { Connection, Edge } from 'graphql-relay';
-import type { DynamoDBSchema, ScanQueryResponse, QueryRequest } from 'aws-sdk-promise';
+import type { DynamoDBSchema, ScanQueryResponse, QueryRequest } from 'aws-sdk';
 // eslint-disable-next-line no-unused-vars
 import type { ConnectionArgs, QueryExpression, Model, TypedMaybeDataModel,
   TypedDataModel } from '../flow/Types';

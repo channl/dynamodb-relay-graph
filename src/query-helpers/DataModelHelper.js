@@ -6,7 +6,7 @@ import AttributeMapHelper from '../query-helpers/AttributeMapHelper';
 import Instrument from '../logging/Instrument';
 import DataMapper from '../query-helpers/DataMapper';
 import type { Connection, Edge } from 'graphql-relay';
-import type { AttributeMap, BatchWriteItemRequest } from 'aws-sdk-promise';
+import type { AttributeMap, BatchWriteItemRequest } from 'aws-sdk';
 import type { TypedDataModel, DataModel, Model, Value } from '../flow/Types';
 
 export default class DataModelHelper {

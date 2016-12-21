@@ -11,7 +11,7 @@ import type EdgeConnectionQuery from '../query/EdgeConnectionQuery';
 import type { Connection } from 'graphql-relay';
 import type { ConnectionArgs, QueryExpression, ExpressionValue, Model } from '../flow/Types';
 import type { TableDefinition, KeyDefinition, KeySchema,
-  DynamoDBSchema } from 'aws-sdk-promise';
+  DynamoDBSchema } from 'aws-sdk';
 
 export default class QueryHelper {
 

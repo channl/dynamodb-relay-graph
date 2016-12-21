@@ -9,7 +9,7 @@ import Instrument from '../logging/Instrument';
 import DataModelHelper from '../query-helpers/DataModelHelper';
 import TypeHelper from '../query-helpers/TypeHelper';
 import { fromGlobalId } from 'graphql-relay';
-import type { BatchGetItemRequest, BatchGetItemResponse } from 'aws-sdk-promise';
+import type { BatchGetItemRequest, BatchGetItemResponse } from 'aws-sdk';
 import type { TypedMaybeDataModel, TypeAndKey } from '../flow/Types';
 
 export default class EntityResolver {

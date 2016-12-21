@@ -13,7 +13,7 @@ import EntityWriter from './query-writers/EntityWriter';
 import ToNodesConnectionResolver from './query-resolvers/ToNodesConnectionResolver';
 import DataMapper from './query-helpers/DataMapper';
 import { fromGlobalId } from 'graphql-relay';
-import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk-promise';
+import type { DynamoDBConfig, DynamoDBSchema } from 'aws-sdk';
 import type { ExprModel, QueryExpression, ConnectionArgs } from './flow/Types';
 
 export default class Graph {

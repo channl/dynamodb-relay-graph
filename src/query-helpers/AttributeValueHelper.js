@@ -1,7 +1,7 @@
 /* @flow */
 import invariant from 'invariant';
 import SingleValueHelper from '../query-helpers/SingleValueHelper';
-import type { AttributeValue } from 'aws-sdk-promise';
+import type { AttributeValue } from 'aws-sdk';
 
 export default class AttributeValueHelper {
 

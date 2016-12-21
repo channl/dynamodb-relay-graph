@@ -5,7 +5,7 @@ import invariant from 'invariant';
 import warning from 'warning';
 import Instrument from '../logging/Instrument';
 import type { BatchGetItemRequest, BatchGetItemResponse,
-  BatchWriteItemRequest, BatchWriteItemResponse } from 'aws-sdk-promise';
+  BatchWriteItemRequest, BatchWriteItemResponse } from 'aws-sdk';
 
 export default class BatchingDynamoDB {
   _dynamoDB: DynamoDB;

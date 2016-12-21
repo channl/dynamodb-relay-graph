@@ -1,7 +1,7 @@
 /* @flow */
 import invariant from 'invariant';
 import AttributeValueHelper from '../query-helpers/AttributeValueHelper';
-import type { AttributeMap } from 'aws-sdk-promise';
+import type { AttributeMap } from 'aws-sdk';
 // eslint-disable-next-line no-unused-vars
 // import type { AttrMapValueConvertor, AttrMapConvertor, Model } from '../flow/Types';
 

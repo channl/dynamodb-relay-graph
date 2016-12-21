@@ -1,6 +1,6 @@
 /* @flow */
 import invariant from 'invariant';
-import type { AttributeValue } from 'aws-sdk-promise';
+import type { AttributeValue } from 'aws-sdk';
 import type { Value } from '../flow/Types';
 
 export default class ValueHelper {

@@ -13,7 +13,7 @@ import Instrument from '../logging/Instrument';
 // eslint-disable-next-line no-unused-vars
 import type { ConnectionArgs, QueryExpression, TypedDataModel, TypedMaybeDataModel, Model } from '../flow/Types';
 import type { Connection } from 'graphql-relay';
-import type { DynamoDBSchema, ScanQueryResponse, QueryRequest } from 'aws-sdk-promise';
+import type { DynamoDBSchema, ScanQueryResponse, QueryRequest } from 'aws-sdk';
 
 export default class NodeConnectionResolver {
   _dynamoDB: DynamoDB;

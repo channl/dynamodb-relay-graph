@@ -1,6 +1,6 @@
 /* @flow */
 import invariant from 'invariant';
-import type { TableDefinition } from 'aws-sdk-promise';
+import type { TableDefinition } from 'aws-sdk';
 
 export default class TableDefinitionHelper {
 

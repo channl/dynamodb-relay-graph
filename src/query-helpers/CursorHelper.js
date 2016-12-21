@@ -1,6 +1,6 @@
 /* @flow */
 import invariant from 'invariant';
-import type { AttributeMap } from 'aws-sdk-promise';
+import type { AttributeMap } from 'aws-sdk';
 
 export default class CursorHelper {
 

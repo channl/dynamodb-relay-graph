@@ -1,5 +1,5 @@
 /* @flow */
-import type { AttributeMap } from 'aws-sdk-promise';
+import type { AttributeMap } from 'aws-sdk';
 
 export type ConnectionArgs = {
   first?: number,
