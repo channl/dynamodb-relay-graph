@@ -182,6 +182,15 @@ describe('AcceptanceTests', function () {
   let dataMapper = new TestDataMapper();
   let graph = new Graph(dbConfig, dbSchema, dataMapper);
 
+  it('Can get tag', async () => {
+    let result = await graph
+      .v('Tag', { id: 'VGFnOjNpejVYMGx4VEZ1ZmtnejdiYTc5Umc9PQ==' }, {first: 1})
+      .single()
+      .getAsync(To.Tag);
+
+    expect(result).to.deep.equal({});
+  });
+/*
   it('Can query for nodes', async () => {
     let result = await graph
       .v('User', {}, {first: 2})

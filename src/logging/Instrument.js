@@ -66,7 +66,6 @@ export default class Instrument {
         case 'ToNodeConnectionQuery':
           return false;
         default:
-          log('Not filtering arg type \'' + a.constructor.name + '\'');
           return true;
       }
     });

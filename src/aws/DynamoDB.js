@@ -1,6 +1,7 @@
 /* @flow */
 import AWS from 'aws-sdk';
 import invariant from 'invariant';
+// import log from '../logging/log';
 import type { DynamoDBConfig, DescribeTableRequest, DescribeTableResponse, UpdateTableRequest,
   UpdateTableResponse, ListTablesRequest, ListTablesResponse, DeleteTableRequest,
   DeleteTableResponse, ScanRequest, ScanQueryResponse, QueryRequest, PutItemRequest,
@@ -69,7 +70,15 @@ export default class DynamoDB {
   }
 
   async batchWriteItemAsync(params: BatchWriteItemRequest): Promise<BatchWriteItemResponse> {
-    return await this._db.batchWriteItem(params).promise();
+    try {
+      return await this._db.batchWriteItem(params).promise();
+    } catch (ex) {
+      // if (ex.message === 'Provided list of item keys contains duplicates') {
+        // let firstDuplicate = this._getFirstDuplicate(params);
+        // log('WARN: ' + JSON.stringify(firstDuplicate));
+      // }
+      throw ex;
+    }
   }
 
   async deleteItemAsync(params: DeleteItemRequest): Promise<DeleteItemResponse> {
